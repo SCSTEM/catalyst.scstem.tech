@@ -1,0 +1,59 @@
+import { useCallback } from "react";
+import { api } from "../api";
+import { useQuery } from "../hooks/useQuery";
+import { LeaderboardRow } from "./LeaderboardRow";
+
+function Avatar({ url, name }: { url: string | null; name: string | null }) {
+  if (url) {
+    return (
+      <img
+        src={url}
+        alt={name ?? "User"}
+        className="h-7 w-7 rounded-full"
+        loading="lazy"
+      />
+    );
+  }
+  return (
+    <div className="flex h-7 w-7 items-center justify-center rounded-full bg-gray-700 text-xs">
+      ?
+    </div>
+  );
+}
+
+export function UserLeaderboard({
+  onSelect,
+}: {
+  onSelect: (userId: string) => void;
+}) {
+  const fetcher = useCallback(async () => {
+    const res = await api.api.leaderboard.users.$get();
+    return await res.json();
+  }, []);
+  const { data, loading, error } = useQuery(fetcher);
+
+  if (loading) {
+    return <p className="text-center text-gray-500">Loading...</p>;
+  }
+  if (error) {
+    return <p className="text-center text-red-400">{error}</p>;
+  }
+  if (!data?.length) {
+    return <p className="text-center text-gray-500">No reactors yet</p>;
+  }
+
+  return (
+    <div className="space-y-1">
+      {data.map((entry, i) => (
+        <LeaderboardRow
+          key={entry.userId}
+          rank={i + 1}
+          left={<Avatar url={entry.avatarUrl} name={entry.displayName} />}
+          label={entry.displayName || entry.userId}
+          count={entry.totalCount}
+          onClick={() => onSelect(entry.userId)}
+        />
+      ))}
+    </div>
+  );
+}

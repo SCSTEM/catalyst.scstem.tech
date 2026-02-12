@@ -1,0 +1,12 @@
+{
+  "name": "catalyst-worker",
+  "main": "./src/index.ts",
+  "compatibility_date": "2025-04-01",
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "emoji-db",
+      "database_id": "placeholder-create-with-wrangler-d1-create"
+    }
+  ]
+}
