@@ -79,7 +79,7 @@ Under **Basic Information** > **App Credentials**, copy the **Signing Secret**.
 
 ```bash
 cd packages/worker
-bunx wrangler d1 create emoji-db
+bunx wrangler d1 create catalyst-db
 ```
 
 This prints a database ID. Paste it into `packages/worker/wrangler.jsonc`:
@@ -89,7 +89,7 @@ This prints a database ID. Paste it into `packages/worker/wrangler.jsonc`:
   "d1_databases": [
     {
       "binding": "DB",
-      "database_name": "emoji-db",
+      "database_name": "catalyst-db",
       "database_id": "<paste-your-id-here>"
     }
   ]
