@@ -6,14 +6,16 @@ import { LeaderboardRow } from "./LeaderboardRow";
 
 export function EmojiLeaderboard({
   onSelect,
+  pollingInterval,
 }: {
   onSelect: (emoji: string) => void;
+  pollingInterval?: number;
 }) {
   const fetcher = useCallback(async () => {
     const res = await api.api.rankings.emojis.$get();
     return await res.json();
   }, []);
-  const { data, loading, error } = useQuery(fetcher);
+  const { data, loading, error } = useQuery(fetcher, { pollingInterval });
 
   if (loading) {
     return <p className="text-center text-gray-500">Loading...</p>;
