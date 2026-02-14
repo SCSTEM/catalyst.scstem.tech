@@ -155,16 +155,15 @@ if (BACKFILL_TARGET === "remote") {
   db = drizzleD1(createD1HttpClient(accountId, databaseId, apiToken) as any);
   console.log("Connected to remote D1");
 } else {
-  const sqliteFiles = [
-    ...new Glob("**/*.sqlite").scanSync(".wrangler/state/v3/d1"),
-  ];
+  const d1Dir = "packages/worker/.wrangler/state/v3/d1";
+  const sqliteFiles = [...new Glob("**/*.sqlite").scanSync(d1Dir)];
   if (!sqliteFiles.length) {
     console.error(
       "No local D1 database found. Run `bun run db:migrate:local` first.",
     );
     process.exit(1);
   }
-  const sqlite = new Database(`.wrangler/state/v3/d1/${sqliteFiles[0]}`);
+  const sqlite = new Database(`${d1Dir}/${sqliteFiles[0]}`);
   db = drizzleBunSqlite(sqlite);
   console.log(`Connected to local D1: ${sqliteFiles[0]}`);
 }
@@ -241,7 +240,7 @@ do {
   if (channelCursor) {
     params.cursor = channelCursor;
   }
-  const res = await slackApi<ChannelsResponse>("conversations.list", params);
+  const res = await slackApi<ChannelsResponse>("users.conversations", params);
   channels.push(...res.channels.map((c) => ({ id: c.id, name: c.name })));
   channelCursor = res.response_metadata?.next_cursor ?? "";
   await sleep(1200);
@@ -325,6 +324,9 @@ console.log(
 console.log("Inserting reactions...");
 const BATCH_SIZE = 100;
 const reactionBatches = chunks(allReactions, BATCH_SIZE);
+const [{ countBefore: reactionsCountBefore }] = await db
+  .select({ countBefore: sql<number>`COUNT(*)` })
+  .from(reactions);
 for (let i = 0; i < reactionBatches.length; i++) {
   const batch = reactionBatches[i];
   if (!batch) {
@@ -347,6 +349,12 @@ for (let i = 0; i < reactionBatches.length; i++) {
     console.log(`  ${count} / ${allReactions.length}`);
   }
 }
+const [{ countAfter: reactionsCountAfter }] = await db
+  .select({ countAfter: sql<number>`COUNT(*)` })
+  .from(reactions);
+console.log(
+  `  ${reactionsCountAfter - reactionsCountBefore} new reactions inserted`,
+);
 
 // ── Step 4: Rebuild aggregates from DB ──
 //
@@ -372,6 +380,9 @@ console.log("  user-emoji counts rebuilt");
 // ── Step 5: Fetch user profiles ──
 
 console.log("Fetching user profiles...");
+const [{ countBefore: usersCountBefore }] = await db
+  .select({ countBefore: sql<number>`COUNT(*)` })
+  .from(users);
 for (const userId of uniqueUsers) {
   try {
     const res = await slackApi<{
@@ -405,10 +416,17 @@ for (const userId of uniqueUsers) {
   }
   await sleep(1200);
 }
+const [{ countAfter: usersCountAfter }] = await db
+  .select({ countAfter: sql<number>`COUNT(*)` })
+  .from(users);
+console.log(`  ${usersCountAfter - usersCountBefore} new users inserted`);
 
 // ── Step 6: Fetch custom emoji ──
 
 console.log("Fetching custom emoji list...");
+const [{ countBefore: emojisCountBefore }] = await db
+  .select({ countBefore: sql<number>`COUNT(*)` })
+  .from(emojiImages);
 try {
   const res = await slackApi<{ emoji: Record<string, string> }>("emoji.list");
   const emojiRows: { name: string; imageUrl: string }[] = [];
@@ -428,7 +446,12 @@ try {
       })
       .run();
   }
-  console.log(`  ${emojiRows.length} custom emojis`);
+  const [{ countAfter: emojisCountAfter }] = await db
+    .select({ countAfter: sql<number>`COUNT(*)` })
+    .from(emojiImages);
+  console.log(
+    `  ${emojisCountAfter - emojisCountBefore} new custom emojis inserted`,
+  );
 } catch (e) {
   console.warn(`Failed to fetch emoji list: ${e}`);
 }
