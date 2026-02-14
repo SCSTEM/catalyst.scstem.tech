@@ -1,51 +1,62 @@
-import { sql } from "drizzle-orm";
+import { and, eq, sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/d1";
-import { emojiTotals, reactions, userEmojiCounts } from "../db/schema";
+import { reactions, reactionTotals, userEmojiCounts } from "../db/schema";
 
-export async function recordReaction(
-  d1: D1Database,
-  event: {
-    userId: string;
-    emoji: string;
-    channelId: string;
-    messageTs: string;
-    eventTs: string;
-    isRemoval: boolean;
-  },
-) {
+type ReactionEvent = {
+  userId: string;
+  emoji: string;
+  channelId: string;
+  messageTs: string;
+};
+
+export async function addReaction(d1: D1Database, event: ReactionEvent) {
   const db = drizzle(d1);
-  const delta = event.isRemoval ? -1 : 1;
 
   await db.batch([
-    db.insert(reactions).values({
-      userId: event.userId,
-      emoji: event.emoji,
-      channelId: event.channelId,
-      messageTs: event.messageTs,
-      eventTs: event.eventTs,
-      isRemoval: event.isRemoval ? 1 : 0,
-    }),
+    db.insert(reactions).values(event).onConflictDoNothing(),
     db
-      .insert(emojiTotals)
-      .values({ emoji: event.emoji, count: Math.max(0, delta) })
+      .insert(reactionTotals)
+      .values({ emoji: event.emoji, count: 1 })
       .onConflictDoUpdate({
-        target: emojiTotals.emoji,
-        set: {
-          count: sql`MAX(0, ${emojiTotals.count} + ${delta})`,
-        },
+        target: reactionTotals.emoji,
+        set: { count: sql`${reactionTotals.count} + 1` },
       }),
     db
       .insert(userEmojiCounts)
-      .values({
-        userId: event.userId,
-        emoji: event.emoji,
-        count: Math.max(0, delta),
-      })
+      .values({ userId: event.userId, emoji: event.emoji, count: 1 })
       .onConflictDoUpdate({
         target: [userEmojiCounts.userId, userEmojiCounts.emoji],
-        set: {
-          count: sql`MAX(0, ${userEmojiCounts.count} + ${delta})`,
-        },
+        set: { count: sql`${userEmojiCounts.count} + 1` },
       }),
+  ]);
+}
+
+export async function removeReaction(d1: D1Database, event: ReactionEvent) {
+  const db = drizzle(d1);
+
+  await db.batch([
+    db
+      .delete(reactions)
+      .where(
+        and(
+          eq(reactions.userId, event.userId),
+          eq(reactions.emoji, event.emoji),
+          eq(reactions.channelId, event.channelId),
+          eq(reactions.messageTs, event.messageTs),
+        ),
+      ),
+    db
+      .update(reactionTotals)
+      .set({ count: sql`MAX(0, ${reactionTotals.count} - 1)` })
+      .where(eq(reactionTotals.emoji, event.emoji)),
+    db
+      .update(userEmojiCounts)
+      .set({ count: sql`MAX(0, ${userEmojiCounts.count} - 1)` })
+      .where(
+        and(
+          eq(userEmojiCounts.userId, event.userId),
+          eq(userEmojiCounts.emoji, event.emoji),
+        ),
+      ),
   ]);
 }

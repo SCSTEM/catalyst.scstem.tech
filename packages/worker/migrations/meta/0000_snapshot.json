@@ -1,7 +1,7 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "d3848d5b-682f-4c97-8cc1-81fb2e8e8576",
+  "id": "9c2bdb78-ce9e-4a32-8d01-faf66026845e",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "tables": {
     "emoji_images": {
@@ -36,8 +36,8 @@
       "uniqueConstraints": {},
       "checkConstraints": {}
     },
-    "emoji_totals": {
-      "name": "emoji_totals",
+    "reaction_totals": {
+      "name": "reaction_totals",
       "columns": {
         "emoji": {
           "name": "emoji",
@@ -64,13 +64,6 @@
     "reactions": {
       "name": "reactions",
       "columns": {
-        "id": {
-          "name": "id",
-          "type": "integer",
-          "primaryKey": true,
-          "notNull": true,
-          "autoincrement": true
-        },
         "user_id": {
           "name": "user_id",
           "type": "text",
@@ -99,21 +92,6 @@
           "notNull": true,
           "autoincrement": false
         },
-        "event_ts": {
-          "name": "event_ts",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "is_removal": {
-          "name": "is_removal",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "default": 0
-        },
         "created_at": {
           "name": "created_at",
           "type": "text",
@@ -136,7 +114,12 @@
         }
       },
       "foreignKeys": {},
-      "compositePrimaryKeys": {},
+      "compositePrimaryKeys": {
+        "reactions_user_id_emoji_channel_id_message_ts_pk": {
+          "columns": ["user_id", "emoji", "channel_id", "message_ts"],
+          "name": "reactions_user_id_emoji_channel_id_message_ts_pk"
+        }
+      },
       "uniqueConstraints": {},
       "checkConstraints": {}
     },

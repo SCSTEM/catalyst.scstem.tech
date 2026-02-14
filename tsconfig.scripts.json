@@ -11,5 +11,6 @@
     "noEmit": true,
     "verbatimModuleSyntax": true
   },
-  "include": ["scripts"]
+  "include": ["scripts"],
+  "references": [{ "path": "./packages/worker" }]
 }

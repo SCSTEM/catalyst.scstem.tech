@@ -1,5 +1,5 @@
+import { nameToEmoji } from "gemoji";
 import { useEmojiMap } from "../hooks/useEmojiMap";
-import { slackNameToUnicode } from "../slackEmoji";
 
 export function Emoji({
   name,
@@ -29,7 +29,7 @@ export function Emoji({
   }
 
   // 2. Try standard emoji Unicode mapping
-  const unicode = slackNameToUnicode(name);
+  const unicode = nameToEmoji[name];
   if (unicode) {
     return (
       <span title={`:${name}:`} style={{ fontSize: size }}>

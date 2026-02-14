@@ -27,7 +27,7 @@ export function UserLeaderboard({
   onSelect: (userId: string) => void;
 }) {
   const fetcher = useCallback(async () => {
-    const res = await api.api.leaderboard.users.$get();
+    const res = await api.api.rankings.users.$get();
     return await res.json();
   }, []);
   const { data, loading, error } = useQuery(fetcher);

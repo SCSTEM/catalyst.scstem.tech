@@ -12,7 +12,7 @@ export function UserDetail({
   onBack: () => void;
 }) {
   const fetcher = useCallback(async () => {
-    const res = await api.api.leaderboard.users[":userId"].$get({
+    const res = await api.api.users[":userId"].emojis.$get({
       param: { userId },
     });
     return await res.json();

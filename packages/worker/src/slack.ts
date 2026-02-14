@@ -1,5 +1,5 @@
 import { SlackApp } from "slack-cloudflare-workers";
-import { recordReaction } from "./lib/db";
+import { addReaction, removeReaction } from "./lib/db";
 
 type Env = {
   SLACK_SIGNING_SECRET: string;
@@ -7,7 +7,7 @@ type Env = {
   DB: D1Database;
 };
 
-export function createSlackApp(env: Env) {
+export function createSlackApp(env: Env): SlackApp<Env> {
   const app = new SlackApp({ env });
 
   // ── Slash command ──
@@ -19,24 +19,20 @@ export function createSlackApp(env: Env) {
   // ── Events ──
 
   app.event("reaction_added", async ({ payload }) => {
-    await recordReaction(env.DB, {
+    await addReaction(env.DB, {
       userId: payload.user,
       emoji: payload.reaction,
       channelId: payload.item?.channel ?? "",
       messageTs: payload.item?.ts ?? "",
-      eventTs: payload.event_ts ?? "",
-      isRemoval: false,
     });
   });
 
   app.event("reaction_removed", async ({ payload }) => {
-    await recordReaction(env.DB, {
+    await removeReaction(env.DB, {
       userId: payload.user,
       emoji: payload.reaction,
       channelId: payload.item?.channel ?? "",
       messageTs: payload.item?.ts ?? "",
-      eventTs: payload.event_ts ?? "",
-      isRemoval: true,
     });
   });
 

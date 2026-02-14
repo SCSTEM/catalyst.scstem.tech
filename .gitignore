@@ -32,3 +32,6 @@ logs
 
 # ide
 .idea
+
+*.local.*
+.mise.toml

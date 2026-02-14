@@ -1,0 +1,43 @@
+import { and, desc, eq, gt } from "drizzle-orm";
+import { drizzle } from "drizzle-orm/d1";
+import { Hono } from "hono";
+import { emojiImages, userEmojiCounts, users } from "../db/schema";
+
+type Bindings = {
+  DB: D1Database;
+};
+
+export const usersRoute = new Hono<{ Bindings: Bindings }>().get(
+  "/:userId/emojis",
+  async (c) => {
+    const db = drizzle(c.env.DB);
+    const userId = c.req.param("userId");
+    const limit = Math.min(Number(c.req.query("limit") ?? 50), 200);
+
+    const emojis = await db
+      .select({
+        emoji: userEmojiCounts.emoji,
+        count: userEmojiCounts.count,
+        imageUrl: emojiImages.imageUrl,
+      })
+      .from(userEmojiCounts)
+      .leftJoin(emojiImages, eq(userEmojiCounts.emoji, emojiImages.name))
+      .where(
+        and(eq(userEmojiCounts.userId, userId), gt(userEmojiCounts.count, 0)),
+      )
+      .orderBy(desc(userEmojiCounts.count))
+      .limit(limit);
+
+    const user = await db
+      .select({
+        userId: users.userId,
+        displayName: users.displayName,
+        avatarUrl: users.avatarUrl,
+      })
+      .from(users)
+      .where(eq(users.userId, userId))
+      .get();
+
+    return c.json({ user: user ?? null, emojis });
+  },
+);

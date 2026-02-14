@@ -1,7 +1,8 @@
 import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { emojisRoute } from "./routes/emojis";
-import { leaderboardRoute } from "./routes/leaderboard";
+import { rankingsRoute } from "./routes/rankings";
+import { usersRoute } from "./routes/users";
 
 type Bindings = {
   DB: D1Database;
@@ -19,8 +20,9 @@ const app = new Hono<{ Bindings: Bindings }>()
     }),
   )
   .get("/api/health", (c) => c.json({ ok: true }))
-  .route("/api/leaderboard", leaderboardRoute)
-  .route("/api/emojis", emojisRoute);
+  .route("/api/rankings", rankingsRoute)
+  .route("/api/emojis", emojisRoute)
+  .route("/api/users", usersRoute);
 
 export type AppType = typeof app;
 
