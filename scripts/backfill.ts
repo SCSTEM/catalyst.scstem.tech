@@ -18,17 +18,19 @@
  */
 
 import { Database } from "bun:sqlite";
+import {
+  emojiImages,
+  reactions,
+  reactionTotals,
+  userEmojiCounts,
+  users,
+} from "@catalyst/worker/db/schema";
 import { Glob } from "bun";
 import { sql } from "drizzle-orm";
 import { drizzle as drizzleBunSqlite } from "drizzle-orm/bun-sqlite";
 import { drizzle as drizzleD1 } from "drizzle-orm/d1";
-import {
-  emojiImages,
-  emojiTotals,
-  reactions,
-  userEmojiCounts,
-  users,
-} from "../packages/worker/src/db/schema";
+
+const MAX_RETRIES = 5;
 
 // ── Config ──
 
@@ -39,6 +41,12 @@ if (!SLACK_TOKEN) {
 }
 
 const BACKFILL_SINCE = process.env.BACKFILL_SINCE;
+if (BACKFILL_SINCE && Number.isNaN(new Date(BACKFILL_SINCE).getTime())) {
+  console.error(
+    `Invalid BACKFILL_SINCE date: "${BACKFILL_SINCE}". Use ISO format, e.g. "2025-01-01".`,
+  );
+  process.exit(1);
+}
 const oldest = BACKFILL_SINCE
   ? String(Math.floor(new Date(BACKFILL_SINCE).getTime() / 1000))
   : undefined;
@@ -174,17 +182,34 @@ async function slackApi<T>(
   for (const [k, v] of Object.entries(params)) {
     url.searchParams.set(k, v);
   }
-  const res = await fetch(url, {
-    headers: { Authorization: `Bearer ${SLACK_TOKEN}` },
-  });
-  if (!res.ok) {
-    throw new Error(`Slack API ${method} HTTP ${res.status}`);
+
+  for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
+    const res = await fetch(url, {
+      headers: { Authorization: `Bearer ${SLACK_TOKEN}` },
+    });
+
+    if (res.status === 429) {
+      const retryAfter = Number(res.headers.get("Retry-After") ?? "5");
+      console.warn(
+        `  Rate limited on ${method}, retrying in ${retryAfter}s (attempt ${attempt + 1}/${MAX_RETRIES})`,
+      );
+      await sleep(retryAfter * 1000);
+      continue;
+    }
+
+    if (!res.ok) {
+      throw new Error(`Slack API ${method} HTTP ${res.status}`);
+    }
+    const data = (await res.json()) as T & { ok: boolean; error?: string };
+    if (!data.ok) {
+      throw new Error(`Slack API ${method}: ${data.error}`);
+    }
+    return data;
   }
-  const data = (await res.json()) as T & { ok: boolean; error?: string };
-  if (!data.ok) {
-    throw new Error(`Slack API ${method}: ${data.error}`);
-  }
-  return data;
+
+  throw new Error(
+    `Slack API ${method}: rate limited after ${MAX_RETRIES} retries`,
+  );
 }
 
 function sleep(ms: number) {
@@ -313,10 +338,9 @@ for (let i = 0; i < reactionBatches.length; i++) {
         emoji: r.emoji,
         channelId: r.channelId,
         messageTs: r.messageTs,
-        eventTs: r.messageTs,
-        isRemoval: 0,
       })),
     )
+    .onConflictDoNothing()
     .run();
   if (i % 20 === 0) {
     const count = Math.min((i + 1) * BATCH_SIZE, allReactions.length);
@@ -324,45 +348,26 @@ for (let i = 0; i < reactionBatches.length; i++) {
   }
 }
 
-// ── Step 4: Rebuild aggregates ──
+// ── Step 4: Rebuild aggregates from DB ──
+//
+// Aggregates are computed from the full reactions table (not just what was
+// fetched this run). Re-running backfill is safe (ON CONFLICT DO NOTHING).
 
 console.log("Rebuilding aggregate tables...");
 
-// Emoji totals
-const emojiCountMap = new Map<string, number>();
-for (const r of allReactions) {
-  emojiCountMap.set(r.emoji, (emojiCountMap.get(r.emoji) ?? 0) + 1);
-}
-await db.delete(emojiTotals).run();
-for (const batch of chunks([...emojiCountMap.entries()], BATCH_SIZE)) {
-  await db
-    .insert(emojiTotals)
-    .values(batch.map(([emoji, count]) => ({ emoji, count })))
-    .run();
-}
-console.log(`  ${emojiCountMap.size} emoji totals`);
+await db.run(sql`DELETE FROM ${reactionTotals}`);
+await db.run(sql`
+  INSERT INTO ${reactionTotals} (emoji, count)
+  SELECT emoji, COUNT(*) FROM ${reactions} GROUP BY emoji
+`);
+console.log("  emoji totals rebuilt");
 
-// User-emoji counts
-const userEmojiMap = new Map<string, Map<string, number>>();
-for (const r of allReactions) {
-  let emojiMap = userEmojiMap.get(r.userId);
-  if (!emojiMap) {
-    emojiMap = new Map();
-    userEmojiMap.set(r.userId, emojiMap);
-  }
-  emojiMap.set(r.emoji, (emojiMap.get(r.emoji) ?? 0) + 1);
-}
-await db.delete(userEmojiCounts).run();
-const userEmojiRows: { userId: string; emoji: string; count: number }[] = [];
-for (const [userId, emojiMap] of userEmojiMap) {
-  for (const [emoji, count] of emojiMap) {
-    userEmojiRows.push({ userId, emoji, count });
-  }
-}
-for (const batch of chunks(userEmojiRows, BATCH_SIZE)) {
-  await db.insert(userEmojiCounts).values(batch).run();
-}
-console.log(`  ${userEmojiRows.length} user-emoji counts`);
+await db.run(sql`DELETE FROM ${userEmojiCounts}`);
+await db.run(sql`
+  INSERT INTO ${userEmojiCounts} (user_id, emoji, count)
+  SELECT user_id, emoji, COUNT(*) FROM ${reactions} GROUP BY user_id, emoji
+`);
+console.log("  user-emoji counts rebuilt");
 
 // ── Step 5: Fetch user profiles ──
 

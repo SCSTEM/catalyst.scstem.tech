@@ -1,5 +1,5 @@
+import type { AppType } from "@catalyst/worker/app";
 import { hc } from "hono/client";
-import type { AppType } from "../../worker/src/app";
 
 const baseUrl = import.meta.env.PROD ? "https://api.catalyst.scstem.org" : "/";
 

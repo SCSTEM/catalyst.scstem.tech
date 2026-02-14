@@ -10,7 +10,7 @@ export function EmojiLeaderboard({
   onSelect: (emoji: string) => void;
 }) {
   const fetcher = useCallback(async () => {
-    const res = await api.api.leaderboard.emojis.$get();
+    const res = await api.api.rankings.emojis.$get();
     return await res.json();
   }, []);
   const { data, loading, error } = useQuery(fetcher);

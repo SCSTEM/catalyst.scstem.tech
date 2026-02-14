@@ -2,10 +2,13 @@
   "name": "@catalyst/worker",
   "type": "module",
   "private": true,
+  "exports": {
+    "./app": "./src/app.ts",
+    "./db/schema": "./src/db/schema.ts"
+  },
   "scripts": {
     "dev": "wrangler dev",
     "deploy": "wrangler deploy",
-    "typecheck": "tsc --noEmit",
     "db:generate": "drizzle-kit generate",
     "db:migrate:local": "wrangler d1 migrations apply DB --local",
     "db:migrate:remote": "wrangler d1 migrations apply DB --remote",

@@ -251,10 +251,10 @@ Visit `http://localhost:5173`.
 | Method | Path | Description |
 |--------|------|-------------|
 | GET | `/api/health` | Health check |
-| GET | `/api/leaderboard/emojis?limit=50` | Top emojis by reaction count |
-| GET | `/api/leaderboard/users?limit=50` | Top reactors by total count |
-| GET | `/api/leaderboard/emojis/:emoji` | Who uses a specific emoji most |
-| GET | `/api/leaderboard/users/:userId` | A user's emoji breakdown |
+| GET | `/api/rankings/emojis?limit=50` | Top emojis by reaction count |
+| GET | `/api/rankings/users?limit=50` | Top reactors by total count |
+| GET | `/api/emojis/:emoji/users?limit=50` | Who uses a specific emoji most |
+| GET | `/api/users/:userId/emojis?limit=50` | A user's emoji breakdown |
 | GET | `/api/emojis` | Custom emoji name-to-image-URL map |
 | POST | `/slack/events` | Slack Events API webhook (handled by SDK) |
 
@@ -270,7 +270,8 @@ Visit `http://localhost:5173`.
                                                            │
                                                            ▼
                                                   ┌─────────────────────┐
-                                                  │  recordReaction()   │
+                                                  │  addReaction() /    │
+                                                  │  removeReaction()   │
                                                   │  → D1 batch write   │
                                                   └─────────────────────┘
 
