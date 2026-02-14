@@ -46,7 +46,7 @@ export const rankingsRoute = new Hono<{ Bindings: Bindings }>()
       .leftJoin(users, eq(userEmojiCounts.userId, users.userId))
       .where(gt(userEmojiCounts.count, 0))
       .groupBy(userEmojiCounts.userId)
-      .orderBy(sql`total_count desc`)
+      .orderBy(desc(sum(userEmojiCounts.count)))
       .limit(limit);
 
     return c.json(results);
