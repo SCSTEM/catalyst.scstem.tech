@@ -32,3 +32,5 @@ logs
 
 # ide
 .idea
+
+*.local.*
