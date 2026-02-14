@@ -34,3 +34,4 @@ logs
 .idea
 
 *.local.*
+.mise.toml
