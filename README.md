@@ -129,7 +129,11 @@ SLACK_BOT_TOKEN=xoxb-your-bot-token
 cd packages/worker
 bunx wrangler secret put SLACK_SIGNING_SECRET
 bunx wrangler secret put SLACK_BOT_TOKEN
+bunx wrangler secret put SITE_PASSWORD
+bunx wrangler secret put TURNSTILE_SECRET_KEY
 ```
+
+> `SITE_PASSWORD` and `TURNSTILE_SECRET_KEY` have test defaults in `wrangler.jsonc` for local development. You **must** override them with real values in production via `wrangler secret put`.
 
 ## 5. Deploy
 
@@ -248,15 +252,7 @@ Visit `http://localhost:5173`.
 
 ### API endpoints
 
-| Method | Path | Description |
-|--------|------|-------------|
-| GET | `/api/health` | Health check |
-| GET | `/api/rankings/emojis?limit=50` | Top emojis by reaction count |
-| GET | `/api/rankings/users?limit=50` | Top reactors by total count |
-| GET | `/api/emojis/:emoji/users?limit=50` | Who uses a specific emoji most |
-| GET | `/api/users/:userId/emojis?limit=50` | A user's emoji breakdown |
-| GET | `/api/emojis` | Custom emoji name-to-image-URL map |
-| POST | `/slack/events` | Slack Events API webhook (handled by SDK) |
+All API routes are defined in `packages/worker/src/app.ts` — see that file for the authoritative list. The `/slack/events` endpoint is handled separately in `packages/worker/src/index.ts`.
 
 ## Architecture
 

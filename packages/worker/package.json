@@ -7,12 +7,16 @@
     "./db/schema": "./src/db/schema.ts"
   },
   "scripts": {
-    "dev": "wrangler dev",
     "deploy": "wrangler deploy",
+    "test": "vitest run",
+    "test:watch": "vitest",
+
+    "dev": "wrangler dev",
+    "cf-typegen": "wrangler types",
+
     "db:generate": "drizzle-kit generate",
     "db:migrate:local": "wrangler d1 migrations apply DB --local",
-    "db:migrate:remote": "wrangler d1 migrations apply DB --remote",
-    "cf-typegen": "wrangler types"
+    "db:migrate:remote": "wrangler d1 migrations apply DB --remote"
   },
   "dependencies": {
     "@hono/zod-validator": "^0.7.6",
@@ -22,9 +26,11 @@
     "zod": "^4.3.6"
   },
   "devDependencies": {
+    "@cloudflare/vitest-pool-workers": "^0.12.12",
     "@cloudflare/workers-types": "^4.20260207.0",
     "drizzle-kit": "^0.31.9",
     "typescript": "^5.9.3",
+    "vitest": "^2.1.9",
     "wrangler": "^4.63.0"
   }
 }

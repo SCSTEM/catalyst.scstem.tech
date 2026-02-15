@@ -14,7 +14,11 @@
     "rules": {
       "recommended": true,
       "correctness": {
-        "useUniqueElementIds": "off"
+        "useUniqueElementIds": "off",
+        "noUnusedImports": "warn"
+      },
+      "style": {
+        "useImportType": "warn"
       },
       "suspicious": {
         "noUnknownAtRules": "off",
@@ -55,7 +59,8 @@
       "!.claude/",
       "!.carson/",
       "!.types/",
-      "!worker-configuration.d.ts"
+      "!worker-configuration.d.ts",
+      "!**/routeTree.gen.ts"
     ]
   }
 }
