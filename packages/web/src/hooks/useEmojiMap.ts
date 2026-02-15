@@ -1,6 +1,5 @@
-import { useCallback } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { api } from "../api";
-import { useQuery } from "./useQuery";
 
 const fetchEmojiMap = async () => {
   const res = await api.api.emojis.$get();
@@ -10,8 +9,11 @@ const fetchEmojiMap = async () => {
 type EmojiMap = Awaited<ReturnType<typeof fetchEmojiMap>>;
 
 export function useEmojiMap() {
-  const fetcher = useCallback(fetchEmojiMap, []);
-  const { data, loading } = useQuery(fetcher, { key: "emojis:map" });
+  const { data, isPending } = useQuery({
+    queryKey: ["emojis", "map"],
+    queryFn: fetchEmojiMap,
+    staleTime: 5 * 60_000,
+  });
 
-  return { map: data ?? ({} as EmojiMap), loading };
+  return { map: data ?? ({} as EmojiMap), loading: isPending };
 }

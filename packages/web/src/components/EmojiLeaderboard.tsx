@@ -1,6 +1,5 @@
-import { useCallback } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { api } from "../api";
-import { useQuery } from "../hooks/useQuery";
 import { Emoji } from "./Emoji";
 import { LeaderboardRow } from "./LeaderboardRow";
 
@@ -9,19 +8,19 @@ export function EmojiLeaderboard({
 }: {
   onSelect: (emoji: string) => void;
 }) {
-  const fetcher = useCallback(async () => {
-    const res = await api.api.rankings.emojis.$get();
-    return await res.json();
-  }, []);
-  const { data, loading, error } = useQuery(fetcher, {
-    key: "rankings:emojis",
+  const { data, isPending, error } = useQuery({
+    queryKey: ["rankings", "emojis"],
+    queryFn: async () => {
+      const res = await api.api.rankings.emojis.$get();
+      return await res.json();
+    },
   });
 
-  if (loading) {
+  if (isPending) {
     return <p className="text-center text-muted-foreground">Loading...</p>;
   }
   if (error) {
-    return <p className="text-center text-red-400">{error}</p>;
+    return <p className="text-center text-red-400">{error.message}</p>;
   }
   if (!data?.length) {
     return (

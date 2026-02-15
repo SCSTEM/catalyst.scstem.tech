@@ -1,4 +1,5 @@
-import { useCallback, useMemo, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { useMemo, useState } from "react";
 import {
   Area,
   AreaChart,
@@ -11,7 +12,6 @@ import {
   YAxis,
 } from "recharts";
 import { api } from "../api";
-import { useQuery } from "../hooks/useQuery";
 import { categorizeEmojis } from "../lib/emojiCategories";
 import { Emoji } from "./Emoji";
 import {
@@ -159,15 +159,14 @@ function TrendChart({
 function EmojiTrendsChart() {
   const [period, setPeriod] = useState<Period>("week");
 
-  const fetcher = useCallback(async () => {
-    const res = await api.api.analytics["emoji-trends"].$get({
-      query: { period },
-    });
-    return await res.json();
-  }, [period]);
-
-  const { data, loading, error } = useQuery(fetcher, {
-    key: `analytics:emoji-trends:${period}`,
+  const { data, isPending, error } = useQuery({
+    queryKey: ["analytics", "emoji-trends", period],
+    queryFn: async () => {
+      const res = await api.api.analytics["emoji-trends"].$get({
+        query: { period },
+      });
+      return await res.json();
+    },
   });
 
   const chartConfig = useMemo<ChartConfig>(() => {
@@ -197,8 +196,8 @@ function EmojiTrendsChart() {
       series={data?.series ?? []}
       keys={data?.emojis ?? []}
       config={chartConfig}
-      loading={loading}
-      error={error}
+      loading={isPending}
+      error={error?.message ?? null}
       stacked
       period={period}
       onPeriodChange={setPeriod}
@@ -209,15 +208,14 @@ function EmojiTrendsChart() {
 function UserTrendsChart() {
   const [period, setPeriod] = useState<Period>("week");
 
-  const fetcher = useCallback(async () => {
-    const res = await api.api.analytics["user-trends"].$get({
-      query: { period },
-    });
-    return await res.json();
-  }, [period]);
-
-  const { data, loading, error } = useQuery(fetcher, {
-    key: `analytics:user-trends:${period}`,
+  const { data, isPending, error } = useQuery({
+    queryKey: ["analytics", "user-trends", period],
+    queryFn: async () => {
+      const res = await api.api.analytics["user-trends"].$get({
+        query: { period },
+      });
+      return await res.json();
+    },
   });
 
   const userIds = useMemo(() => {
@@ -268,8 +266,8 @@ function UserTrendsChart() {
       series={data?.series ?? []}
       keys={userIds}
       config={chartConfig}
-      loading={loading}
-      error={error}
+      loading={isPending}
+      error={error?.message ?? null}
       period={period}
       onPeriodChange={setPeriod}
     />
@@ -277,13 +275,14 @@ function UserTrendsChart() {
 }
 
 function CategoryChart() {
-  const fetcher = useCallback(async () => {
-    const res = await api.api.rankings.emojis.$get({ query: { limit: "200" } });
-    return await res.json();
-  }, []);
-
-  const { data, loading, error } = useQuery(fetcher, {
-    key: "analytics:categories",
+  const { data, isPending, error } = useQuery({
+    queryKey: ["analytics", "categories"],
+    queryFn: async () => {
+      const res = await api.api.rankings.emojis.$get({
+        query: { limit: "200" },
+      });
+      return await res.json();
+    },
   });
 
   const categories = useMemo(() => {
@@ -316,10 +315,12 @@ function CategoryChart() {
         <CardDescription>Emoji usage by Unicode category</CardDescription>
       </CardHeader>
       <CardContent>
-        {loading && (
+        {isPending && (
           <p className="py-12 text-center text-muted-foreground">Loading...</p>
         )}
-        {error && <p className="py-12 text-center text-red-400">{error}</p>}
+        {error && (
+          <p className="py-12 text-center text-red-400">{error.message}</p>
+        )}
         {categories.length > 0 && (
           <ChartContainer
             config={chartConfig}

@@ -1,3 +1,4 @@
+import { useQueryClient } from "@tanstack/react-query";
 import { RefreshCw } from "lucide-react";
 import type { ReactNode } from "react";
 import { useState } from "react";
@@ -12,10 +13,10 @@ import { UserDetail } from "./components/UserDetail";
 import { UserLeaderboard } from "./components/UserLeaderboard";
 
 export function App() {
+  const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState("emojis");
   const [emojiDetail, setEmojiDetail] = useState<string | null>(null);
   const [userDetail, setUserDetail] = useState<string | null>(null);
-  const [refreshKey, setRefreshKey] = useState(0);
 
   function handleSelectUser(userId: string) {
     setEmojiDetail(null);
@@ -35,13 +36,12 @@ export function App() {
       label: "Top Emojis",
       content: emojiDetail ? (
         <EmojiDetail
-          key={refreshKey}
           emoji={emojiDetail}
           onBack={() => setEmojiDetail(null)}
           onSelectUser={handleSelectUser}
         />
       ) : (
-        <EmojiLeaderboard key={refreshKey} onSelect={setEmojiDetail} />
+        <EmojiLeaderboard onSelect={setEmojiDetail} />
       ),
     },
     {
@@ -49,13 +49,12 @@ export function App() {
       label: "Top Reactors",
       content: userDetail ? (
         <UserDetail
-          key={refreshKey}
           userId={userDetail}
           onBack={() => setUserDetail(null)}
           onSelectEmoji={handleSelectEmoji}
         />
       ) : (
-        <UserLeaderboard key={refreshKey} onSelect={setUserDetail} />
+        <UserLeaderboard onSelect={setUserDetail} />
       ),
     },
     {
@@ -91,7 +90,7 @@ export function App() {
         <Button
           size="icon"
           className="fixed bottom-6 right-6 z-50 size-12"
-          onClick={() => setRefreshKey((k) => k + 1)}
+          onClick={() => queryClient.invalidateQueries()}
         >
           <RefreshCw />
         </Button>
