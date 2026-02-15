@@ -1,4 +1,9 @@
-const TOKEN_PAYLOAD = "catalyst-session-v1";
+const TOKEN_PREFIX = "catalyst-session-v1";
+const WINDOW_MS = 24 * 60 * 60 * 1000;
+
+function currentWindow(now: number = Date.now()): number {
+  return Math.floor(now / WINDOW_MS);
+}
 
 async function hmac(secret: string, data: string): Promise<string> {
   const encoder = new TextEncoder();
@@ -15,22 +20,32 @@ async function hmac(secret: string, data: string): Promise<string> {
     .join("");
 }
 
+function timeSafeEqual(a: string, b: string): boolean {
+  if (a.length !== b.length) {
+    return false;
+  }
+  let mismatch = 0;
+  for (let i = 0; i < a.length; i++) {
+    mismatch |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  }
+  return mismatch === 0;
+}
+
 export async function createSessionToken(password: string): Promise<string> {
-  return hmac(password, TOKEN_PAYLOAD);
+  const window = currentWindow();
+  return hmac(password, `${TOKEN_PREFIX}:${window}`);
 }
 
 export async function verifySessionToken(
   password: string,
   token: string,
 ): Promise<boolean> {
-  const expected = await hmac(password, TOKEN_PAYLOAD);
-  if (token.length !== expected.length) {
-    return false;
-  }
-  // Constant-time comparison
-  let mismatch = 0;
-  for (let i = 0; i < expected.length; i++) {
-    mismatch |= expected.charCodeAt(i) ^ token.charCodeAt(i);
-  }
-  return mismatch === 0;
+  const window = currentWindow();
+  // Accept tokens from the current window and the previous one,
+  // giving an effective lifetime of 24-48 hours.
+  const [current, previous] = await Promise.all([
+    hmac(password, `${TOKEN_PREFIX}:${window}`),
+    hmac(password, `${TOKEN_PREFIX}:${window - 1}`),
+  ]);
+  return timeSafeEqual(token, current) || timeSafeEqual(token, previous);
 }
