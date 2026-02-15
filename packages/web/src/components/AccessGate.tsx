@@ -1,5 +1,5 @@
 import { REGEXP_ONLY_DIGITS } from "input-otp";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { api } from "@/api";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -19,12 +19,24 @@ import { Turnstile } from "./Turnstile";
 const TURNSTILE_SITE_KEY =
   import.meta.env.VITE_TURNSTILE_SITE_KEY || "1x00000000000000000000AA";
 
+function getPassParam(): string {
+  const param = new URLSearchParams(window.location.search).get("pass");
+  if (param && /^\d{6}$/.test(param)) {
+    const url = new URL(window.location.href);
+    url.searchParams.delete("pass");
+    window.history.replaceState({}, "", url.toString());
+    return param;
+  }
+  return "";
+}
+
 type AccessGateProps = {
   onAuthenticated: () => void;
 };
 
 export function AccessGate({ onAuthenticated }: AccessGateProps) {
-  const [password, setPassword] = useState("");
+  const [password, setPassword] = useState(getPassParam);
+  const autoSubmit = useRef(password.length === 6);
   const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -33,17 +45,13 @@ export function AccessGate({ onAuthenticated }: AccessGateProps) {
   const canSubmit =
     password.length === 6 && turnstileToken !== null && !loading;
 
-  async function handleSubmit() {
-    if (!canSubmit || !turnstileToken) {
-      return;
-    }
-
+  async function submit(pass: string, token: string) {
     setLoading(true);
     setError(null);
 
     try {
       const res = await api.api.auth.verify.$post({
-        json: { password, turnstileToken },
+        json: { password: pass, turnstileToken: token },
       });
 
       if (res.ok) {
@@ -63,6 +71,21 @@ export function AccessGate({ onAuthenticated }: AccessGateProps) {
       setTurnstileKey((k) => k + 1);
     } finally {
       setLoading(false);
+    }
+  }
+
+  function handleSubmit() {
+    if (!canSubmit || !turnstileToken) {
+      return;
+    }
+    submit(password, turnstileToken);
+  }
+
+  function handleTurnstileVerify(token: string) {
+    setTurnstileToken(token);
+    if (autoSubmit.current && password.length === 6) {
+      autoSubmit.current = false;
+      submit(password, token);
     }
   }
 
@@ -99,7 +122,7 @@ export function AccessGate({ onAuthenticated }: AccessGateProps) {
           <Turnstile
             key={turnstileKey}
             siteKey={TURNSTILE_SITE_KEY}
-            onVerify={setTurnstileToken}
+            onVerify={handleTurnstileVerify}
             onExpire={() => setTurnstileToken(null)}
           />
 
