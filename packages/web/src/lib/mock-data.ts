@@ -216,7 +216,7 @@ const routes: MockRoute[] = [
   },
   {
     pattern: /\/api\/auth\/verify$/,
-    handler: () => ({ ok: true }),
+    handler: () => ({ ok: true, token: "mock-preview-token" }),
   },
   {
     pattern: /\/api\/rankings\/emojis$/,

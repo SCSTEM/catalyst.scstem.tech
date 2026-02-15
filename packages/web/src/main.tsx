@@ -1,11 +1,18 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { createRouter, RouterProvider } from "@tanstack/react-router";
-import { StrictMode } from "react";
+import { lazy, StrictMode, Suspense } from "react";
 import { createRoot } from "react-dom/client";
 import "./index.css";
 import { TooltipProvider } from "@radix-ui/react-tooltip";
 import { routeTree } from "./routeTree.gen";
+
+const ReactQueryDevtools = import.meta.env.PROD
+  ? () => null
+  : lazy(() =>
+      import("@tanstack/react-query-devtools").then((m) => ({
+        default: m.ReactQueryDevtools,
+      })),
+    );
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -31,7 +38,12 @@ createRoot(document.getElementById("root")!).render(
       <TooltipProvider>
         <RouterProvider router={router} />
       </TooltipProvider>
-      <ReactQueryDevtools initialIsOpen={false} buttonPosition="bottom-left" />
+      <Suspense>
+        <ReactQueryDevtools
+          initialIsOpen={false}
+          buttonPosition="bottom-left"
+        />
+      </Suspense>
     </QueryClientProvider>
   </StrictMode>,
 );

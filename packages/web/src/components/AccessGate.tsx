@@ -8,7 +8,7 @@ import {
   InputOTPSeparator,
   InputOTPSlot,
 } from "@/components/ui/input-otp";
-import { api } from "@/lib/api";
+import { api, setSessionToken } from "@/lib/api";
 import { Layout } from "./Layout";
 
 // Cloudflare Turnstile test keys: https://developers.cloudflare.com/turnstile/troubleshooting/testing/
@@ -52,6 +52,10 @@ export function AccessGate({ onAuthenticated }: AccessGateProps) {
       });
 
       if (res.ok) {
+        const data = (await res.json()) as { token?: string };
+        if (data.token) {
+          setSessionToken(data.token);
+        }
         sessionStorage.setItem("catalyst-auth", "1");
         onAuthenticated();
       } else {

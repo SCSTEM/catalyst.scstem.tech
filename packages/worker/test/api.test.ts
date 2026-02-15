@@ -1,10 +1,19 @@
 import { SELF } from "cloudflare:test";
 import { beforeAll, describe, expect, it } from "vitest";
+import { createSessionToken } from "../src/lib/auth";
 import { seedTestDb } from "./seed";
+
+let authHeaders: Record<string, string>;
 
 beforeAll(async () => {
   await seedTestDb();
+  const token = await createSessionToken("000000");
+  authHeaders = { Authorization: `Bearer ${token}` };
 });
+
+function authedFetch(url: string) {
+  return SELF.fetch(url, { headers: authHeaders });
+}
 
 describe("GET /api/health", () => {
   it("returns ok", async () => {
@@ -14,9 +23,23 @@ describe("GET /api/health", () => {
   });
 });
 
+describe("auth middleware", () => {
+  it("rejects requests without a token", async () => {
+    const res = await SELF.fetch("http://localhost/api/rankings/emojis");
+    expect(res.status).toBe(401);
+  });
+
+  it("rejects requests with an invalid token", async () => {
+    const res = await SELF.fetch("http://localhost/api/rankings/emojis", {
+      headers: { Authorization: "Bearer invalid-token" },
+    });
+    expect(res.status).toBe(401);
+  });
+});
+
 describe("GET /api/rankings/emojis", () => {
   it("returns emojis sorted by count descending", async () => {
-    const res = await SELF.fetch("http://localhost/api/rankings/emojis");
+    const res = await authedFetch("http://localhost/api/rankings/emojis");
     expect(res.status).toBe(200);
     const data = (await res.json()) as Array<{
       emoji: string;
@@ -36,7 +59,7 @@ describe("GET /api/rankings/emojis", () => {
   });
 
   it("respects limit parameter", async () => {
-    const res = await SELF.fetch(
+    const res = await authedFetch(
       "http://localhost/api/rankings/emojis?limit=2",
     );
     const data = (await res.json()) as unknown[];
@@ -44,7 +67,7 @@ describe("GET /api/rankings/emojis", () => {
   });
 
   it("includes imageUrl for custom emojis", async () => {
-    const res = await SELF.fetch("http://localhost/api/rankings/emojis");
+    const res = await authedFetch("http://localhost/api/rankings/emojis");
     const data = (await res.json()) as Array<{
       emoji: string;
       imageUrl: string | null;
@@ -59,7 +82,7 @@ describe("GET /api/rankings/emojis", () => {
 
 describe("GET /api/rankings/users", () => {
   it("returns users sorted by total reaction count", async () => {
-    const res = await SELF.fetch("http://localhost/api/rankings/users");
+    const res = await authedFetch("http://localhost/api/rankings/users");
     expect(res.status).toBe(200);
     const data = (await res.json()) as Array<{
       userId: string;
@@ -76,7 +99,7 @@ describe("GET /api/rankings/users", () => {
   });
 
   it("includes user display names", async () => {
-    const res = await SELF.fetch("http://localhost/api/rankings/users");
+    const res = await authedFetch("http://localhost/api/rankings/users");
     const data = (await res.json()) as Array<{
       userId: string;
       displayName: string | null;
@@ -88,7 +111,7 @@ describe("GET /api/rankings/users", () => {
 
 describe("GET /api/emojis", () => {
   it("returns emoji name to image URL map", async () => {
-    const res = await SELF.fetch("http://localhost/api/emojis");
+    const res = await authedFetch("http://localhost/api/emojis");
     expect(res.status).toBe(200);
     const data = (await res.json()) as Record<string, string>;
     expect(data.shipit).toBe("https://example.com/shipit.png");
@@ -98,7 +121,7 @@ describe("GET /api/emojis", () => {
 
 describe("GET /api/emojis/:emoji/users", () => {
   it("returns users who used a specific emoji", async () => {
-    const res = await SELF.fetch("http://localhost/api/emojis/thumbsup/users");
+    const res = await authedFetch("http://localhost/api/emojis/thumbsup/users");
     expect(res.status).toBe(200);
     const data = (await res.json()) as Array<{
       userId: string;
@@ -111,7 +134,7 @@ describe("GET /api/emojis/:emoji/users", () => {
   });
 
   it("returns empty array for unknown emoji", async () => {
-    const res = await SELF.fetch(
+    const res = await authedFetch(
       "http://localhost/api/emojis/nonexistent/users",
     );
     const data = (await res.json()) as unknown[];
@@ -121,7 +144,7 @@ describe("GET /api/emojis/:emoji/users", () => {
 
 describe("GET /api/users/:userId/emojis", () => {
   it("returns emoji breakdown for a user", async () => {
-    const res = await SELF.fetch("http://localhost/api/users/U002/emojis");
+    const res = await authedFetch("http://localhost/api/users/U002/emojis");
     expect(res.status).toBe(200);
     const data = (await res.json()) as {
       user: { userId: string; displayName: string } | null;
@@ -133,7 +156,7 @@ describe("GET /api/users/:userId/emojis", () => {
   });
 
   it("returns null user for unknown userId", async () => {
-    const res = await SELF.fetch("http://localhost/api/users/UNKNOWN/emojis");
+    const res = await authedFetch("http://localhost/api/users/UNKNOWN/emojis");
     const data = (await res.json()) as { user: null; emojis: unknown[] };
     expect(data.user).toBeNull();
     expect(data.emojis).toEqual([]);
@@ -142,7 +165,7 @@ describe("GET /api/users/:userId/emojis", () => {
 
 describe("GET /api/analytics/emoji-trends", () => {
   it("returns emoji trend series", async () => {
-    const res = await SELF.fetch(
+    const res = await authedFetch(
       "http://localhost/api/analytics/emoji-trends?period=day&days=30",
     );
     expect(res.status).toBe(200);
@@ -161,7 +184,7 @@ describe("GET /api/analytics/emoji-trends", () => {
 
 describe("GET /api/analytics/user-trends", () => {
   it("returns user trend series", async () => {
-    const res = await SELF.fetch(
+    const res = await authedFetch(
       "http://localhost/api/analytics/user-trends?period=day&days=30",
     );
     expect(res.status).toBe(200);

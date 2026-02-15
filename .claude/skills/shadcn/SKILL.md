@@ -41,12 +41,7 @@ Settings: **new-york** style, **lucide** icons, **no RSC**, CSS variables enable
 
 ## Currently Installed Components
 
-- `button` — `@/components/ui/button`
-- `card` — `@/components/ui/card`
-- `chart` — `@/components/ui/chart` (recharts integration)
-- `input-otp` — `@/components/ui/input-otp`
-- `tabs` — `@/components/ui/tabs`
-- `tooltip` — `@/components/ui/tooltip`
+Check `packages/web/src/components/ui/` for the current list. Each file corresponds to one shadcn component.
 
 ## Using Components
 
@@ -79,9 +74,4 @@ After adding a new component, run `bun run check` to ensure formatting is consis
 
 ## Dependencies
 
-shadcn components may add Radix UI packages. These are managed automatically by the CLI. Current Radix dependencies:
-- `@radix-ui/react-select`
-- `@radix-ui/react-slot`
-- `@radix-ui/react-tabs`
-- `@radix-ui/react-tooltip`
-- `radix-ui` (unified package)
+shadcn components may add Radix UI packages. These are managed automatically by the CLI. See `packages/web/package.json` for the current list.

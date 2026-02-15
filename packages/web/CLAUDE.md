@@ -124,7 +124,7 @@ This respects the `components.json` config which maps:
 - Utils → `@/lib/utils`
 - Hooks → `@/hooks/`
 
-Currently installed: button, card, chart, input-otp, tabs, tooltip
+Check `src/components/ui/` for the current list of installed components.
 
 ## Styling
 

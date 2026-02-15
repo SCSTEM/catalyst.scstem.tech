@@ -1,6 +1,7 @@
 import { zValidator } from "@hono/zod-validator";
 import { Hono } from "hono";
 import z from "zod";
+import { createSessionToken } from "../lib/auth";
 
 type Bindings = {
   SITE_PASSWORD: string;
@@ -40,7 +41,9 @@ export const authRoute = new Hono<{ Bindings: Bindings }>().post(
       return c.json({ ok: false, error: "Invalid password" }, 401);
     }
 
+    const token = await createSessionToken(c.env.SITE_PASSWORD);
+
     c.header("Cache-Control", "no-store");
-    return c.json({ ok: true });
+    return c.json({ ok: true, token });
   },
 );

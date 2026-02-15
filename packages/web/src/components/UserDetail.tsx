@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
-import { api } from "../lib/api";
+import { api, fetchJson } from "@/lib/api";
+import { Avatar } from "./Avatar";
 import { DetailView } from "./DetailView";
 import { Emoji } from "./Emoji";
 import { LeaderboardRow } from "./LeaderboardRow";
@@ -19,29 +20,23 @@ export function UserDetail({
       const res = await api.api.users[":userId"].emojis.$get({
         param: { userId },
       });
-      return await res.json();
+      return fetchJson(res);
     },
   });
 
   const user = data?.user;
   const emojis = data?.emojis ?? [];
 
-  const icon = user?.avatarUrl ? (
-    <img
-      src={user.avatarUrl}
-      alt={user.displayName}
-      className="h-10 w-10 rounded-full"
-    />
-  ) : (
-    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-muted">
-      ?
-    </div>
-  );
-
   return (
     <DetailView
       onBack={onBack}
-      icon={icon}
+      icon={
+        <Avatar
+          url={user?.avatarUrl ?? null}
+          name={user?.displayName ?? null}
+          size={40}
+        />
+      }
       title={user?.displayName || userId}
       loading={isPending}
       error={error?.message ?? null}

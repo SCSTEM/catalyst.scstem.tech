@@ -1,5 +1,6 @@
 import { Hono } from "hono";
 import { cors } from "hono/cors";
+import { verifySessionToken } from "./lib/auth";
 import { analyticsRoute } from "./routes/analytics";
 import { authRoute } from "./routes/auth";
 import { emojisRoute } from "./routes/emojis";
@@ -25,6 +26,7 @@ const app = new Hono<{ Bindings: Bindings }>()
     cors({
       origin: (origin) => (ALLOWED_ORIGINS.has(origin) ? origin : ""),
       allowMethods: ["GET", "POST", "OPTIONS"],
+      allowHeaders: ["Content-Type", "Authorization"],
       maxAge: 86400,
     }),
   )
@@ -36,6 +38,18 @@ const app = new Hono<{ Bindings: Bindings }>()
   })
   .get("/api/health", (c) => c.json({ ok: true }))
   .route("/api/auth", authRoute)
+  .use("/api/*", async (c, next) => {
+    const header = c.req.header("Authorization");
+    if (!header?.startsWith("Bearer ")) {
+      return c.json({ error: "Unauthorized" }, 401);
+    }
+    const token = header.slice(7);
+    const valid = await verifySessionToken(c.env.SITE_PASSWORD, token);
+    if (!valid) {
+      return c.json({ error: "Unauthorized" }, 401);
+    }
+    await next();
+  })
   .route("/api/rankings", rankingsRoute)
   .route("/api/emojis", emojisRoute)
   .route("/api/users", usersRoute)
