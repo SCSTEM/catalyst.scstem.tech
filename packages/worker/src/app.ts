@@ -1,5 +1,6 @@
 import { Hono } from "hono";
 import { cors } from "hono/cors";
+import { analyticsRoute } from "./routes/analytics";
 import { emojisRoute } from "./routes/emojis";
 import { rankingsRoute } from "./routes/rankings";
 import { usersRoute } from "./routes/users";
@@ -22,7 +23,8 @@ const app = new Hono<{ Bindings: Bindings }>()
   .get("/api/health", (c) => c.json({ ok: true }))
   .route("/api/rankings", rankingsRoute)
   .route("/api/emojis", emojisRoute)
-  .route("/api/users", usersRoute);
+  .route("/api/users", usersRoute)
+  .route("/api/analytics", analyticsRoute);
 
 export type AppType = typeof app;
 

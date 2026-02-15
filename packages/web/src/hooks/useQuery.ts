@@ -1,6 +1,20 @@
 import { useEffect, useState } from "react";
 
+const cache = new Map<string, unknown>();
+const inflight = new Map<string, Promise<unknown>>();
+
+function dedupedFetch<T>(key: string, fetcher: () => Promise<T>): Promise<T> {
+  const existing = inflight.get(key) as Promise<T> | undefined;
+  if (existing) {
+    return existing;
+  }
+  const promise = fetcher().finally(() => inflight.delete(key));
+  inflight.set(key, promise);
+  return promise;
+}
+
 interface UseQueryOptions {
+  key?: string;
   pollingInterval?: number;
 }
 
@@ -8,19 +22,30 @@ export function useQuery<T>(
   fetcher: () => Promise<T>,
   options?: UseQueryOptions,
 ) {
-  const [data, setData] = useState<T | null>(null);
-  const [loading, setLoading] = useState(true);
+  const cached = options?.key
+    ? (cache.get(options.key) as T | undefined)
+    : undefined;
+  const [data, setData] = useState<T | null>(cached ?? null);
+  const [loading, setLoading] = useState(cached == null);
   const [error, setError] = useState<string | null>(null);
 
-  // Initial fetch
+  // Initial fetch (stale-while-revalidate when cached)
   useEffect(() => {
     let cancelled = false;
-    setLoading(true);
+    if (!cached) {
+      setLoading(true);
+    }
     setError(null);
-    fetcher()
+    const request = options?.key
+      ? dedupedFetch(options.key, fetcher)
+      : fetcher();
+    request
       .then((result) => {
         if (!cancelled) {
           setData(result);
+          if (options?.key) {
+            cache.set(options.key, result);
+          }
         }
       })
       .catch((e) => {
@@ -49,7 +74,12 @@ export function useQuery<T>(
 
     function poll() {
       fetcher()
-        .then((result) => setData(result))
+        .then((result) => {
+          setData(result);
+          if (options?.key) {
+            cache.set(options.key, result);
+          }
+        })
         .catch(() => {});
     }
 

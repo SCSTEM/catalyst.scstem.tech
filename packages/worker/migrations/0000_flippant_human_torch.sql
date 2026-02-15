@@ -20,6 +20,7 @@ CREATE TABLE `reactions` (
 --> statement-breakpoint
 CREATE INDEX `idx_reactions_emoji` ON `reactions` (`emoji`);--> statement-breakpoint
 CREATE INDEX `idx_reactions_user` ON `reactions` (`user_id`);--> statement-breakpoint
+CREATE INDEX `idx_reactions_created_at` ON `reactions` (`created_at`);--> statement-breakpoint
 CREATE TABLE `user_emoji_counts` (
 	`user_id` text NOT NULL,
 	`emoji` text NOT NULL,

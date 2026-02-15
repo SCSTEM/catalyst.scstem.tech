@@ -22,6 +22,7 @@ export const reactions = sqliteTable(
     }),
     index("idx_reactions_emoji").on(table.emoji),
     index("idx_reactions_user").on(table.userId),
+    index("idx_reactions_created_at").on(table.createdAt),
   ],
 );
 

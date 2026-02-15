@@ -17,7 +17,9 @@ export function EmojiDetail({
     });
     return await res.json();
   }, [emoji]);
-  const { data, loading, error } = useQuery(fetcher);
+  const { data, loading, error } = useQuery(fetcher, {
+    key: `emoji:${emoji}:users`,
+  });
 
   return (
     <div>

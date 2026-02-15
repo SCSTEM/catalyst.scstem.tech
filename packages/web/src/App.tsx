@@ -1,93 +1,94 @@
+import { RefreshCw } from "lucide-react";
+import type { ReactNode } from "react";
 import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { EmojiDetail } from "./components/EmojiDetail";
 import { EmojiLeaderboard } from "./components/EmojiLeaderboard";
 import { Layout } from "./components/Layout";
+import { Trends } from "./components/Trends";
 import { UserDetail } from "./components/UserDetail";
 import { UserLeaderboard } from "./components/UserLeaderboard";
 
-type View =
-  | { kind: "emojis" }
-  | { kind: "users" }
-  | { kind: "emoji-detail"; emoji: string }
-  | { kind: "user-detail"; userId: string };
-
-const tabs = [
-  { kind: "emojis" as const, label: "Top Emojis" },
-  { kind: "users" as const, label: "Top Reactors" },
-];
-
-const POLLING_INTERVAL = 5000;
-
 export function App() {
-  const [view, setView] = useState<View>({ kind: "emojis" });
-  const [live, setLive] = useState(false);
+  const [emojiDetail, setEmojiDetail] = useState<string | null>(null);
+  const [userDetail, setUserDetail] = useState<string | null>(null);
+  const [refreshKey, setRefreshKey] = useState(0);
 
-  const activeTab =
-    view.kind === "emojis" || view.kind === "emoji-detail" ? "emojis" : "users";
+  const tabs: { value: string; label: string; content: ReactNode }[] = [
+    {
+      value: "emojis",
+      label: "Top Emojis",
+      content: emojiDetail ? (
+        <EmojiDetail
+          key={refreshKey}
+          emoji={emojiDetail}
+          onBack={() => setEmojiDetail(null)}
+        />
+      ) : (
+        <EmojiLeaderboard key={refreshKey} onSelect={setEmojiDetail} />
+      ),
+    },
+    {
+      value: "users",
+      label: "Top Reactors",
+      content: userDetail ? (
+        <UserDetail
+          key={refreshKey}
+          userId={userDetail}
+          onBack={() => setUserDetail(null)}
+        />
+      ) : (
+        <UserLeaderboard key={refreshKey} onSelect={setUserDetail} />
+      ),
+    },
+    {
+      value: "trends",
+      label: "Trends",
+      content: <Trends />,
+    },
+  ];
 
   return (
-    <Layout>
-      {/* Tab bar */}
-      <div className="mb-6 flex items-center gap-2">
-        <div className="flex flex-1 gap-1 rounded-lg bg-gray-900 p-1">
-          {tabs.map((tab) => (
-            <button
-              key={tab.kind}
-              type="button"
-              onClick={() => setView({ kind: tab.kind })}
-              className={`flex-1 rounded-md px-4 py-2 text-sm font-medium transition-colors ${
-                activeTab === tab.kind
-                  ? "bg-gray-800 text-white"
-                  : "text-gray-400 hover:text-gray-200"
-              }`}
+    <Layout title="Emoji Leaderboard 😎">
+      <Tabs
+        defaultValue="emojis"
+        onValueChange={() => {
+          setEmojiDetail(null);
+          setUserDetail(null);
+        }}
+      >
+        <div className="mb-6 flex items-center gap-2 h-14">
+          <TabsList className="flex-1 h-full">
+            {tabs.map((tab) => (
+              <TabsTrigger
+                key={tab.value}
+                value={tab.value}
+                className="flex-1 h-full"
+              >
+                {tab.label}
+              </TabsTrigger>
+            ))}
+          </TabsList>
+          <div className="h-full py-1">
+            <Button
+              className="h-full"
+              onClick={() => setRefreshKey((k) => k + 1)}
             >
-              {tab.label}
-            </button>
-          ))}
+              <RefreshCw />
+            </Button>
+          </div>
         </div>
-        <button
-          type="button"
-          onClick={() => setLive((v) => !v)}
-          className={`flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
-            live
-              ? "bg-green-900/50 text-green-400"
-              : "bg-gray-900 text-gray-400 hover:text-gray-200"
-          }`}
-        >
-          <span
-            className={`inline-block h-2 w-2 rounded-full ${
-              live ? "animate-pulse bg-green-400" : "bg-gray-600"
-            }`}
-          />
-          Live
-        </button>
-      </div>
 
-      {/* Content */}
-      {view.kind === "emojis" && (
-        <EmojiLeaderboard
-          onSelect={(emoji) => setView({ kind: "emoji-detail", emoji })}
-          pollingInterval={live ? POLLING_INTERVAL : undefined}
-        />
-      )}
-      {view.kind === "users" && (
-        <UserLeaderboard
-          onSelect={(userId) => setView({ kind: "user-detail", userId })}
-          pollingInterval={live ? POLLING_INTERVAL : undefined}
-        />
-      )}
-      {view.kind === "emoji-detail" && (
-        <EmojiDetail
-          emoji={view.emoji}
-          onBack={() => setView({ kind: "emojis" })}
-        />
-      )}
-      {view.kind === "user-detail" && (
-        <UserDetail
-          userId={view.userId}
-          onBack={() => setView({ kind: "users" })}
-        />
-      )}
+        <Card className="p-4">
+          {tabs.map((tab) => (
+            <TabsContent key={tab.value} value={tab.value}>
+              {tab.content}
+            </TabsContent>
+          ))}
+        </Card>
+      </Tabs>
     </Layout>
   );
 }

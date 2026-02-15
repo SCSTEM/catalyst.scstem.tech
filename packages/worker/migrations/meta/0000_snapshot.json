@@ -1,7 +1,7 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "9c2bdb78-ce9e-4a32-8d01-faf66026845e",
+  "id": "25039265-b145-4c77-a8ab-6aa0cfdb9f71",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "tables": {
     "emoji_images": {
@@ -110,6 +110,11 @@
         "idx_reactions_user": {
           "name": "idx_reactions_user",
           "columns": ["user_id"],
+          "isUnique": false
+        },
+        "idx_reactions_created_at": {
+          "name": "idx_reactions_created_at",
+          "columns": ["created_at"],
           "isUnique": false
         }
       },

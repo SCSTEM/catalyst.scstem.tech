@@ -9,19 +9,9 @@ const fetchEmojiMap = async () => {
 
 type EmojiMap = Awaited<ReturnType<typeof fetchEmojiMap>>;
 
-let cachedMap: EmojiMap | null = null;
-
 export function useEmojiMap() {
-  const fetcher = useCallback(async () => {
-    if (cachedMap) {
-      return cachedMap;
-    }
-    const data = await fetchEmojiMap();
-    cachedMap = data;
-    return data;
-  }, []);
-
-  const { data, loading } = useQuery(fetcher);
+  const fetcher = useCallback(fetchEmojiMap, []);
+  const { data, loading } = useQuery(fetcher, { key: "emojis:map" });
 
   return { map: data ?? ({} as EmojiMap), loading };
 }

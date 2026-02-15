@@ -260,6 +260,7 @@ type ReactionRow = {
   emoji: string;
   channelId: string;
   messageTs: string;
+  createdAt: string;
 };
 
 const allReactions: ReactionRow[] = [];
@@ -300,6 +301,7 @@ for (const channel of channels) {
             emoji: reaction.name,
             channelId: channel.id,
             messageTs: msg.ts,
+            createdAt: new Date(Number.parseFloat(msg.ts) * 1000).toISOString(),
           });
           uniqueUsers.add(userId);
         }
@@ -340,6 +342,7 @@ for (let i = 0; i < reactionBatches.length; i++) {
         emoji: r.emoji,
         channelId: r.channelId,
         messageTs: r.messageTs,
+        createdAt: r.createdAt,
       })),
     )
     .onConflictDoNothing()

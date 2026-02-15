@@ -1,0 +1,383 @@
+import { useCallback, useMemo, useState } from "react";
+import {
+  Area,
+  AreaChart,
+  CartesianGrid,
+  Cell,
+  Label,
+  Pie,
+  PieChart,
+  XAxis,
+  YAxis,
+} from "recharts";
+import { api } from "../api";
+import { useQuery } from "../hooks/useQuery";
+import { categorizeEmojis } from "../lib/emojiCategories";
+import { Emoji } from "./Emoji";
+import {
+  Card,
+  CardAction,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "./ui/card";
+import type { ChartConfig } from "./ui/chart";
+import {
+  ChartContainer,
+  ChartLegend,
+  ChartLegendContent,
+  ChartTooltip,
+  ChartTooltipContent,
+} from "./ui/chart";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
+
+const CHART_COLORS = [
+  "var(--chart-1)",
+  "var(--chart-2)",
+  "var(--chart-3)",
+  "var(--chart-4)",
+  "var(--chart-5)",
+  "#f97316",
+  "#a855f7",
+  "#ec4899",
+];
+
+type Period = "day" | "week" | "month";
+
+function PeriodSelector({
+  value,
+  onChange,
+}: {
+  value: Period;
+  onChange: (p: Period) => void;
+}) {
+  return (
+    <TabsList>
+      {(["day", "week", "month"] as const).map((p) => (
+        <TabsTrigger
+          key={p}
+          value={p}
+          data-state={value === p ? "active" : "inactive"}
+          onClick={() => onChange(p)}
+        >
+          {p.charAt(0).toUpperCase() + p.slice(1)}
+        </TabsTrigger>
+      ))}
+    </TabsList>
+  );
+}
+
+// --- Shared area chart shell ---
+
+interface TrendChartProps {
+  title: string;
+  description: string;
+  series: Record<string, unknown>[];
+  keys: string[];
+  config: ChartConfig;
+  loading: boolean;
+  error: string | null;
+  stacked?: boolean;
+  period: Period;
+  onPeriodChange: (p: Period) => void;
+}
+
+function TrendChart({
+  title,
+  description,
+  series,
+  keys,
+  config,
+  loading,
+  error,
+  stacked,
+  period,
+  onPeriodChange,
+}: TrendChartProps) {
+  return (
+    <Card className="shadow-none! border-0">
+      <CardHeader>
+        <CardTitle>{title}</CardTitle>
+        <CardDescription>{description}</CardDescription>
+        <CardAction>
+          <PeriodSelector value={period} onChange={onPeriodChange} />
+        </CardAction>
+      </CardHeader>
+      <CardContent>
+        {loading && (
+          <p className="py-12 text-center text-gray-500">Loading...</p>
+        )}
+        {error && <p className="py-12 text-center text-red-400">{error}</p>}
+        {!loading && !error && series.length > 0 && (
+          <ChartContainer config={config} className="h-87.5 w-full">
+            <AreaChart data={series}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="period" tickLine={false} axisLine={false} />
+              <YAxis tickLine={false} axisLine={false} />
+              <ChartTooltip content={<ChartTooltipContent />} />
+              <ChartLegend content={<ChartLegendContent />} />
+              {keys.map((key, i) => (
+                <Area
+                  key={key}
+                  dataKey={key}
+                  type="monotone"
+                  fill={CHART_COLORS[i % CHART_COLORS.length]}
+                  fillOpacity={0.15}
+                  stroke={CHART_COLORS[i % CHART_COLORS.length]}
+                  stackId={stacked ? "a" : undefined}
+                />
+              ))}
+            </AreaChart>
+          </ChartContainer>
+        )}
+        {!loading && !error && series.length === 0 && (
+          <p className="py-12 text-center text-gray-500">
+            No data for this period
+          </p>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
+// --- Concrete charts ---
+
+function EmojiTrendsChart() {
+  const [period, setPeriod] = useState<Period>("week");
+
+  const fetcher = useCallback(async () => {
+    const res = await api.api.analytics["emoji-trends"].$get({
+      query: { period },
+    });
+    return await res.json();
+  }, [period]);
+
+  const { data, loading, error } = useQuery(fetcher, {
+    key: `analytics:emoji-trends:${period}`,
+  });
+
+  const chartConfig = useMemo<ChartConfig>(() => {
+    if (!data) {
+      return {};
+    }
+    const config: ChartConfig = {
+      total: { label: "Total", color: "var(--chart-active-dot)" },
+    };
+    for (const [i, emoji] of data.emojis.entries()) {
+      config[emoji] = {
+        label: (
+          <span className="inline-flex items-center gap-1">
+            <Emoji name={emoji} size={14} />
+          </span>
+        ),
+        color: CHART_COLORS[i % CHART_COLORS.length],
+      };
+    }
+    return config;
+  }, [data]);
+
+  return (
+    <TrendChart
+      title="Emoji Trends"
+      description="Top emoji usage over time"
+      series={data?.series ?? []}
+      keys={data?.emojis ?? []}
+      config={chartConfig}
+      loading={loading}
+      error={error}
+      stacked
+      period={period}
+      onPeriodChange={setPeriod}
+    />
+  );
+}
+
+function UserTrendsChart() {
+  const [period, setPeriod] = useState<Period>("week");
+
+  const fetcher = useCallback(async () => {
+    const res = await api.api.analytics["user-trends"].$get({
+      query: { period },
+    });
+    return await res.json();
+  }, [period]);
+
+  const { data, loading, error } = useQuery(fetcher, {
+    key: `analytics:user-trends:${period}`,
+  });
+
+  const userIds = useMemo(() => {
+    if (!data?.series.length) {
+      return [];
+    }
+    const ids = new Set<string>();
+    for (const point of data.series) {
+      for (const key of Object.keys(point)) {
+        if (key !== "period") {
+          ids.add(key);
+        }
+      }
+    }
+    return [...ids];
+  }, [data]);
+
+  const chartConfig = useMemo<ChartConfig>(() => {
+    if (!data) {
+      return {};
+    }
+    const config: ChartConfig = {};
+    for (const [i, userId] of userIds.entries()) {
+      config[userId] = {
+        label: data.users[userId] || userId,
+        color: CHART_COLORS[i % CHART_COLORS.length],
+      };
+    }
+    return config;
+  }, [data, userIds]);
+
+  return (
+    <TrendChart
+      title="Top Reactors"
+      description="Most active reactors over time"
+      series={data?.series ?? []}
+      keys={userIds}
+      config={chartConfig}
+      loading={loading}
+      error={error}
+      period={period}
+      onPeriodChange={setPeriod}
+    />
+  );
+}
+
+function CategoryChart() {
+  const fetcher = useCallback(async () => {
+    const res = await api.api.rankings.emojis.$get({ query: { limit: "200" } });
+    return await res.json();
+  }, []);
+
+  const { data, loading, error } = useQuery(fetcher, {
+    key: "analytics:categories",
+  });
+
+  const categories = useMemo(() => {
+    if (!data) {
+      return [];
+    }
+    return categorizeEmojis(data);
+  }, [data]);
+
+  const totalCount = useMemo(
+    () => categories.reduce((sum, c) => sum + c.count, 0),
+    [categories],
+  );
+
+  const chartConfig = useMemo<ChartConfig>(() => {
+    const config: ChartConfig = {};
+    for (const cat of categories) {
+      config[cat.category] = {
+        label: cat.category,
+        color: cat.fill,
+      };
+    }
+    return config;
+  }, [categories]);
+
+  return (
+    <Card className="shadow-none! border-0">
+      <CardHeader>
+        <CardTitle>Categories</CardTitle>
+        <CardDescription>Emoji usage by Unicode category</CardDescription>
+      </CardHeader>
+      <CardContent>
+        {loading && (
+          <p className="py-12 text-center text-gray-500">Loading...</p>
+        )}
+        {error && <p className="py-12 text-center text-red-400">{error}</p>}
+        {categories.length > 0 && (
+          <ChartContainer
+            config={chartConfig}
+            className="mx-auto h-87.5 w-full"
+          >
+            <PieChart>
+              <ChartTooltip content={<ChartTooltipContent hideLabel />} />
+              <Pie
+                data={categories}
+                dataKey="count"
+                nameKey="category"
+                innerRadius={80}
+                outerRadius={140}
+                strokeWidth={2}
+              >
+                {categories.map((cat) => (
+                  <Cell key={cat.category} fill={cat.fill} />
+                ))}
+                <Label
+                  content={({ viewBox }) => {
+                    if (viewBox && "cx" in viewBox && "cy" in viewBox) {
+                      return (
+                        <text
+                          x={viewBox.cx}
+                          y={viewBox.cy}
+                          textAnchor="middle"
+                          dominantBaseline="middle"
+                        >
+                          <tspan
+                            x={viewBox.cx}
+                            y={viewBox.cy}
+                            className="fill-foreground text-3xl font-bold"
+                          >
+                            {totalCount.toLocaleString()}
+                          </tspan>
+                          <tspan
+                            x={viewBox.cx}
+                            y={(viewBox.cy ?? 0) + 24}
+                            className="fill-gray-400 text-sm"
+                          >
+                            reactions
+                          </tspan>
+                        </text>
+                      );
+                    }
+                    return null;
+                  }}
+                />
+              </Pie>
+              <ChartLegend
+                content={<ChartLegendContent nameKey="category" />}
+              />
+            </PieChart>
+          </ChartContainer>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
+export function Trends() {
+  return (
+    <Tabs defaultValue="emoji-trends">
+      <TabsList className="w-full">
+        <TabsTrigger value="emoji-trends" className="flex-1">
+          Emoji Trends
+        </TabsTrigger>
+        <TabsTrigger value="user-trends" className="flex-1">
+          Top Reactors
+        </TabsTrigger>
+        <TabsTrigger value="categories" className="flex-1">
+          Categories
+        </TabsTrigger>
+      </TabsList>
+      <TabsContent value="emoji-trends">
+        <EmojiTrendsChart />
+      </TabsContent>
+      <TabsContent value="user-trends">
+        <UserTrendsChart />
+      </TabsContent>
+      <TabsContent value="categories">
+        <CategoryChart />
+      </TabsContent>
+    </Tabs>
+  );
+}

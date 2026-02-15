@@ -17,14 +17,12 @@ export function LeaderboardRow({
     <button
       type="button"
       onClick={onClick}
-      className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left transition-colors hover:bg-gray-800/60"
+      className="cursor-pointer flex w-full items-center gap-6 rounded-lg text-left transition-colors hover:bg-main hover:text-background h-10 pr-2"
     >
-      <span className="w-8 text-right text-sm text-gray-500">{rank}</span>
-      <span className="flex-shrink-0">{left}</span>
+      <span className="w-6 text-right text-xl">{rank}</span>
+      <span className="shrink-0">{left}</span>
       <span className="min-w-0 flex-1 truncate">{label}</span>
-      <span className="font-mono text-sm text-gray-400">
-        {count.toLocaleString()}
-      </span>
+      <span className="font-mono">{count.toLocaleString()}</span>
     </button>
   );
 }

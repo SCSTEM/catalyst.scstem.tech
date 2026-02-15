@@ -1,21 +1,39 @@
 import { nameToEmoji } from "gemoji";
+import type { ReactNode } from "react";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { useEmojiMap } from "../hooks/useEmojiMap";
 
 export function Emoji({
   name,
   imageUrl,
+  showTooltip = true,
   size = 24,
 }: {
   name: string;
   imageUrl?: string | null;
+  showTooltip?: boolean;
   size?: number;
 }) {
   const { map } = useEmojiMap();
 
-  // 1. If we have a direct image URL (from DB join), use it
+  // Default to showing the emoji name if we can't find an image
+  let element: ReactNode = (
+    <span
+      className="rounded bg-gray-800 px-1 text-sm text-gray-400"
+      title={`:${name}:`}
+    >
+      :{name}:
+    </span>
+  );
+
+  // If we have a direct image URL (from DB join), use it
   const customUrl = imageUrl ?? map[name];
   if (customUrl) {
-    return (
+    element = (
       <img
         src={customUrl}
         alt={`:${name}:`}
@@ -28,23 +46,37 @@ export function Emoji({
     );
   }
 
-  // 2. Try standard emoji Unicode mapping
-  const unicode = nameToEmoji[name];
+  // Try standard emoji Unicode mapping
+  const unicode = nameToEmoji[remapName(name)];
   if (unicode) {
-    return (
+    element = (
       <span title={`:${name}:`} style={{ fontSize: size }}>
         {unicode}
       </span>
     );
   }
 
-  // 3. Fallback: text
+  if (!showTooltip) {
+    return element;
+  }
+
   return (
-    <span
-      className="rounded bg-gray-800 px-1 text-sm text-gray-400"
-      title={`:${name}:`}
-    >
-      :{name}:
-    </span>
+    <Tooltip>
+      <TooltipTrigger asChild>{element}</TooltipTrigger>
+      <TooltipContent>{`:${name}:`}</TooltipContent>
+    </Tooltip>
   );
+}
+
+function remapName(name: string): string {
+  switch (name) {
+    case "rolling_on_the_floor_laughing":
+      return "rofl";
+    case "biohazard_sign":
+      return "biohazard";
+    case "robot_face":
+      return "robot";
+    default:
+      return name;
+  }
 }

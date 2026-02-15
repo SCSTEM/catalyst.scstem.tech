@@ -33,6 +33,11 @@
       "tailwindDirectives": true
     }
   },
+  "html": {
+    "formatter": {
+      "enabled": true
+    }
+  },
   "assist": {
     "enabled": true,
     "actions": {

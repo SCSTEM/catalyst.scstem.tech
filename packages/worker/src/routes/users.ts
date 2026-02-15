@@ -1,7 +1,9 @@
+import { zValidator } from "@hono/zod-validator";
 import { and, desc, eq, gt } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/d1";
 import { Hono } from "hono";
 import { emojiImages, userEmojiCounts, users } from "../db/schema";
+import { limitQuery } from "./util";
 
 type Bindings = {
   DB: D1Database;
@@ -9,10 +11,11 @@ type Bindings = {
 
 export const usersRoute = new Hono<{ Bindings: Bindings }>().get(
   "/:userId/emojis",
+  zValidator("query", limitQuery),
   async (c) => {
     const db = drizzle(c.env.DB);
     const userId = c.req.param("userId");
-    const limit = Math.min(Number(c.req.query("limit") ?? 50), 200);
+    const limit = c.req.valid("query")?.limit ?? 50;
 
     const emojis = await db
       .select({

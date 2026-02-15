@@ -17,7 +17,9 @@ export function UserDetail({
     });
     return await res.json();
   }, [userId]);
-  const { data, loading, error } = useQuery(fetcher);
+  const { data, loading, error } = useQuery(fetcher, {
+    key: `user:${userId}:emojis`,
+  });
 
   const user = data?.user;
   const emojis = data?.emojis ?? [];
