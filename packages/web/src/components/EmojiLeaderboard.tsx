@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { api } from "../lib/api";
+import { api, fetchJson } from "@/lib/api";
 import { Emoji } from "./Emoji";
 import { LeaderboardRow } from "./LeaderboardRow";
 
@@ -12,7 +12,7 @@ export function EmojiLeaderboard({
     queryKey: ["rankings", "emojis"],
     queryFn: async () => {
       const res = await api.api.rankings.emojis.$get();
-      return await res.json();
+      return fetchJson(res);
     },
   });
 

@@ -5,7 +5,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { useEmojiMap } from "../hooks/useEmojiMap";
+import { useEmojiMap } from "@/hooks/useEmojiMap";
 
 export function Emoji({
   name,

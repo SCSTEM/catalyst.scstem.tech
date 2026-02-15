@@ -1,24 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
-import { api } from "../lib/api";
+import { api, fetchJson } from "@/lib/api";
+import { Avatar } from "./Avatar";
 import { LeaderboardRow } from "./LeaderboardRow";
-
-function Avatar({ url, name }: { url: string | null; name: string | null }) {
-  if (url) {
-    return (
-      <img
-        src={url}
-        alt={name ?? "User"}
-        className="h-7 w-7 rounded-full"
-        loading="lazy"
-      />
-    );
-  }
-  return (
-    <div className="flex h-7 w-7 items-center justify-center rounded-full bg-muted text-xs">
-      ?
-    </div>
-  );
-}
 
 export function UserLeaderboard({
   onSelect,
@@ -31,7 +14,7 @@ export function UserLeaderboard({
       const res = await api.api.rankings.users.$get({
         query: { limit: "10" },
       });
-      return await res.json();
+      return fetchJson(res);
     },
   });
 

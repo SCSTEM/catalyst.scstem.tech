@@ -12,8 +12,8 @@ import {
   YAxis,
 } from "recharts";
 import { useMediaQuery } from "usehooks-ts";
-import { api } from "../lib/api";
-import { categorizeEmojis } from "../lib/emojiCategories";
+import { api, fetchJson } from "@/lib/api";
+import { categorizeEmojis } from "@/lib/emojiCategories";
 import { Emoji } from "./Emoji";
 import {
   Card,
@@ -169,7 +169,7 @@ function EmojiTrendsChart() {
       const res = await api.api.analytics["emoji-trends"].$get({
         query: { period },
       });
-      return await res.json();
+      return fetchJson(res);
     },
   });
 
@@ -218,7 +218,7 @@ function UserTrendsChart() {
       const res = await api.api.analytics["user-trends"].$get({
         query: { period },
       });
-      return await res.json();
+      return fetchJson(res);
     },
   });
 
@@ -291,7 +291,7 @@ function CategoryChart() {
       const res = await api.api.rankings.emojis.$get({
         query: { limit: "200" },
       });
-      return await res.json();
+      return fetchJson(res);
     },
   });
 

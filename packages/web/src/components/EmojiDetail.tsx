@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
-import { api } from "../lib/api";
+import { api, fetchJson } from "@/lib/api";
+import { Avatar } from "./Avatar";
 import { DetailView } from "./DetailView";
 import { Emoji } from "./Emoji";
 import { LeaderboardRow } from "./LeaderboardRow";
@@ -19,7 +20,7 @@ export function EmojiDetail({
       const res = await api.api.emojis[":emoji"].users.$get({
         param: { emoji },
       });
-      return await res.json();
+      return fetchJson(res);
     },
   });
 
@@ -38,20 +39,7 @@ export function EmojiDetail({
           <LeaderboardRow
             key={entry.userId}
             rank={i + 1}
-            left={
-              entry.avatarUrl ? (
-                <img
-                  src={entry.avatarUrl}
-                  alt={entry.displayName ?? "User"}
-                  className="h-7 w-7 rounded-full"
-                  loading="lazy"
-                />
-              ) : (
-                <div className="flex h-7 w-7 items-center justify-center rounded-full bg-muted text-xs">
-                  ?
-                </div>
-              )
-            }
+            left={<Avatar url={entry.avatarUrl} name={entry.displayName} />}
             label={entry.displayName || entry.userId}
             count={entry.count}
             onClick={() => onSelectUser(entry.userId)}
