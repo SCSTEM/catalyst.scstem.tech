@@ -12,7 +12,12 @@ import {
 import { Layout } from "./Layout";
 import { Turnstile } from "./Turnstile";
 
-const TURNSTILE_SITE_KEY = import.meta.env.VITE_TURNSTILE_SITE_KEY as string;
+// Cloudflare Turnstile test keys: https://developers.cloudflare.com/turnstile/troubleshooting/testing/
+// Always passes (visible): 1x00000000000000000000AA
+// Always blocks:           2x00000000000000000000AB
+// Forces interactive:      3x00000000000000000000FF
+const TURNSTILE_SITE_KEY =
+  import.meta.env.VITE_TURNSTILE_SITE_KEY || "1x00000000000000000000AA";
 
 type AccessGateProps = {
   onAuthenticated: () => void;
