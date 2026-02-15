@@ -39,7 +39,7 @@ export const authRoute = new Hono<{ Bindings: Bindings }>().post(
     }
 
     if (password !== c.env.SITE_PASSWORD) {
-      return c.json({ ok: false, error: "Invalid password" }, 401);
+      return c.json({ ok: false, error: "Incorrect password" }, 401);
     }
 
     const ttl = Number(c.env.SESSION_TTL_HOURS) || 0;
