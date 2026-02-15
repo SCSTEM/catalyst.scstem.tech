@@ -2,6 +2,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { RefreshCw } from "lucide-react";
 import type { ReactNode } from "react";
 import { useState } from "react";
+import { AccessGate } from "@/components/AccessGate";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -13,6 +14,9 @@ import { UserDetail } from "./components/UserDetail";
 import { UserLeaderboard } from "./components/UserLeaderboard";
 
 export function App() {
+  const [isAuthenticated, setIsAuthenticated] = useState(
+    () => sessionStorage.getItem("catalyst-auth") === "1",
+  );
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState("emojis");
   const [emojiDetail, setEmojiDetail] = useState<string | null>(null);
@@ -63,6 +67,10 @@ export function App() {
       content: <Trends />,
     },
   ];
+
+  if (!isAuthenticated) {
+    return <AccessGate onAuthenticated={() => setIsAuthenticated(true)} />;
+  }
 
   return (
     <Layout title="Emoji Leaderboard 😎">
