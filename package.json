@@ -18,6 +18,7 @@
     "db:generate": "bun --filter '@catalyst/worker' db:generate",
     "db:migrate:local": "bun --filter '@catalyst/worker' db:migrate:local",
     "db:migrate:remote": "bun --filter '@catalyst/worker' db:migrate:remote",
+    "test": "bun --filter '@catalyst/worker' test",
     "backfill": "bun scripts/backfill.ts",
     "db:seed": "bun scripts/seed.ts"
   },

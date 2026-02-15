@@ -10,6 +10,7 @@ All commands run from the repo root:
 # Verify changes (run both before marking work done)
 bun run typecheck        # tsc -b across all packages
 bun run check            # biome lint + format (auto-fixes)
+bun run test             # Vitest integration tests (worker API)
 
 # Development
 bun run dev              # Both worker + web in parallel

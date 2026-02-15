@@ -2,6 +2,7 @@ import { createRootRoute, Outlet } from "@tanstack/react-router";
 import { TanStackRouterDevtools } from "@tanstack/react-router-devtools";
 import { useState } from "react";
 import { AccessGate } from "@/components/AccessGate";
+import { isPreview } from "@/lib/api";
 
 export const Route = createRootRoute({
   component: RootLayout,
@@ -10,7 +11,7 @@ export const Route = createRootRoute({
 
 function RootLayout() {
   const [isAuthenticated, setIsAuthenticated] = useState(
-    () => sessionStorage.getItem("catalyst-auth") === "1",
+    () => isPreview || sessionStorage.getItem("catalyst-auth") === "1",
   );
 
   if (!isAuthenticated) {
