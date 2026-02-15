@@ -70,7 +70,7 @@ function RouteComponent() {
       <Button
         size="icon"
         className="fixed bottom-6 right-6 z-50 size-12"
-        onClick={() => queryClient.invalidateQueries()}
+        onClick={() => queryClient.invalidateQueries({ queryKey: ["stats"] })}
       >
         <RefreshCw />
       </Button>

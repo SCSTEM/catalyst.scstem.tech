@@ -1,8 +1,7 @@
-import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { Emoji } from "@/components/stats/Emoji";
 import { LeaderboardRow } from "@/components/stats/LeaderboardRow";
-import { api, fetchJson } from "@/lib/api";
+import { useEmojiRankings } from "@/hooks/queries";
 
 export const Route = createFileRoute("/stats/emojis/")({
   component: EmojisPage,
@@ -10,14 +9,7 @@ export const Route = createFileRoute("/stats/emojis/")({
 
 function EmojisPage() {
   const navigate = useNavigate();
-
-  const { data, isPending, error } = useQuery({
-    queryKey: ["rankings", "emojis"],
-    queryFn: async () => {
-      const res = await api.api.rankings.emojis.$get();
-      return fetchJson(res);
-    },
-  });
+  const { data, isPending, error } = useEmojiRankings();
 
   if (isPending) {
     return <p className="text-center text-muted-foreground">Loading...</p>;

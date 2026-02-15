@@ -4,7 +4,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { useSlackCustomEmojis } from "@/hooks/useSlackCustomEmojis";
+import { useSlackCustomEmojis } from "@/hooks/queries";
 
 const REMAP: Record<string, string> = {
   rolling_on_the_floor_laughing: "rofl",
@@ -13,15 +13,13 @@ const REMAP: Record<string, string> = {
   thinking_face: "thinking",
 };
 
-export function Emoji({
-  name,
-  hideTooltip = false,
-  size = 24,
-}: {
+type EmojiProps = {
   name: string;
   hideTooltip?: boolean;
   size?: number;
-}) {
+};
+
+export function Emoji({ name, hideTooltip = false, size = 24 }: EmojiProps) {
   const { data: emojiMap } = useSlackCustomEmojis();
   const customUrl = emojiMap?.[name];
   const unicode = !customUrl ? nameToEmoji[REMAP[name] ?? name] : undefined;

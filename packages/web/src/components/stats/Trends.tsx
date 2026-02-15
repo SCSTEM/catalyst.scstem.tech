@@ -1,4 +1,3 @@
-import { useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import {
   Area,
@@ -12,7 +11,12 @@ import {
   YAxis,
 } from "recharts";
 import { useMediaQuery } from "usehooks-ts";
-import { api, fetchJson } from "@/lib/api";
+import type { Period } from "@/hooks/queries";
+import {
+  useCategoryData,
+  useEmojiTrends,
+  useUserTrends,
+} from "@/hooks/queries";
 import { categorizeEmojis } from "@/lib/emojiCategories";
 import {
   Card,
@@ -43,8 +47,6 @@ const CHART_COLORS = [
   "#a855f7",
   "#ec4899",
 ];
-
-type Period = "day" | "week" | "month";
 
 function PeriodSelector({
   value,
@@ -119,11 +121,11 @@ function TrendChart({
         </CardAction>
       </CardHeader>
       <CardContent className="md:px-6 px-2">
-        {loading && (
+        {loading ? (
           <p className="py-12 text-center text-muted-foreground">Loading...</p>
-        )}
-        {error && <p className="py-12 text-center text-red-400">{error}</p>}
-        {!loading && !error && series.length > 0 && (
+        ) : error ? (
+          <p className="py-12 text-center text-red-400">{error}</p>
+        ) : series.length > 0 ? (
           <ChartContainer config={config} className="h-80 md:h-87.5 w-full">
             <AreaChart data={series}>
               <CartesianGrid strokeDasharray="3 3" />
@@ -144,8 +146,7 @@ function TrendChart({
               ))}
             </AreaChart>
           </ChartContainer>
-        )}
-        {!loading && !error && series.length === 0 && (
+        ) : (
           <p className="py-12 text-center text-muted-foreground">
             No data for this period
           </p>
@@ -162,16 +163,7 @@ function TrendChart({
 
 function EmojiTrendsChart() {
   const [period, setPeriod] = useState<Period>("week");
-
-  const { data, isPending, error } = useQuery({
-    queryKey: ["analytics", "emoji-trends", period],
-    queryFn: async () => {
-      const res = await api.api.analytics["emoji-trends"].$get({
-        query: { period },
-      });
-      return fetchJson(res);
-    },
-  });
+  const { data, isPending, error } = useEmojiTrends(period);
 
   const chartConfig = useMemo<ChartConfig>(() => {
     if (!data) {
@@ -211,16 +203,7 @@ function EmojiTrendsChart() {
 
 function UserTrendsChart() {
   const [period, setPeriod] = useState<Period>("week");
-
-  const { data, isPending, error } = useQuery({
-    queryKey: ["analytics", "user-trends", period],
-    queryFn: async () => {
-      const res = await api.api.analytics["user-trends"].$get({
-        query: { period },
-      });
-      return fetchJson(res);
-    },
-  });
+  const { data, isPending, error } = useUserTrends(period);
 
   const userIds = useMemo(() => {
     if (!data?.series.length) {
@@ -285,15 +268,7 @@ function CategoryChart() {
   const labelY1 = isDesktop ? -42 : -72;
   const labelY2 = isDesktop ? -12 : -48;
 
-  const { data, isPending, error } = useQuery({
-    queryKey: ["analytics", "categories"],
-    queryFn: async () => {
-      const res = await api.api.rankings.emojis.$get({
-        query: { limit: "200" },
-      });
-      return fetchJson(res);
-    },
-  });
+  const { data, isPending, error } = useCategoryData();
 
   const categories = useMemo(() => {
     if (!data) {
@@ -325,13 +300,11 @@ function CategoryChart() {
         <CardDescription>Reaction emoji usage by category</CardDescription>
       </CardHeader>
       <CardContent>
-        {isPending && (
+        {isPending ? (
           <p className="py-12 text-center text-muted-foreground">Loading...</p>
-        )}
-        {error && (
+        ) : error ? (
           <p className="py-12 text-center text-red-400">{error.message}</p>
-        )}
-        {categories.length > 0 && (
+        ) : categories.length > 0 ? (
           <ChartContainer
             config={chartConfig}
             className="mx-auto h-96 md:h-87.5 w-full"
@@ -385,7 +358,7 @@ function CategoryChart() {
               />
             </PieChart>
           </ChartContainer>
-        )}
+        ) : null}
       </CardContent>
     </Card>
   );

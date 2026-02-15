@@ -1,12 +1,12 @@
-export function Avatar({
-  url,
-  name,
-  size = 28,
-}: {
-  url?: string;
-  name?: string;
+import { cn } from "@/lib/utils";
+
+type AvatarProps = {
+  url?: string | null;
+  name?: string | null;
   size?: number;
-}) {
+};
+
+export function Avatar({ url, name, size = 28 }: AvatarProps) {
   const sizeClass =
     size === 40 ? "h-10 w-10" : size === 28 ? "h-7 w-7" : "h-7 w-7";
 
@@ -19,7 +19,7 @@ export function Avatar({
       <img
         src={url}
         alt={name ?? "User"}
-        className={`${sizeClass} rounded-full`}
+        className={cn(sizeClass, "rounded-full")}
         loading="lazy"
       />
     );
@@ -27,7 +27,10 @@ export function Avatar({
 
   return (
     <div
-      className={`flex ${sizeClass} items-center justify-center rounded-full bg-muted text-xs`}
+      className={cn(
+        "flex items-center justify-center rounded-full bg-muted text-xs",
+        sizeClass,
+      )}
     >
       ?
     </div>

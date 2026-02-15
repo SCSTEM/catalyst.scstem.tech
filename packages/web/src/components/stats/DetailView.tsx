@@ -3,6 +3,16 @@ import { ArrowLeft } from "lucide-react";
 import type { ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 
+type DetailViewProps = {
+  icon: ReactNode;
+  title: string;
+  loading: boolean;
+  error?: string;
+  emptyMessage: string;
+  isEmpty: boolean;
+  children: ReactNode;
+};
+
 export function DetailView({
   icon,
   title,
@@ -11,15 +21,7 @@ export function DetailView({
   emptyMessage,
   isEmpty,
   children,
-}: {
-  icon: ReactNode;
-  title: string;
-  loading: boolean;
-  error?: string;
-  emptyMessage: string;
-  isEmpty: boolean;
-  children: ReactNode;
-}) {
+}: DetailViewProps) {
   const router = useRouter();
   const canGoBack = useCanGoBack();
 

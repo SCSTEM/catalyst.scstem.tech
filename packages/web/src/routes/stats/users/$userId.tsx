@@ -1,10 +1,9 @@
-import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { Avatar } from "@/components/Avatar";
 import { DetailView } from "@/components/stats/DetailView";
 import { Emoji } from "@/components/stats/Emoji";
 import { LeaderboardRow } from "@/components/stats/LeaderboardRow";
-import { api, fetchJson } from "@/lib/api";
+import { useUserEmojis } from "@/hooks/queries";
 
 export const Route = createFileRoute("/stats/users/$userId")({
   component: UserDetailPage,
@@ -13,16 +12,7 @@ export const Route = createFileRoute("/stats/users/$userId")({
 function UserDetailPage() {
   const { userId } = Route.useParams();
   const navigate = useNavigate();
-
-  const { data, isPending, error } = useQuery({
-    queryKey: ["users", userId, "emojis"],
-    queryFn: async () => {
-      const res = await api.api.users[":userId"].emojis.$get({
-        param: { userId },
-      });
-      return fetchJson(res);
-    },
-  });
+  const { data, isPending, error } = useUserEmojis(userId);
 
   const user = data?.user;
   const emojis = data?.emojis ?? [];

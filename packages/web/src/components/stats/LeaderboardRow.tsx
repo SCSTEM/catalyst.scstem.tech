@@ -1,18 +1,20 @@
 import type { ReactNode } from "react";
 
+type LeaderboardRowProps = {
+  rank: number;
+  left: ReactNode;
+  label: string;
+  count: number;
+  onClick?: () => void;
+};
+
 export function LeaderboardRow({
   rank,
   left,
   label,
   count,
   onClick,
-}: {
-  rank: number;
-  left: ReactNode;
-  label: string;
-  count: number;
-  onClick?: () => void;
-}) {
+}: LeaderboardRowProps) {
   return (
     <button
       type="button"

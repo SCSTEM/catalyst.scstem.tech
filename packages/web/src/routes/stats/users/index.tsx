@@ -1,8 +1,7 @@
-import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { Avatar } from "@/components/Avatar";
 import { LeaderboardRow } from "@/components/stats/LeaderboardRow";
-import { api, fetchJson } from "@/lib/api";
+import { useUserRankings } from "@/hooks/queries";
 
 export const Route = createFileRoute("/stats/users/")({
   component: UsersPage,
@@ -10,16 +9,7 @@ export const Route = createFileRoute("/stats/users/")({
 
 function UsersPage() {
   const navigate = useNavigate();
-
-  const { data, isPending, error } = useQuery({
-    queryKey: ["rankings", "users"],
-    queryFn: async () => {
-      const res = await api.api.rankings.users.$get({
-        query: { limit: "10" },
-      });
-      return fetchJson(res);
-    },
-  });
+  const { data, isPending, error } = useUserRankings();
 
   if (isPending) {
     return <p className="text-center text-muted-foreground">Loading...</p>;

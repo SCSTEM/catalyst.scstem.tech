@@ -36,7 +36,7 @@ Use the `@/` path alias for all imports within the `src/` directory. Only use re
 // Good — cross-directory imports use @/
 import { Button } from "@/components/ui/button";
 import { api } from "@/lib/api";
-import { useEmojiMap } from "@/hooks/useEmojiMap";
+import { useEmojiRankings } from "@/hooks/queries";
 
 // Good — same-directory sibling
 import { LeaderboardRow } from "./LeaderboardRow";
@@ -49,26 +49,47 @@ The `@/` alias is configured in both `tsconfig.json` and `vite.config.ts` and re
 
 ## Data Fetching with TanStack Query
 
-All API calls go through the typed Hono RPC client (`src/lib/api.ts`). The pattern:
+All API calls go through the typed Hono RPC client (`src/lib/api.ts`). Wrap each query in a custom `useFoo` hook in `src/hooks/queries.ts` — never use `useQuery` inline in components.
 
 ```tsx
-import { useQuery } from "@tanstack/react-query";
-import { api } from "@/lib/api";
+// src/hooks/queries.ts
+export function useEmojiRankings() {
+  return useQuery({
+    queryKey: ["stats", "rankings", "emojis"],
+    queryFn: async () => {
+      const res = await api.api.rankings.emojis.$get();
+      return fetchJson(res);
+    },
+  });
+}
 
-const { data, isPending, error } = useQuery({
-  queryKey: ["rankings", "emojis"],
-  queryFn: async () => {
-    const res = await api.api.rankings.emojis.$get();
-    return await res.json();
-  },
-});
+// In a component
+import { useEmojiRankings } from "@/hooks/queries";
+
+const { data, isPending, error } = useEmojiRankings();
 ```
 
 Key conventions:
-- `queryKey` mirrors the API path segments (e.g. `["rankings", "emojis"]`)
+- **All query hooks live in `src/hooks/queries.ts`** — one file, named exports
+- **Cache keys are namespaced by feature** — stats queries use `["stats", ...]` as the first segment to enable scoped invalidation
+- After the namespace, `queryKey` mirrors the API path segments (e.g. `["stats", "rankings", "emojis"]`)
 - The `api.api.*` double-api is intentional — first `api` is the client instance, second is the `/api` route prefix
-- Always `await res.json()` — the return type is automatically inferred from the worker's response
-- For parameterized queries, include params in the key: `["users", userId, "emojis"]`
+- Use `fetchJson(res)` from `@/lib/api` — it handles 401 errors and infers the return type
+- For parameterized queries, include params in the key: `["stats", "users", userId, "emojis"]`
+
+## Component Conventions
+
+- **Discrete prop types** — Extract a named `FooProps` type for component props unless the component has only 1–2 fields. Inline is fine for 1–2 fields.
+- **Ternary over `&&`** — Prefer ternary expressions (`condition ? <X /> : null`) over `&&` (`condition && <X />`). Chain ternaries for multi-branch rendering (`loading ? ... : error ? ... : ...`).
+- **Use `cn()` for dynamic classes** — Never use template strings for className. Use the `cn()` utility from `@/lib/utils` to compose conditional or dynamic class names.
+
+```tsx
+// Good
+className={cn("flex items-center rounded-full", sizeClass)}
+
+// Bad
+className={`flex items-center rounded-full ${sizeClass}`}
+```
 
 ## Adding shadcn/ui Components
 
