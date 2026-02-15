@@ -12,7 +12,7 @@ import {
   YAxis,
 } from "recharts";
 import { useMediaQuery } from "usehooks-ts";
-import { api } from "../api";
+import { api } from "../lib/api";
 import { categorizeEmojis } from "../lib/emojiCategories";
 import { Emoji } from "./Emoji";
 import {

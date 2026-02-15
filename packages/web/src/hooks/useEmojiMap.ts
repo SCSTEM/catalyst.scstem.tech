@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { api } from "../api";
+import { api } from "../lib/api";
 
 const fetchEmojiMap = async () => {
   const res = await api.api.emojis.$get();

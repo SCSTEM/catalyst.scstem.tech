@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { api } from "../api";
+import { api } from "../lib/api";
 import { LeaderboardRow } from "./LeaderboardRow";
 
 function Avatar({ url, name }: { url: string | null; name: string | null }) {

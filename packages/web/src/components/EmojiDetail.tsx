@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { api } from "../api";
+import { api } from "../lib/api";
 import { DetailView } from "./DetailView";
 import { Emoji } from "./Emoji";
 import { LeaderboardRow } from "./LeaderboardRow";
