@@ -1,7 +1,6 @@
 import { Turnstile } from "@marsidev/react-turnstile";
 import { REGEXP_ONLY_DIGITS } from "input-otp";
 import { useRef, useState } from "react";
-import { api } from "@/api";
 import { Card } from "@/components/ui/card";
 import {
   InputOTP,
@@ -9,6 +8,7 @@ import {
   InputOTPSeparator,
   InputOTPSlot,
 } from "@/components/ui/input-otp";
+import { api } from "@/lib/api";
 import { Layout } from "./Layout";
 
 // Cloudflare Turnstile test keys: https://developers.cloudflare.com/turnstile/troubleshooting/testing/
