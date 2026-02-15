@@ -13,6 +13,7 @@ type Bindings = {
   SLACK_BOT_TOKEN: string;
   SITE_PASSWORD: string;
   TURNSTILE_SECRET_KEY: string;
+  SESSION_TTL_HOURS: string;
 };
 
 const ALLOWED_ORIGINS = new Set([
@@ -44,7 +45,8 @@ const app = new Hono<{ Bindings: Bindings }>()
       return c.json({ error: "Unauthorized" }, 401);
     }
     const token = header.slice(7);
-    const valid = await verifySessionToken(c.env.SITE_PASSWORD, token);
+    const ttl = Number(c.env.SESSION_TTL_HOURS) || 0;
+    const valid = await verifySessionToken(c.env.SITE_PASSWORD, token, ttl);
     if (!valid) {
       return c.json({ error: "Unauthorized" }, 401);
     }

@@ -6,6 +6,7 @@ import { createSessionToken } from "../lib/auth";
 type Bindings = {
   SITE_PASSWORD: string;
   TURNSTILE_SECRET_KEY: string;
+  SESSION_TTL_HOURS: string;
 };
 
 const verifyBody = z.object({
@@ -41,7 +42,8 @@ export const authRoute = new Hono<{ Bindings: Bindings }>().post(
       return c.json({ ok: false, error: "Invalid password" }, 401);
     }
 
-    const token = await createSessionToken(c.env.SITE_PASSWORD);
+    const ttl = Number(c.env.SESSION_TTL_HOURS) || 0;
+    const token = await createSessionToken(c.env.SITE_PASSWORD, ttl);
 
     c.header("Cache-Control", "no-store");
     return c.json({ ok: true, token });

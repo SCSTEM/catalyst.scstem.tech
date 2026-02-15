@@ -1,8 +1,7 @@
 const TOKEN_PREFIX = "catalyst-session-v1";
-const WINDOW_MS = 24 * 60 * 60 * 1000;
 
-function currentWindow(now: number = Date.now()): number {
-  return Math.floor(now / WINDOW_MS);
+function currentWindow(ttlHours: number): number {
+  return Math.floor(Date.now() / (ttlHours * 60 * 60 * 1000));
 }
 
 async function hmac(secret: string, data: string): Promise<string> {
@@ -31,18 +30,36 @@ function timeSafeEqual(a: string, b: string): boolean {
   return mismatch === 0;
 }
 
-export async function createSessionToken(password: string): Promise<string> {
-  const window = currentWindow();
+/**
+ * Create a session token. When `ttlHours` is 0 the token never expires.
+ * Otherwise the token is scoped to a time window of `ttlHours`.
+ */
+export async function createSessionToken(
+  password: string,
+  ttlHours = 0,
+): Promise<string> {
+  if (ttlHours <= 0) {
+    return hmac(password, TOKEN_PREFIX);
+  }
+  const window = currentWindow(ttlHours);
   return hmac(password, `${TOKEN_PREFIX}:${window}`);
 }
 
+/**
+ * Verify a session token. When `ttlHours` is 0 the token is treated as
+ * non-expiring. Otherwise the current and previous time windows are
+ * accepted, giving an effective lifetime of 1-2x `ttlHours`.
+ */
 export async function verifySessionToken(
   password: string,
   token: string,
+  ttlHours = 0,
 ): Promise<boolean> {
-  const window = currentWindow();
-  // Accept tokens from the current window and the previous one,
-  // giving an effective lifetime of 24-48 hours.
+  if (ttlHours <= 0) {
+    const expected = await hmac(password, TOKEN_PREFIX);
+    return timeSafeEqual(token, expected);
+  }
+  const window = currentWindow(ttlHours);
   const [current, previous] = await Promise.all([
     hmac(password, `${TOKEN_PREFIX}:${window}`),
     hmac(password, `${TOKEN_PREFIX}:${window - 1}`),
