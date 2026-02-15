@@ -8,7 +8,7 @@ export const limitQuery = z
       .refine((val) => val >= 1 && val <= 200, {
         message: "Limit must be between 1 and 200",
       })
-      .default(50)
-      .optional(),
+      .optional()
+      .default(50),
   })
   .optional();

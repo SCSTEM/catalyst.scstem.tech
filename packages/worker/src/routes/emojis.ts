@@ -25,6 +25,7 @@ export const emojisRoute = new Hono<{ Bindings: Bindings }>()
       map[row.name] = row.imageUrl;
     }
 
+    c.header("Cache-Control", "public, max-age=3600");
     return c.json(map);
   })
   .get("/:emoji/users", zValidator("query", limitQuery), async (c) => {

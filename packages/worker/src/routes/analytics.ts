@@ -47,8 +47,8 @@ export const analyticsRoute = new Hono<{ Bindings: Bindings }>()
       limit: rawLimit,
     } = c.req.valid("query");
     const period = parsePeriod(rawPeriod);
-    const days = Math.min(Math.max(Number(rawDays ?? 90), 1), 365);
-    const limit = Math.min(Math.max(Number(rawLimit ?? 8), 1), 20);
+    const days = Math.min(Math.max(Number(rawDays) || 90, 1), 365);
+    const limit = Math.min(Math.max(Number(rawLimit) || 8, 1), 20);
 
     const cutoff = sql`datetime('now', '-' || ${String(days)} || ' days')`;
     const bucket = bucketExpr[period];
@@ -120,8 +120,8 @@ export const analyticsRoute = new Hono<{ Bindings: Bindings }>()
       limit: rawLimit,
     } = c.req.valid("query");
     const period = parsePeriod(rawPeriod);
-    const days = Math.min(Math.max(Number(rawDays ?? 90), 1), 365);
-    const limit = Math.min(Math.max(Number(rawLimit ?? 8), 1), 20);
+    const days = Math.min(Math.max(Number(rawDays) || 90, 1), 365);
+    const limit = Math.min(Math.max(Number(rawLimit) || 8, 1), 20);
 
     const cutoff = sql`datetime('now', '-' || ${String(days)} || ' days')`;
     const bucket = bucketExpr[period];
