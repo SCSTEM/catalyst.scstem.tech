@@ -11,15 +11,26 @@ type Bindings = {
   SLACK_BOT_TOKEN: string;
 };
 
+const ALLOWED_ORIGINS = new Set([
+  "https://catalyst.scstem.org",
+  "http://localhost:5173",
+]);
+
 const app = new Hono<{ Bindings: Bindings }>()
   .use(
     "/api/*",
     cors({
-      origin: ["https://catalyst.scstem.org", "http://localhost:5173"],
+      origin: (origin) => (ALLOWED_ORIGINS.has(origin) ? origin : ""),
       allowMethods: ["GET", "OPTIONS"],
       maxAge: 86400,
     }),
   )
+  .use("/api/*", async (c, next) => {
+    await next();
+    if (!c.res.headers.has("Cache-Control")) {
+      c.res.headers.set("Cache-Control", "public, max-age=60");
+    }
+  })
   .get("/api/health", (c) => c.json({ ok: true }))
   .route("/api/rankings", rankingsRoute)
   .route("/api/emojis", emojisRoute)

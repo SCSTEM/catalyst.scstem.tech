@@ -19,20 +19,26 @@ export function createSlackApp(env: Env): SlackApp<Env> {
   // ── Events ──
 
   app.event("reaction_added", async ({ payload }) => {
+    if (!payload.item?.channel || !payload.item?.ts) {
+      return;
+    }
     await addReaction(env.DB, {
       userId: payload.user,
       emoji: payload.reaction,
-      channelId: payload.item?.channel ?? "",
-      messageTs: payload.item?.ts ?? "",
+      channelId: payload.item.channel,
+      messageTs: payload.item.ts,
     });
   });
 
   app.event("reaction_removed", async ({ payload }) => {
+    if (!payload.item?.channel || !payload.item?.ts) {
+      return;
+    }
     await removeReaction(env.DB, {
       userId: payload.user,
       emoji: payload.reaction,
-      channelId: payload.item?.channel ?? "",
-      messageTs: payload.item?.ts ?? "",
+      channelId: payload.item.channel,
+      messageTs: payload.item.ts,
     });
   });
 

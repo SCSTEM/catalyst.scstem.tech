@@ -123,7 +123,7 @@ function TrendChart({
         )}
         {error && <p className="py-12 text-center text-red-400">{error}</p>}
         {!loading && !error && series.length > 0 && (
-          <ChartContainer config={config} className="h-87.5 w-full">
+          <ChartContainer config={config} className="h-64 md:h-87.5 w-full">
             <AreaChart data={series}>
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis dataKey="period" tickLine={false} axisLine={false} />

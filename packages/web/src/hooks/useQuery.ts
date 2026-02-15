@@ -77,7 +77,9 @@ export function useQuery<T>(
             cache.set(key, result);
           }
         })
-        .catch(() => {});
+        .catch((e) => {
+          setError(e instanceof Error ? e.message : "Fetch failed");
+        });
     }
 
     function start() {
