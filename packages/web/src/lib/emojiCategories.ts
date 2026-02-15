@@ -6,11 +6,11 @@ const CATEGORY_COLORS = [
   "var(--chart-3)",
   "var(--chart-4)",
   "var(--chart-5)",
-  "#f97316",
-  "#a855f7",
-  "#ec4899",
-  "#14b8a6",
-  "#6366f1",
+  "var(--chart-6)",
+  "var(--chart-7)",
+  "var(--chart-8)",
+  "var(--chart-9)",
+  "var(--chart-10)",
 ];
 
 // Build name → category lookup from gemoji
