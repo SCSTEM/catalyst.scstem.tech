@@ -1,6 +1,5 @@
-import { useCallback } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { api } from "../api";
-import { useQuery } from "../hooks/useQuery";
 import { DetailView } from "./DetailView";
 import { Emoji } from "./Emoji";
 import { LeaderboardRow } from "./LeaderboardRow";
@@ -14,14 +13,14 @@ export function EmojiDetail({
   onBack: () => void;
   onSelectUser: (userId: string) => void;
 }) {
-  const fetcher = useCallback(async () => {
-    const res = await api.api.emojis[":emoji"].users.$get({
-      param: { emoji },
-    });
-    return await res.json();
-  }, [emoji]);
-  const { data, loading, error } = useQuery(fetcher, {
-    key: `emoji:${emoji}:users`,
+  const { data, isPending, error } = useQuery({
+    queryKey: ["emojis", emoji, "users"],
+    queryFn: async () => {
+      const res = await api.api.emojis[":emoji"].users.$get({
+        param: { emoji },
+      });
+      return await res.json();
+    },
   });
 
   return (
@@ -29,10 +28,10 @@ export function EmojiDetail({
       onBack={onBack}
       icon={<Emoji name={emoji} size={40} hideTooltip />}
       title={`:${emoji}:`}
-      loading={loading}
-      error={error}
+      loading={isPending}
+      error={error?.message ?? null}
       emptyMessage="No users found"
-      isEmpty={!loading && (!data || data.length === 0)}
+      isEmpty={!isPending && (!data || data.length === 0)}
     >
       <div className="space-y-1">
         {data?.map((entry, i) => (

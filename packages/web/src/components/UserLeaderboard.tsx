@@ -1,6 +1,5 @@
-import { useCallback } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { api } from "../api";
-import { useQuery } from "../hooks/useQuery";
 import { LeaderboardRow } from "./LeaderboardRow";
 
 function Avatar({ url, name }: { url: string | null; name: string | null }) {
@@ -26,19 +25,21 @@ export function UserLeaderboard({
 }: {
   onSelect: (userId: string) => void;
 }) {
-  const fetcher = useCallback(async () => {
-    const res = await api.api.rankings.users.$get({ query: { limit: "10" } });
-    return await res.json();
-  }, []);
-  const { data, loading, error } = useQuery(fetcher, {
-    key: "rankings:users",
+  const { data, isPending, error } = useQuery({
+    queryKey: ["rankings", "users"],
+    queryFn: async () => {
+      const res = await api.api.rankings.users.$get({
+        query: { limit: "10" },
+      });
+      return await res.json();
+    },
   });
 
-  if (loading) {
+  if (isPending) {
     return <p className="text-center text-muted-foreground">Loading...</p>;
   }
   if (error) {
-    return <p className="text-center text-red-400">{error}</p>;
+    return <p className="text-center text-red-400">{error.message}</p>;
   }
   if (!data?.length) {
     return <p className="text-center text-muted-foreground">No reactors yet</p>;
