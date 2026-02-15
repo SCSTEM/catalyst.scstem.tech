@@ -15,6 +15,7 @@
     "@radix-ui/react-tooltip": "^1.2.8",
     "@tanstack/react-query": "^5.90.21",
     "@tanstack/react-query-devtools": "^5.91.3",
+    "@tanstack/react-router": "^1.160.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "gemoji": "^8.1.0",
@@ -31,6 +32,8 @@
   "devDependencies": {
     "@catalyst/worker": "workspace:*",
     "@tailwindcss/vite": "^4.1.18",
+    "@tanstack/react-router-devtools": "^1.160.0",
+    "@tanstack/router-plugin": "^1.160.0",
     "@types/react": "^19.2.13",
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^5.1.3",

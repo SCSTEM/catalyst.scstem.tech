@@ -55,7 +55,8 @@
       "!.claude/",
       "!.carson/",
       "!.types/",
-      "!worker-configuration.d.ts"
+      "!worker-configuration.d.ts",
+      "!**/routeTree.gen.ts"
     ]
   }
 }
