@@ -1,13 +1,16 @@
 import { useQuery } from "@tanstack/react-query";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { Emoji } from "@/components/stats/Emoji";
+import { LeaderboardRow } from "@/components/stats/LeaderboardRow";
 import { api, fetchJson } from "@/lib/api";
-import { Emoji } from "./Emoji";
-import { LeaderboardRow } from "./LeaderboardRow";
 
-export function EmojiLeaderboard({
-  onSelect,
-}: {
-  onSelect: (emoji: string) => void;
-}) {
+export const Route = createFileRoute("/stats/emojis/")({
+  component: EmojisPage,
+});
+
+function EmojisPage() {
+  const navigate = useNavigate();
+
   const { data, isPending, error } = useQuery({
     queryKey: ["rankings", "emojis"],
     queryFn: async () => {
@@ -34,17 +37,15 @@ export function EmojiLeaderboard({
         <LeaderboardRow
           key={entry.emoji}
           rank={i + 1}
-          left={
-            <Emoji
-              name={entry.emoji}
-              imageUrl={entry.imageUrl}
-              size={28}
-              hideTooltip
-            />
-          }
+          left={<Emoji name={entry.emoji} size={28} hideTooltip />}
           label={`:${entry.emoji}:`}
           count={entry.count}
-          onClick={() => onSelect(entry.emoji)}
+          onClick={() =>
+            navigate({
+              to: "/stats/emojis/$emoji",
+              params: { emoji: entry.emoji },
+            })
+          }
         />
       ))}
     </div>

@@ -1,19 +1,19 @@
 import { useQuery } from "@tanstack/react-query";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { Avatar } from "@/components/Avatar";
+import { DetailView } from "@/components/stats/DetailView";
+import { Emoji } from "@/components/stats/Emoji";
+import { LeaderboardRow } from "@/components/stats/LeaderboardRow";
 import { api, fetchJson } from "@/lib/api";
-import { Avatar } from "./Avatar";
-import { DetailView } from "./DetailView";
-import { Emoji } from "./Emoji";
-import { LeaderboardRow } from "./LeaderboardRow";
 
-export function UserDetail({
-  userId,
-  onBack,
-  onSelectEmoji,
-}: {
-  userId: string;
-  onBack: () => void;
-  onSelectEmoji: (emoji: string) => void;
-}) {
+export const Route = createFileRoute("/stats/users/$userId")({
+  component: UserDetailPage,
+});
+
+function UserDetailPage() {
+  const { userId } = Route.useParams();
+  const navigate = useNavigate();
+
   const { data, isPending, error } = useQuery({
     queryKey: ["users", userId, "emojis"],
     queryFn: async () => {
@@ -29,17 +29,10 @@ export function UserDetail({
 
   return (
     <DetailView
-      onBack={onBack}
-      icon={
-        <Avatar
-          url={user?.avatarUrl ?? null}
-          name={user?.displayName ?? null}
-          size={40}
-        />
-      }
+      icon={<Avatar url={user?.avatarUrl} name={user?.displayName} size={40} />}
       title={user?.displayName || userId}
       loading={isPending}
-      error={error?.message ?? null}
+      error={error?.message}
       emptyMessage="No reactions found"
       isEmpty={!isPending && emojis.length === 0}
     >
@@ -48,17 +41,15 @@ export function UserDetail({
           <LeaderboardRow
             key={entry.emoji}
             rank={i + 1}
-            left={
-              <Emoji
-                name={entry.emoji}
-                imageUrl={entry.imageUrl}
-                size={28}
-                hideTooltip
-              />
-            }
+            left={<Emoji name={entry.emoji} size={28} hideTooltip />}
             label={`:${entry.emoji}:`}
             count={entry.count}
-            onClick={() => onSelectEmoji(entry.emoji)}
+            onClick={() =>
+              navigate({
+                to: "/stats/emojis/$emoji",
+                params: { emoji: entry.emoji },
+              })
+            }
           />
         ))}
       </div>

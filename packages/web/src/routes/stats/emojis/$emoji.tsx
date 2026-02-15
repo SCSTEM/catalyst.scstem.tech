@@ -1,19 +1,19 @@
 import { useQuery } from "@tanstack/react-query";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { Avatar } from "@/components/Avatar";
+import { DetailView } from "@/components/stats/DetailView";
+import { Emoji } from "@/components/stats/Emoji";
+import { LeaderboardRow } from "@/components/stats/LeaderboardRow";
 import { api, fetchJson } from "@/lib/api";
-import { Avatar } from "./Avatar";
-import { DetailView } from "./DetailView";
-import { Emoji } from "./Emoji";
-import { LeaderboardRow } from "./LeaderboardRow";
 
-export function EmojiDetail({
-  emoji,
-  onBack,
-  onSelectUser,
-}: {
-  emoji: string;
-  onBack: () => void;
-  onSelectUser: (userId: string) => void;
-}) {
+export const Route = createFileRoute("/stats/emojis/$emoji")({
+  component: EmojiDetailPage,
+});
+
+function EmojiDetailPage() {
+  const { emoji } = Route.useParams();
+  const navigate = useNavigate();
+
   const { data, isPending, error } = useQuery({
     queryKey: ["emojis", emoji, "users"],
     queryFn: async () => {
@@ -26,11 +26,10 @@ export function EmojiDetail({
 
   return (
     <DetailView
-      onBack={onBack}
       icon={<Emoji name={emoji} size={40} hideTooltip />}
       title={`:${emoji}:`}
       loading={isPending}
-      error={error?.message ?? null}
+      error={error?.message}
       emptyMessage="No users found"
       isEmpty={!isPending && (!data || data.length === 0)}
     >
@@ -42,7 +41,12 @@ export function EmojiDetail({
             left={<Avatar url={entry.avatarUrl} name={entry.displayName} />}
             label={entry.displayName || entry.userId}
             count={entry.count}
-            onClick={() => onSelectUser(entry.userId)}
+            onClick={() =>
+              navigate({
+                to: "/stats/users/$userId",
+                params: { userId: entry.userId },
+              })
+            }
           />
         ))}
       </div>

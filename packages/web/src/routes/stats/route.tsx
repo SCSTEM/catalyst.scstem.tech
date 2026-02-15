@@ -6,39 +6,39 @@ import {
   useNavigate,
 } from "@tanstack/react-router";
 import { RefreshCw } from "lucide-react";
-import { Layout } from "@/components/Layout";
+import { StatsLayout } from "@/components/layouts/StatsLayout";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
-export const Route = createFileRoute("/_app")({
-  component: AppLayout,
+export const Route = createFileRoute("/stats")({
+  component: RouteComponent,
 });
 
 const tabs = [
-  { value: "emojis", to: "/emojis", label: "Top Reactions" },
-  { value: "users", to: "/users", label: "Top Reactors" },
-  { value: "trends", to: "/trends", label: "Trends" },
+  { value: "emojis", to: "/stats/emojis", label: "Top Reactions" },
+  { value: "users", to: "/stats/users", label: "Top Reactors" },
+  { value: "trends", to: "/stats/trends", label: "Trends" },
 ] as const;
 
 function getActiveTab(pathname: string): string {
-  if (pathname.startsWith("/users")) {
+  if (pathname.startsWith("/stats/users")) {
     return "users";
   }
-  if (pathname.startsWith("/trends")) {
+  if (pathname.startsWith("/stats/trends")) {
     return "trends";
   }
   return "emojis";
 }
 
-function AppLayout() {
+function RouteComponent() {
   const queryClient = useQueryClient();
   const location = useLocation();
   const navigate = useNavigate();
   const activeTab = getActiveTab(location.pathname);
 
   return (
-    <Layout title="Emoji Leaderboard 😎">
+    <StatsLayout title="Emoji Leaderboard 😎">
       <Tabs
         value={activeTab}
         onValueChange={(value) => {
@@ -74,6 +74,6 @@ function AppLayout() {
       >
         <RefreshCw />
       </Button>
-    </Layout>
+    </StatsLayout>
   );
 }

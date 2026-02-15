@@ -17,7 +17,7 @@ export function LeaderboardRow({
     <button
       type="button"
       onClick={onClick}
-      className="cursor-pointer flex w-full items-center gap-6 rounded-lg text-left transition-colors hover:bg-main hover:text-background h-10 pr-2"
+      className="cursor-pointer flex w-full items-center gap-6 rounded-lg text-left transition-colors hover:bg-main hover:text-background h-10 pr-2 select-none"
     >
       <span className="w-6 text-right text-base md:text-xl">{rank}</span>
       <span className="shrink-0">{left}</span>

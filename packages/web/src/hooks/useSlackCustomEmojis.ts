@@ -1,19 +1,17 @@
 import { useQuery } from "@tanstack/react-query";
 import { api, fetchJson } from "@/lib/api";
 
-const fetchEmojiMap = async () => {
+const fetchSlackCustomEmojis = async () => {
   const res = await api.api.emojis.$get();
   return fetchJson(res);
 };
 
-type EmojiMap = Awaited<ReturnType<typeof fetchEmojiMap>>;
-
-export function useEmojiMap() {
+export function useSlackCustomEmojis() {
   const { data, isPending } = useQuery({
     queryKey: ["emojis", "map"],
-    queryFn: fetchEmojiMap,
+    queryFn: fetchSlackCustomEmojis,
     staleTime: 5 * 60_000,
   });
 
-  return { map: data ?? ({} as EmojiMap), loading: isPending };
+  return { data, loading: isPending };
 }

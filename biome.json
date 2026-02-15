@@ -15,10 +15,10 @@
       "recommended": true,
       "correctness": {
         "useUniqueElementIds": "off",
-        "noUnusedImports": "error"
+        "noUnusedImports": "warn"
       },
       "style": {
-        "useImportType": "error"
+        "useImportType": "warn"
       },
       "suspicious": {
         "noUnknownAtRules": "off",

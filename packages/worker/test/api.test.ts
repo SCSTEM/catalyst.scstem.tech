@@ -44,7 +44,6 @@ describe("GET /api/rankings/emojis", () => {
     const data = (await res.json()) as Array<{
       emoji: string;
       count: number;
-      imageUrl: string | null;
     }>;
     expect(data.length).toBeGreaterThan(0);
     // Should be sorted descending
@@ -64,19 +63,6 @@ describe("GET /api/rankings/emojis", () => {
     );
     const data = (await res.json()) as unknown[];
     expect(data.length).toBe(2);
-  });
-
-  it("includes imageUrl for custom emojis", async () => {
-    const res = await authedFetch("http://localhost/api/rankings/emojis");
-    const data = (await res.json()) as Array<{
-      emoji: string;
-      imageUrl: string | null;
-    }>;
-    const shipit = data.find((e) => e.emoji === "shipit");
-    expect(shipit?.imageUrl).toBe("https://example.com/shipit.png");
-    // Standard emojis have no image
-    const thumbsup = data.find((e) => e.emoji === "thumbsup");
-    expect(thumbsup?.imageUrl).toBeNull();
   });
 });
 

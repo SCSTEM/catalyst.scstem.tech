@@ -1,15 +1,11 @@
 import { createRootRoute, Outlet } from "@tanstack/react-router";
-import { lazy, Suspense, useState } from "react";
+import { lazy, useState } from "react";
 import { AccessGate } from "@/components/AccessGate";
 import { isPreview } from "@/lib/api";
 
-const TanStackRouterDevtools = import.meta.env.PROD
+const DevTools = import.meta.env.PROD
   ? () => null
-  : lazy(() =>
-      import("@tanstack/react-router-devtools").then((m) => ({
-        default: m.TanStackRouterDevtools,
-      })),
-    );
+  : lazy(() => import("@/components/DevTools"));
 
 export const Route = createRootRoute({
   component: RootLayout,
@@ -28,9 +24,7 @@ function RootLayout() {
   return (
     <>
       <Outlet />
-      <Suspense>
-        <TanStackRouterDevtools position="bottom-right" />
-      </Suspense>
+      <DevTools />
     </>
   );
 }

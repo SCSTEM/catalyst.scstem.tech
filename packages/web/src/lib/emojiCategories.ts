@@ -13,7 +13,6 @@ const CATEGORY_COLORS = [
   "var(--chart-10)",
 ];
 
-// Build name → category lookup from gemoji
 const nameToCategory = new Map<string, string>();
 for (const entry of gemoji) {
   for (const name of entry.names) {

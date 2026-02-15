@@ -8,58 +8,17 @@ Routes live in `src/routes/` and are auto-discovered by the TanStack Router Vite
 
 ### Route structure
 
-```
-src/routes/
-├── __root.tsx           # Root layout (auth gate, devtools)
-├── _app.tsx             # Pathless layout (tabs, card wrapper, refresh button)
-└── _app/
-    ├── index.tsx        # / → redirects to /emojis
-    ├── emojis/
-    │   ├── index.tsx    # /emojis — emoji leaderboard
-    │   └── $emoji.tsx   # /emojis/:emoji — emoji detail
-    ├── users/
-    │   ├── index.tsx    # /users — user leaderboard
-    │   └── $userId.tsx  # /users/:userId — user detail
-    └── trends.tsx       # /trends — trend charts
-```
+Browse `src/routes/` for the current route tree — it is the source of truth. Key patterns:
+
+- **`__root.tsx`** — `createRootRoute`. Wraps all routes with auth gate and DevTools.
+- **`route.tsx` in a directory** — Layout route for that path segment. Contains shared UI (tabs, wrappers) and an `<Outlet />` for children.
+- **`index.tsx` in a directory** — Index route (e.g. `/stats/` renders `stats/index.tsx`).
+- **`$param.tsx`** — Dynamic segments. Access params via `Route.useParams()`.
 
 ### Key conventions
 
-- **`__root.tsx`** — `createRootRoute`. Wraps all routes with auth gate and TanStack Router DevTools.
-- **`_app.tsx`** — Pathless layout route (`createFileRoute("/_app")`). Contains the tab navigation and card wrapper shared by all pages.
-- **`$param.tsx`** — Dynamic segments. Access params via `Route.useParams()`.
-- **Navigation** — Use `useNavigate()` from `@tanstack/react-router`, not `window.location` or state-based navigation.
+- **Navigation** — Use `useNavigate()` from `@tanstack/react-router`, not `window.location`. Always use fully-qualified paths (matching the file-system nesting).
 - **Adding a route** — Create the file in `src/routes/`, export `Route` using `createFileRoute`. The Vite plugin auto-regenerates `routeTree.gen.ts`.
-
-### Route file template
-
-```tsx
-import { createFileRoute } from "@tanstack/react-router";
-
-export const Route = createFileRoute("/_app/my-page")({
-  component: MyPage,
-});
-
-function MyPage() {
-  return <div>...</div>;
-}
-```
-
-### Route with params
-
-```tsx
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
-
-export const Route = createFileRoute("/_app/items/$itemId")({
-  component: ItemDetail,
-});
-
-function ItemDetail() {
-  const { itemId } = Route.useParams();
-  const navigate = useNavigate();
-  // ...
-}
-```
 
 ## Directory Layout
 

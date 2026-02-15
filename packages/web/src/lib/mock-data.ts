@@ -258,13 +258,13 @@ const routes: MockRoute[] = [
 
 export function createMockFetch(): typeof fetch {
   return async (input: RequestInfo | URL, _init?: RequestInit) => {
-    const url = new URL(
+    const raw =
       typeof input === "string"
         ? input
         : input instanceof URL
           ? input.href
-          : input.url,
-    );
+          : input.url;
+    const url = new URL(raw, "http://localhost");
 
     for (const route of routes) {
       const match = url.pathname.match(route.pattern);

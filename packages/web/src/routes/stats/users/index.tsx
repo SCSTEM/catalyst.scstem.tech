@@ -1,13 +1,16 @@
 import { useQuery } from "@tanstack/react-query";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { Avatar } from "@/components/Avatar";
+import { LeaderboardRow } from "@/components/stats/LeaderboardRow";
 import { api, fetchJson } from "@/lib/api";
-import { Avatar } from "./Avatar";
-import { LeaderboardRow } from "./LeaderboardRow";
 
-export function UserLeaderboard({
-  onSelect,
-}: {
-  onSelect: (userId: string) => void;
-}) {
+export const Route = createFileRoute("/stats/users/")({
+  component: UsersPage,
+});
+
+function UsersPage() {
+  const navigate = useNavigate();
+
   const { data, isPending, error } = useQuery({
     queryKey: ["rankings", "users"],
     queryFn: async () => {
@@ -37,7 +40,12 @@ export function UserLeaderboard({
           left={<Avatar url={entry.avatarUrl} name={entry.displayName} />}
           label={entry.displayName || entry.userId}
           count={entry.totalCount}
-          onClick={() => onSelect(entry.userId)}
+          onClick={() =>
+            navigate({
+              to: "/stats/users/$userId",
+              params: { userId: entry.userId },
+            })
+          }
         />
       ))}
     </div>

@@ -3,12 +3,16 @@ export function Avatar({
   name,
   size = 28,
 }: {
-  url: string | null;
-  name: string | null;
+  url?: string;
+  name?: string;
   size?: number;
 }) {
   const sizeClass =
     size === 40 ? "h-10 w-10" : size === 28 ? "h-7 w-7" : "h-7 w-7";
+
+  if (!url && !name) {
+    return null;
+  }
 
   if (url) {
     return (

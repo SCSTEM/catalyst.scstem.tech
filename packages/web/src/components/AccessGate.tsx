@@ -5,11 +5,10 @@ import { Card } from "@/components/ui/card";
 import {
   InputOTP,
   InputOTPGroup,
-  InputOTPSeparator,
   InputOTPSlot,
 } from "@/components/ui/input-otp";
 import { api, setSessionToken } from "@/lib/api";
-import { Layout } from "./Layout";
+import { StatsLayout } from "./layouts/StatsLayout";
 
 // Cloudflare Turnstile test keys: https://developers.cloudflare.com/turnstile/troubleshooting/testing/
 // Always passes (visible): 1x00000000000000000000AA
@@ -96,7 +95,7 @@ export function AccessGate({ onAuthenticated }: AccessGateProps) {
   }
 
   return (
-    <Layout title="Emoji Leaderboard 😎">
+    <StatsLayout title="Emoji Leaderboard 😎">
       <Card className="mx-auto max-w-sm p-8">
         <div className="flex flex-col items-center gap-6">
           <p className="text-center text-sm text-muted-foreground">
@@ -113,9 +112,6 @@ export function AccessGate({ onAuthenticated }: AccessGateProps) {
               <InputOTPSlot index={0} />
               <InputOTPSlot index={1} />
               <InputOTPSlot index={2} />
-            </InputOTPGroup>
-            <InputOTPSeparator />
-            <InputOTPGroup>
               <InputOTPSlot index={3} />
               <InputOTPSlot index={4} />
               <InputOTPSlot index={5} />
@@ -136,13 +132,11 @@ export function AccessGate({ onAuthenticated }: AccessGateProps) {
             <p className="text-center text-sm text-muted-foreground">
               Verifying...
             </p>
-          ) : null}
-
-          {error ? (
+          ) : error ? (
             <p className="text-center text-sm text-[#ff6669]">{error}</p>
           ) : null}
         </div>
       </Card>
-    </Layout>
+    </StatsLayout>
   );
 }

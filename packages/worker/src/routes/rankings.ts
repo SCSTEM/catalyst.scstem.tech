@@ -2,12 +2,7 @@ import { zValidator } from "@hono/zod-validator";
 import { desc, eq, gt, sum } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/d1";
 import { Hono } from "hono";
-import {
-  emojiImages,
-  reactionTotals,
-  userEmojiCounts,
-  users,
-} from "../db/schema";
+import { reactionTotals, userEmojiCounts, users } from "../db/schema";
 import { limitQuery } from "./util";
 
 type Bindings = {
@@ -23,10 +18,8 @@ export const rankingsRoute = new Hono<{ Bindings: Bindings }>()
       .select({
         emoji: reactionTotals.emoji,
         count: reactionTotals.count,
-        imageUrl: emojiImages.imageUrl,
       })
       .from(reactionTotals)
-      .leftJoin(emojiImages, eq(reactionTotals.emoji, emojiImages.name))
       .where(gt(reactionTotals.count, 0))
       .orderBy(desc(reactionTotals.count))
       .limit(limit);

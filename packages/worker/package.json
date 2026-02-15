@@ -7,14 +7,16 @@
     "./db/schema": "./src/db/schema.ts"
   },
   "scripts": {
-    "dev": "wrangler dev",
     "deploy": "wrangler deploy",
+    "test": "vitest run",
+    "test:watch": "vitest",
+
+    "dev": "wrangler dev",
+    "cf-typegen": "wrangler types",
+
     "db:generate": "drizzle-kit generate",
     "db:migrate:local": "wrangler d1 migrations apply DB --local",
-    "db:migrate:remote": "wrangler d1 migrations apply DB --remote",
-    "cf-typegen": "wrangler types",
-    "test": "vitest run",
-    "test:watch": "vitest"
+    "db:migrate:remote": "wrangler d1 migrations apply DB --remote"
   },
   "dependencies": {
     "@hono/zod-validator": "^0.7.6",

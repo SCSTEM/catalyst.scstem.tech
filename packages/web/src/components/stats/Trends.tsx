@@ -14,7 +14,6 @@ import {
 import { useMediaQuery } from "usehooks-ts";
 import { api, fetchJson } from "@/lib/api";
 import { categorizeEmojis } from "@/lib/emojiCategories";
-import { Emoji } from "./Emoji";
 import {
   Card,
   CardAction,
@@ -22,16 +21,17 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
-} from "./ui/card";
-import type { ChartConfig } from "./ui/chart";
+} from "../ui/card";
+import type { ChartConfig } from "../ui/chart";
 import {
   ChartContainer,
   ChartLegend,
   ChartLegendContent,
   ChartTooltip,
   ChartTooltipContent,
-} from "./ui/chart";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
+} from "../ui/chart";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
+import { Emoji } from "./Emoji";
 
 const CHART_COLORS = [
   "var(--chart-1)",
