@@ -10,6 +10,7 @@ All commands run from the repo root:
 # Verify changes (run both before marking work done)
 bun run typecheck        # tsc -b across all packages
 bun run check            # biome lint + format (auto-fixes)
+bun run test             # Vitest integration tests (worker API)
 
 # Development
 bun run dev              # Both worker + web in parallel
@@ -25,16 +26,26 @@ bun run db:generate          # Generate Drizzle migration from schema
 bun run db:migrate:local     # Apply migrations to local D1
 bun run db:migrate:remote    # Apply migrations to production D1
 
+# Seed local database with sample data (no Slack token needed)
+bun run db:seed
+
 # Backfill historical Slack data
 SLACK_BOT_TOKEN=xoxb-... bun run backfill
 ```
+
+## Per-Package Documentation
+
+Each package has its own `CLAUDE.md` with detailed patterns and conventions:
+
+- **`packages/worker/CLAUDE.md`** — Adding routes, Drizzle patterns, Bindings, schema changes
+- **`packages/web/CLAUDE.md`** — Routing (TanStack Router), data fetching (TanStack Query), components, styling
 
 ## Architecture
 
 Bun monorepo with two packages:
 
 - **`packages/worker`** — Cloudflare Worker: Hono API + Slack event handler, backed by D1 (SQLite). Deployed to `api.catalyst.scstem.org`.
-- **`packages/web`** — React 19 + Vite SPA. Uses Hono's typed RPC client for end-to-end type safety with the worker API.
+- **`packages/web`** — React 19 + Vite SPA. TanStack Router (file-based routing) + TanStack Query. Uses Hono's typed RPC client for end-to-end type safety with the worker API.
 
 ### Type-safe RPC chain
 
@@ -52,19 +63,17 @@ Reactions use delete-on-remove (not event sourcing). Two pre-aggregated tables (
 
 ### API routes
 
-| Method | Path | Description |
-|--------|------|-------------|
-| GET | `/api/rankings/emojis` | Top emojis by reaction count |
-| GET | `/api/rankings/users` | Top users by total reactions |
-| GET | `/api/emojis` | Custom emoji name → image URL map |
-| GET | `/api/emojis/:emoji/users` | Who uses a specific emoji |
-| GET | `/api/users/:userId/emojis` | A user's emoji breakdown |
-| POST | `/slack/events` | Slack webhook (SDK-handled) |
+All routes are defined in `packages/worker/src/app.ts`. Each `.route()` call mounts a route file from `src/routes/`. Read `app.ts` to see the full list — it's the single source of truth. Don't duplicate the route list elsewhere.
+
+`/slack/events` is handled separately in `src/index.ts` (before the Hono app) via the `slack-cloudflare-workers` SDK.
 
 ## Conventions
 
 - **Always use `bun`/`bunx`**, never `npm`/`npx`.
-- **Biome** handles formatting and linting. A PostToolUse hook runs `bun run check` after every file edit.
+- **Biome** handles formatting and linting. A PostToolUse hook runs `bun run check && bun run typecheck` after every file edit.
 - **No one-line if statements.** Always use braces on a new line, even for single-statement bodies.
 - **Caret ranges with full semver** in package.json (e.g. `"^4.11.9"`, not `"^4"`).
+- **`import type` for type-only imports.** Enforced by biome (`useImportType`). Use `import type { Foo }` when importing only types.
+- **No unused imports.** Enforced by biome (`noUnusedImports`). Remove imports that are no longer used after refactoring.
+- **`@/` alias for cross-directory imports** in the web package. Only use relative imports for same-directory siblings. See `packages/web/CLAUDE.md` for details.
 - Schema changes require deleting all migrations and regenerating a single clean migration with `bun run db:generate` (fresh project, no production migration history to preserve yet).

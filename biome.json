@@ -14,7 +14,11 @@
     "rules": {
       "recommended": true,
       "correctness": {
-        "useUniqueElementIds": "off"
+        "useUniqueElementIds": "off",
+        "noUnusedImports": "error"
+      },
+      "style": {
+        "useImportType": "error"
       },
       "suspicious": {
         "noUnknownAtRules": "off",
