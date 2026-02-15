@@ -35,3 +35,4 @@ logs
 
 *.local.*
 .mise.toml
+*.gen.ts
