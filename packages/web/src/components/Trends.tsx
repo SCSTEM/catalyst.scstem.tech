@@ -53,18 +53,15 @@ function PeriodSelector({
   onChange: (p: Period) => void;
 }) {
   return (
-    <TabsList>
-      {(["day", "week", "month"] as const).map((p) => (
-        <TabsTrigger
-          key={p}
-          value={p}
-          data-state={value === p ? "active" : "inactive"}
-          onClick={() => onChange(p)}
-        >
-          {p.charAt(0).toUpperCase() + p.slice(1)}
-        </TabsTrigger>
-      ))}
-    </TabsList>
+    <Tabs value={value} onValueChange={(v) => onChange(v as Period)}>
+      <TabsList>
+        {(["day", "week", "month"] as const).map((p) => (
+          <TabsTrigger key={p} value={p}>
+            {p.charAt(0).toUpperCase() + p.slice(1)}
+          </TabsTrigger>
+        ))}
+      </TabsList>
+    </Tabs>
   );
 }
 
@@ -81,6 +78,22 @@ interface TrendChartProps {
   stacked?: boolean;
   period: Period;
   onPeriodChange: (p: Period) => void;
+}
+
+function SortedTooltipContent(
+  props: React.ComponentProps<typeof ChartTooltipContent>,
+) {
+  const sorted = props.payload
+    ? [...props.payload].sort((a, b) => {
+        const aVal = typeof a.value === "number" ? a.value : 0;
+        const bVal = typeof b.value === "number" ? b.value : 0;
+        if (bVal !== aVal) {
+          return bVal - aVal;
+        }
+        return String(a.name ?? "").localeCompare(String(b.name ?? ""));
+      })
+    : undefined;
+  return <ChartTooltipContent {...props} payload={sorted} />;
 }
 
 function TrendChart({
@@ -106,7 +119,7 @@ function TrendChart({
       </CardHeader>
       <CardContent>
         {loading && (
-          <p className="py-12 text-center text-gray-500">Loading...</p>
+          <p className="py-12 text-center text-muted-foreground">Loading...</p>
         )}
         {error && <p className="py-12 text-center text-red-400">{error}</p>}
         {!loading && !error && series.length > 0 && (
@@ -115,7 +128,7 @@ function TrendChart({
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis dataKey="period" tickLine={false} axisLine={false} />
               <YAxis tickLine={false} axisLine={false} />
-              <ChartTooltip content={<ChartTooltipContent />} />
+              <ChartTooltip content={<SortedTooltipContent />} />
               <ChartLegend content={<ChartLegendContent />} />
               {keys.map((key, i) => (
                 <Area
@@ -132,7 +145,7 @@ function TrendChart({
           </ChartContainer>
         )}
         {!loading && !error && series.length === 0 && (
-          <p className="py-12 text-center text-gray-500">
+          <p className="py-12 text-center text-muted-foreground">
             No data for this period
           </p>
         )}
@@ -228,8 +241,20 @@ function UserTrendsChart() {
     }
     const config: ChartConfig = {};
     for (const [i, userId] of userIds.entries()) {
+      const user = data.users[userId];
       config[userId] = {
-        label: data.users[userId] || userId,
+        label: (
+          <span className="inline-flex items-center gap-1">
+            {user?.avatar ? (
+              <img
+                src={user.avatar}
+                alt={user.name}
+                className="h-3.5 w-3.5 rounded-full"
+              />
+            ) : null}
+            {user?.name || userId}
+          </span>
+        ),
         color: CHART_COLORS[i % CHART_COLORS.length],
       };
     }
@@ -292,7 +317,7 @@ function CategoryChart() {
       </CardHeader>
       <CardContent>
         {loading && (
-          <p className="py-12 text-center text-gray-500">Loading...</p>
+          <p className="py-12 text-center text-muted-foreground">Loading...</p>
         )}
         {error && <p className="py-12 text-center text-red-400">{error}</p>}
         {categories.length > 0 && (
@@ -325,15 +350,15 @@ function CategoryChart() {
                         >
                           <tspan
                             x={viewBox.cx}
-                            y={viewBox.cy}
+                            y={(viewBox.cy ?? 0) - 30}
                             className="fill-foreground text-3xl font-bold"
                           >
                             {totalCount.toLocaleString()}
                           </tspan>
                           <tspan
                             x={viewBox.cx}
-                            y={(viewBox.cy ?? 0) + 24}
-                            className="fill-gray-400 text-sm"
+                            y={(viewBox.cy ?? 0) - 5}
+                            className="fill-muted-foreground text-sm"
                           >
                             reactions
                           </tspan>
@@ -359,13 +384,13 @@ export function Trends() {
   return (
     <Tabs defaultValue="emoji-trends">
       <TabsList className="w-full">
-        <TabsTrigger value="emoji-trends" className="flex-1">
+        <TabsTrigger value="emoji-trends" className="flex-1 text-sm!">
           Emoji Trends
         </TabsTrigger>
-        <TabsTrigger value="user-trends" className="flex-1">
+        <TabsTrigger value="user-trends" className="flex-1 text-sm!">
           Top Reactors
         </TabsTrigger>
-        <TabsTrigger value="categories" className="flex-1">
+        <TabsTrigger value="categories" className="flex-1 text-sm!">
           Categories
         </TabsTrigger>
       </TabsList>

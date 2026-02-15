@@ -22,9 +22,8 @@ export function useQuery<T>(
   fetcher: () => Promise<T>,
   options?: UseQueryOptions,
 ) {
-  const cached = options?.key
-    ? (cache.get(options.key) as T | undefined)
-    : undefined;
+  const key = options?.key;
+  const cached = key ? (cache.get(key) as T | undefined) : undefined;
   const [data, setData] = useState<T | null>(cached ?? null);
   const [loading, setLoading] = useState(cached == null);
   const [error, setError] = useState<string | null>(null);
@@ -32,19 +31,17 @@ export function useQuery<T>(
   // Initial fetch (stale-while-revalidate when cached)
   useEffect(() => {
     let cancelled = false;
-    if (!cached) {
+    if (!key || !cache.has(key)) {
       setLoading(true);
     }
     setError(null);
-    const request = options?.key
-      ? dedupedFetch(options.key, fetcher)
-      : fetcher();
+    const request = key ? dedupedFetch(key, fetcher) : fetcher();
     request
       .then((result) => {
         if (!cancelled) {
           setData(result);
-          if (options?.key) {
-            cache.set(options.key, result);
+          if (key) {
+            cache.set(key, result);
           }
         }
       })
@@ -61,7 +58,7 @@ export function useQuery<T>(
     return () => {
       cancelled = true;
     };
-  }, [fetcher]);
+  }, [fetcher, key]);
 
   // Polling (pauses when tab is hidden)
   useEffect(() => {
@@ -76,8 +73,8 @@ export function useQuery<T>(
       fetcher()
         .then((result) => {
           setData(result);
-          if (options?.key) {
-            cache.set(options.key, result);
+          if (key) {
+            cache.set(key, result);
           }
         })
         .catch(() => {});
@@ -115,7 +112,7 @@ export function useQuery<T>(
       stop();
       document.removeEventListener("visibilitychange", onVisibilityChange);
     };
-  }, [fetcher, options?.pollingInterval]);
+  }, [fetcher, options?.pollingInterval, key]);
 
   return { data, loading, error };
 }

@@ -12,9 +12,22 @@ import { UserDetail } from "./components/UserDetail";
 import { UserLeaderboard } from "./components/UserLeaderboard";
 
 export function App() {
+  const [activeTab, setActiveTab] = useState("emojis");
   const [emojiDetail, setEmojiDetail] = useState<string | null>(null);
   const [userDetail, setUserDetail] = useState<string | null>(null);
   const [refreshKey, setRefreshKey] = useState(0);
+
+  function handleSelectUser(userId: string) {
+    setEmojiDetail(null);
+    setUserDetail(userId);
+    setActiveTab("users");
+  }
+
+  function handleSelectEmoji(emoji: string) {
+    setUserDetail(null);
+    setEmojiDetail(emoji);
+    setActiveTab("emojis");
+  }
 
   const tabs: { value: string; label: string; content: ReactNode }[] = [
     {
@@ -25,6 +38,7 @@ export function App() {
           key={refreshKey}
           emoji={emojiDetail}
           onBack={() => setEmojiDetail(null)}
+          onSelectUser={handleSelectUser}
         />
       ) : (
         <EmojiLeaderboard key={refreshKey} onSelect={setEmojiDetail} />
@@ -38,6 +52,7 @@ export function App() {
           key={refreshKey}
           userId={userDetail}
           onBack={() => setUserDetail(null)}
+          onSelectEmoji={handleSelectEmoji}
         />
       ) : (
         <UserLeaderboard key={refreshKey} onSelect={setUserDetail} />
@@ -53,14 +68,15 @@ export function App() {
   return (
     <Layout title="Emoji Leaderboard 😎">
       <Tabs
-        defaultValue="emojis"
-        onValueChange={() => {
+        value={activeTab}
+        onValueChange={(value) => {
+          setActiveTab(value);
           setEmojiDetail(null);
           setUserDetail(null);
         }}
       >
-        <div className="mb-6 flex items-center gap-2 h-14">
-          <TabsList className="flex-1 h-full">
+        <div className="mb-6 h-14">
+          <TabsList className="size-full">
             {tabs.map((tab) => (
               <TabsTrigger
                 key={tab.value}
@@ -71,15 +87,14 @@ export function App() {
               </TabsTrigger>
             ))}
           </TabsList>
-          <div className="h-full py-1">
-            <Button
-              className="h-full"
-              onClick={() => setRefreshKey((k) => k + 1)}
-            >
-              <RefreshCw />
-            </Button>
-          </div>
         </div>
+        <Button
+          size="icon"
+          className="fixed bottom-6 right-6 z-50 size-12"
+          onClick={() => setRefreshKey((k) => k + 1)}
+        >
+          <RefreshCw />
+        </Button>
 
         <Card className="p-4">
           {tabs.map((tab) => (

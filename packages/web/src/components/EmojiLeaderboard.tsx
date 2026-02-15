@@ -18,13 +18,15 @@ export function EmojiLeaderboard({
   });
 
   if (loading) {
-    return <p className="text-center text-gray-500">Loading...</p>;
+    return <p className="text-center text-muted-foreground">Loading...</p>;
   }
   if (error) {
     return <p className="text-center text-red-400">{error}</p>;
   }
   if (!data?.length) {
-    return <p className="text-center text-gray-500">No reactions yet</p>;
+    return (
+      <p className="text-center text-muted-foreground">No reactions yet</p>
+    );
   }
 
   return (
@@ -38,7 +40,7 @@ export function EmojiLeaderboard({
               name={entry.emoji}
               imageUrl={entry.imageUrl}
               size={28}
-              showTooltip={false}
+              hideTooltip
             />
           }
           label={`:${entry.emoji}:`}

@@ -15,7 +15,7 @@ function Avatar({ url, name }: { url: string | null; name: string | null }) {
     );
   }
   return (
-    <div className="flex h-7 w-7 items-center justify-center rounded-full bg-gray-700 text-xs">
+    <div className="flex h-7 w-7 items-center justify-center rounded-full bg-muted text-xs">
       ?
     </div>
   );
@@ -35,13 +35,13 @@ export function UserLeaderboard({
   });
 
   if (loading) {
-    return <p className="text-center text-gray-500">Loading...</p>;
+    return <p className="text-center text-muted-foreground">Loading...</p>;
   }
   if (error) {
     return <p className="text-center text-red-400">{error}</p>;
   }
   if (!data?.length) {
-    return <p className="text-center text-gray-500">No reactors yet</p>;
+    return <p className="text-center text-muted-foreground">No reactors yet</p>;
   }
 
   return (

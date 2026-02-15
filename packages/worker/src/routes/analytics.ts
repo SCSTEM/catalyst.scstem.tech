@@ -139,21 +139,28 @@ export const analyticsRoute = new Hono<{ Bindings: Bindings }>()
 
     const userIds = topUsers.map((r) => r.userId);
     if (!userIds.length) {
-      return c.json({ users: {} as Record<string, string>, series: [] });
+      return c.json({
+        users: {} as Record<string, { name: string; avatar: string | null }>,
+        series: [],
+      });
     }
 
-    // Get display names
+    // Get display names + avatars
     const userRows = await db
       .select({
         userId: users.userId,
         displayName: users.displayName,
+        avatarUrl: users.avatarUrl,
       })
       .from(users)
       .where(inArray(users.userId, userIds));
 
-    const userMap: Record<string, string> = {};
+    const userMap: Record<string, { name: string; avatar: string | null }> = {};
     for (const u of userRows) {
-      userMap[u.userId] = u.displayName || u.userId;
+      userMap[u.userId] = {
+        name: u.displayName || u.userId,
+        avatar: u.avatarUrl,
+      };
     }
 
     // Get per-bucket counts

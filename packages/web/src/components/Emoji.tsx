@@ -10,12 +10,12 @@ import { useEmojiMap } from "../hooks/useEmojiMap";
 export function Emoji({
   name,
   imageUrl,
-  showTooltip = true,
+  hideTooltip = false,
   size = 24,
 }: {
   name: string;
   imageUrl?: string | null;
-  showTooltip?: boolean;
+  hideTooltip?: boolean;
   size?: number;
 }) {
   const { map } = useEmojiMap();
@@ -23,12 +23,22 @@ export function Emoji({
   // Default to showing the emoji name if we can't find an image
   let element: ReactNode = (
     <span
-      className="rounded bg-gray-800 px-1 text-sm text-gray-400"
+      className="rounded bg-muted px-1 text-sm text-muted-foreground"
       title={`:${name}:`}
     >
       :{name}:
     </span>
   );
+
+  // Try standard emoji Unicode mapping
+  const unicode = nameToEmoji[remapName(name)];
+  if (unicode) {
+    element = (
+      <span title={`:${name}:`} style={{ fontSize: size }}>
+        {unicode}
+      </span>
+    );
+  }
 
   // If we have a direct image URL (from DB join), use it
   const customUrl = imageUrl ?? map[name];
@@ -46,17 +56,7 @@ export function Emoji({
     );
   }
 
-  // Try standard emoji Unicode mapping
-  const unicode = nameToEmoji[remapName(name)];
-  if (unicode) {
-    element = (
-      <span title={`:${name}:`} style={{ fontSize: size }}>
-        {unicode}
-      </span>
-    );
-  }
-
-  if (!showTooltip) {
+  if (hideTooltip) {
     return element;
   }
 
