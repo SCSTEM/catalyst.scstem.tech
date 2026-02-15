@@ -13,20 +13,14 @@ import {
  * Import and call `seedTestDb()` in your test files' `beforeAll`.
  */
 export async function seedTestDb() {
-  // Apply migrations using prepare().run() (exec() has a bug in test D1)
-  const statements = [
-    `CREATE TABLE IF NOT EXISTS \`emoji_images\` (\`name\` text PRIMARY KEY NOT NULL, \`image_url\` text NOT NULL, \`updated_at\` text DEFAULT (datetime('now')) NOT NULL)`,
-    `CREATE TABLE IF NOT EXISTS \`reaction_totals\` (\`emoji\` text PRIMARY KEY NOT NULL, \`count\` integer DEFAULT 0 NOT NULL)`,
-    `CREATE TABLE IF NOT EXISTS \`reactions\` (\`user_id\` text NOT NULL, \`emoji\` text NOT NULL, \`channel_id\` text NOT NULL, \`message_ts\` text NOT NULL, \`created_at\` text DEFAULT (datetime('now')) NOT NULL, PRIMARY KEY(\`user_id\`, \`emoji\`, \`channel_id\`, \`message_ts\`))`,
-    `CREATE INDEX IF NOT EXISTS \`idx_reactions_emoji\` ON \`reactions\` (\`emoji\`)`,
-    `CREATE INDEX IF NOT EXISTS \`idx_reactions_user\` ON \`reactions\` (\`user_id\`)`,
-    `CREATE INDEX IF NOT EXISTS \`idx_reactions_created_at\` ON \`reactions\` (\`created_at\`)`,
-    `CREATE TABLE IF NOT EXISTS \`user_emoji_counts\` (\`user_id\` text NOT NULL, \`emoji\` text NOT NULL, \`count\` integer DEFAULT 0 NOT NULL, PRIMARY KEY(\`user_id\`, \`emoji\`))`,
-    `CREATE INDEX IF NOT EXISTS \`idx_uec_user\` ON \`user_emoji_counts\` (\`user_id\`)`,
-    `CREATE TABLE IF NOT EXISTS \`users\` (\`user_id\` text PRIMARY KEY NOT NULL, \`display_name\` text DEFAULT '' NOT NULL, \`avatar_url\` text DEFAULT '' NOT NULL, \`updated_at\` text DEFAULT (datetime('now')) NOT NULL)`,
-  ];
-  for (const sql of statements) {
-    await env.DB.prepare(sql).run();
+  // Apply migrations from the real migration files (injected via vitest.config.ts)
+  const migrationSql = (env as Record<string, unknown>).MIGRATION_SQL as string;
+  const statements = migrationSql
+    .split("--> statement-breakpoint")
+    .map((s) => s.trim())
+    .filter(Boolean);
+  for (const stmt of statements) {
+    await env.DB.prepare(stmt).run();
   }
 
   // Seed data

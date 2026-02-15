@@ -29,8 +29,6 @@ import { myFeatureRoute } from "./routes/myFeature";
 .route("/api/my-feature", myFeatureRoute)
 ```
 
-3. Update the API routes table in the root `CLAUDE.md`.
-
 The exported `AppType` in `app.ts` automatically picks up the new route — the web package gets type-safe RPC for free.
 
 ## Key Patterns

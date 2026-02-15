@@ -63,18 +63,9 @@ Reactions use delete-on-remove (not event sourcing). Two pre-aggregated tables (
 
 ### API routes
 
-| Method | Path | Description |
-|--------|------|-------------|
-| GET | `/api/rankings/emojis` | Top emojis by reaction count |
-| GET | `/api/rankings/users` | Top users by total reactions |
-| GET | `/api/emojis` | Custom emoji name → image URL map |
-| GET | `/api/emojis/:emoji/users` | Who uses a specific emoji |
-| GET | `/api/users/:userId/emojis` | A user's emoji breakdown |
-| GET | `/api/analytics/emoji-trends` | Emoji usage over time |
-| GET | `/api/analytics/user-trends` | User activity over time |
-| GET | `/api/health` | Health check |
-| POST | `/api/auth/verify` | Password + Turnstile verification |
-| POST | `/slack/events` | Slack webhook (SDK-handled) |
+All routes are defined in `packages/worker/src/app.ts`. Each `.route()` call mounts a route file from `src/routes/`. Read `app.ts` to see the full list — it's the single source of truth. Don't duplicate the route list elsewhere.
+
+`/slack/events` is handled separately in `src/index.ts` (before the Hono app) via the `slack-cloudflare-workers` SDK.
 
 ## Conventions
 

@@ -121,14 +121,6 @@ Add a mock response in `packages/web/src/lib/mock-data.ts`:
 },
 ```
 
-## Step 6: Update Documentation
-
-Add the route to the API routes table in the root `CLAUDE.md`:
-
-```
-| GET | `/api/<name>/endpoint` | Description here |
-```
-
 ## Checklist
 
 - [ ] Route file created in `packages/worker/src/routes/`
@@ -136,5 +128,4 @@ Add the route to the API routes table in the root `CLAUDE.md`:
 - [ ] Web package can call the route with full type inference
 - [ ] Test added in `packages/worker/test/api.test.ts`
 - [ ] Mock data added in `packages/web/src/lib/mock-data.ts`
-- [ ] API routes table in root `CLAUDE.md` updated
-- [ ] `bun run check && bun run typecheck` passes
+- [ ] `bun run check && bun run typecheck && bun run test` passes
