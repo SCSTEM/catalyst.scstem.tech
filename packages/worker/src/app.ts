@@ -10,7 +10,6 @@ import { usersRoute } from "./routes/users";
 type Bindings = {
   DB: D1Database;
   SLACK_SIGNING_SECRET: string;
-  SLACK_BOT_TOKEN: string;
   SITE_PASSWORD: string;
   TURNSTILE_SECRET_KEY: string;
   SESSION_TTL_HOURS: string;

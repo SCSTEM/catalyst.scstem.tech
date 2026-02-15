@@ -4,7 +4,9 @@ import { createMockFetch } from "./mock-data";
 
 const SESSION_TOKEN_KEY = "catalyst-token";
 
-const baseUrl = import.meta.env.PROD ? "https://api.catalyst.scstem.org" : "/";
+const baseUrl = import.meta.env.VITE_API_URL
+  ? import.meta.env.VITE_API_URL
+  : "/";
 
 export const isPreview = import.meta.env.VITE_PREVIEW === "true";
 
