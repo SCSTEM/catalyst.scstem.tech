@@ -11,6 +11,7 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
+import { useMediaQuery } from "usehooks-ts";
 import { api } from "../api";
 import { categorizeEmojis } from "../lib/emojiCategories";
 import { Emoji } from "./Emoji";
@@ -54,9 +55,9 @@ function PeriodSelector({
 }) {
   return (
     <Tabs value={value} onValueChange={(v) => onChange(v as Period)}>
-      <TabsList>
+      <TabsList className="w-full">
         {(["day", "week", "month"] as const).map((p) => (
-          <TabsTrigger key={p} value={p}>
+          <TabsTrigger key={p} value={p} className="w-full">
             {p.charAt(0).toUpperCase() + p.slice(1)}
           </TabsTrigger>
         ))}
@@ -109,21 +110,21 @@ function TrendChart({
   onPeriodChange,
 }: TrendChartProps) {
   return (
-    <Card className="shadow-none! border-0">
+    <Card className="shadow-none! border-0 md:py-6 py-4">
       <CardHeader>
         <CardTitle>{title}</CardTitle>
         <CardDescription>{description}</CardDescription>
-        <CardAction>
+        <CardAction className="hidden md:block">
           <PeriodSelector value={period} onChange={onPeriodChange} />
         </CardAction>
       </CardHeader>
-      <CardContent>
+      <CardContent className="md:px-6 px-2">
         {loading && (
           <p className="py-12 text-center text-muted-foreground">Loading...</p>
         )}
         {error && <p className="py-12 text-center text-red-400">{error}</p>}
         {!loading && !error && series.length > 0 && (
-          <ChartContainer config={config} className="h-64 md:h-87.5 w-full">
+          <ChartContainer config={config} className="h-80 md:h-87.5 w-full">
             <AreaChart data={series}>
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis dataKey="period" tickLine={false} axisLine={false} />
@@ -150,6 +151,9 @@ function TrendChart({
           </p>
         )}
       </CardContent>
+      <div className="px-6 md:hidden">
+        <PeriodSelector value={period} onChange={onPeriodChange} />
+      </div>
     </Card>
   );
 }
@@ -275,6 +279,12 @@ function UserTrendsChart() {
 }
 
 function CategoryChart() {
+  const isDesktop = useMediaQuery("(min-width: 768px)");
+  const pieInner = isDesktop ? 80 : 55;
+  const pieOuter = isDesktop ? 140 : 95;
+  const labelY1 = isDesktop ? -42 : -72;
+  const labelY2 = isDesktop ? -12 : -48;
+
   const { data, isPending, error } = useQuery({
     queryKey: ["analytics", "categories"],
     queryFn: async () => {
@@ -312,7 +322,7 @@ function CategoryChart() {
     <Card className="shadow-none! border-0">
       <CardHeader>
         <CardTitle>Categories</CardTitle>
-        <CardDescription>Emoji usage by Unicode category</CardDescription>
+        <CardDescription>Reaction emoji usage by category</CardDescription>
       </CardHeader>
       <CardContent>
         {isPending && (
@@ -324,7 +334,7 @@ function CategoryChart() {
         {categories.length > 0 && (
           <ChartContainer
             config={chartConfig}
-            className="mx-auto h-87.5 w-full"
+            className="mx-auto h-96 md:h-87.5 w-full"
           >
             <PieChart>
               <ChartTooltip content={<ChartTooltipContent hideLabel />} />
@@ -332,8 +342,8 @@ function CategoryChart() {
                 data={categories}
                 dataKey="count"
                 nameKey="category"
-                innerRadius={80}
-                outerRadius={140}
+                innerRadius={pieInner}
+                outerRadius={pieOuter}
                 strokeWidth={2}
               >
                 {categories.map((cat) => (
@@ -351,14 +361,14 @@ function CategoryChart() {
                         >
                           <tspan
                             x={viewBox.cx}
-                            y={(viewBox.cy ?? 0) - 30}
+                            y={(viewBox.cy ?? 0) + labelY1}
                             className="fill-foreground text-3xl font-bold"
                           >
                             {totalCount.toLocaleString()}
                           </tspan>
                           <tspan
                             x={viewBox.cx}
-                            y={(viewBox.cy ?? 0) - 5}
+                            y={(viewBox.cy ?? 0) + labelY2}
                             className="fill-muted-foreground text-sm"
                           >
                             reactions
@@ -385,13 +395,13 @@ export function Trends() {
   return (
     <Tabs defaultValue="emoji-trends">
       <TabsList className="w-full">
-        <TabsTrigger value="emoji-trends" className="flex-1 text-sm!">
-          Emoji Trends
+        <TabsTrigger value="emoji-trends" className="flex-1">
+          Emojis
         </TabsTrigger>
-        <TabsTrigger value="user-trends" className="flex-1 text-sm!">
-          Top Reactors
+        <TabsTrigger value="user-trends" className="flex-1">
+          Reactors
         </TabsTrigger>
-        <TabsTrigger value="categories" className="flex-1 text-sm!">
+        <TabsTrigger value="categories" className="flex-1">
           Categories
         </TabsTrigger>
       </TabsList>

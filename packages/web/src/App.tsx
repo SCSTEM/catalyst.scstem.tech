@@ -37,7 +37,7 @@ export function App() {
   const tabs: { value: string; label: string; content: ReactNode }[] = [
     {
       value: "emojis",
-      label: "Top Emojis",
+      label: "Top Reactions",
       content: emojiDetail ? (
         <EmojiDetail
           emoji={emojiDetail}
