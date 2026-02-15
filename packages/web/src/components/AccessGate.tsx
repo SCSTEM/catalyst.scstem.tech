@@ -1,7 +1,6 @@
 import { REGEXP_ONLY_DIGITS } from "input-otp";
 import { useRef, useState } from "react";
 import { api } from "@/api";
-import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import {
   InputOTP,
@@ -36,16 +35,14 @@ type AccessGateProps = {
 
 export function AccessGate({ onAuthenticated }: AccessGateProps) {
   const [password, setPassword] = useState(getPassParam);
-  const autoSubmit = useRef(password.length === 6);
-  const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
+  const turnstileTokenRef = useRef<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const loadingRef = useRef(false);
   const [turnstileKey, setTurnstileKey] = useState(0);
 
-  const canSubmit =
-    password.length === 6 && turnstileToken !== null && !loading;
-
   async function submit(pass: string, token: string) {
+    loadingRef.current = true;
     setLoading(true);
     setError(null);
 
@@ -61,30 +58,35 @@ export function AccessGate({ onAuthenticated }: AccessGateProps) {
         const data = (await res.json()) as { error?: string };
         setError(data.error ?? "Verification failed");
         setPassword("");
-        setTurnstileToken(null);
+        turnstileTokenRef.current = null;
         setTurnstileKey((k) => k + 1);
       }
     } catch {
       setError("Network error. Please try again.");
       setPassword("");
-      setTurnstileToken(null);
+      turnstileTokenRef.current = null;
       setTurnstileKey((k) => k + 1);
     } finally {
+      loadingRef.current = false;
       setLoading(false);
     }
   }
 
-  function handleSubmit() {
-    if (!canSubmit || !turnstileToken) {
-      return;
+  function handlePasswordChange(value: string) {
+    setPassword(value);
+    setError(null);
+    if (
+      value.length === 6 &&
+      turnstileTokenRef.current &&
+      !loadingRef.current
+    ) {
+      submit(value, turnstileTokenRef.current);
     }
-    submit(password, turnstileToken);
   }
 
   function handleTurnstileVerify(token: string) {
-    setTurnstileToken(token);
-    if (autoSubmit.current && password.length === 6) {
-      autoSubmit.current = false;
+    turnstileTokenRef.current = token;
+    if (password.length === 6 && !loadingRef.current) {
       submit(password, token);
     }
   }
@@ -101,10 +103,7 @@ export function AccessGate({ onAuthenticated }: AccessGateProps) {
             maxLength={6}
             pattern={REGEXP_ONLY_DIGITS}
             value={password}
-            onChange={(value) => {
-              setPassword(value);
-              setError(null);
-            }}
+            onChange={handlePasswordChange}
           >
             <InputOTPGroup>
               <InputOTPSlot index={0} />
@@ -123,16 +122,16 @@ export function AccessGate({ onAuthenticated }: AccessGateProps) {
             key={turnstileKey}
             siteKey={TURNSTILE_SITE_KEY}
             onVerify={handleTurnstileVerify}
-            onExpire={() => setTurnstileToken(null)}
+            onExpire={() => {
+              turnstileTokenRef.current = null;
+            }}
           />
 
-          <Button
-            className="w-full"
-            disabled={!canSubmit}
-            onClick={handleSubmit}
-          >
-            {loading ? "Verifying..." : "Enter"}
-          </Button>
+          {loading ? (
+            <p className="text-center text-sm text-muted-foreground">
+              Verifying...
+            </p>
+          ) : null}
 
           {error ? (
             <p className="text-center text-sm text-[#ff6669]">{error}</p>
