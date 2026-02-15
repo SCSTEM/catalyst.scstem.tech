@@ -25,9 +25,19 @@ bun run db:generate          # Generate Drizzle migration from schema
 bun run db:migrate:local     # Apply migrations to local D1
 bun run db:migrate:remote    # Apply migrations to production D1
 
+# Seed local database with sample data (no Slack token needed)
+bun run db:seed
+
 # Backfill historical Slack data
 SLACK_BOT_TOKEN=xoxb-... bun run backfill
 ```
+
+## Per-Package Documentation
+
+Each package has its own `CLAUDE.md` with detailed patterns and conventions:
+
+- **`packages/worker/CLAUDE.md`** — Adding routes, Drizzle patterns, Bindings, schema changes
+- **`packages/web/CLAUDE.md`** — Component organization, TanStack Query patterns, shadcn/ui, styling
 
 ## Architecture
 
@@ -59,12 +69,19 @@ Reactions use delete-on-remove (not event sourcing). Two pre-aggregated tables (
 | GET | `/api/emojis` | Custom emoji name → image URL map |
 | GET | `/api/emojis/:emoji/users` | Who uses a specific emoji |
 | GET | `/api/users/:userId/emojis` | A user's emoji breakdown |
+| GET | `/api/analytics/emoji-trends` | Emoji usage over time |
+| GET | `/api/analytics/user-trends` | User activity over time |
+| GET | `/api/health` | Health check |
+| POST | `/api/auth/verify` | Password + Turnstile verification |
 | POST | `/slack/events` | Slack webhook (SDK-handled) |
 
 ## Conventions
 
 - **Always use `bun`/`bunx`**, never `npm`/`npx`.
-- **Biome** handles formatting and linting. A PostToolUse hook runs `bun run check` after every file edit.
+- **Biome** handles formatting and linting. A PostToolUse hook runs `bun run check && bun run typecheck` after every file edit.
 - **No one-line if statements.** Always use braces on a new line, even for single-statement bodies.
 - **Caret ranges with full semver** in package.json (e.g. `"^4.11.9"`, not `"^4"`).
+- **`import type` for type-only imports.** Enforced by biome (`useImportType`). Use `import type { Foo }` when importing only types.
+- **No unused imports.** Enforced by biome (`noUnusedImports`). Remove imports that are no longer used after refactoring.
+- **`@/` alias for cross-directory imports** in the web package. Only use relative imports for same-directory siblings. See `packages/web/CLAUDE.md` for details.
 - Schema changes require deleting all migrations and regenerating a single clean migration with `bun run db:generate` (fresh project, no production migration history to preserve yet).

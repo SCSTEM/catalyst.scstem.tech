@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+# Git pre-commit hook: runs biome check and typecheck before every commit.
+# Install: cp scripts/pre-commit .git/hooks/pre-commit && chmod +x .git/hooks/pre-commit
+
+set -e
+
+echo "pre-commit: running biome check..."
+bun run check
+
+echo "pre-commit: running typecheck..."
+bun run typecheck
+
+echo "pre-commit: all checks passed"
