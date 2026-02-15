@@ -1,3 +1,4 @@
+import { Turnstile } from "@marsidev/react-turnstile";
 import { REGEXP_ONLY_DIGITS } from "input-otp";
 import { useRef, useState } from "react";
 import { api } from "@/api";
@@ -9,7 +10,6 @@ import {
   InputOTPSlot,
 } from "@/components/ui/input-otp";
 import { Layout } from "./Layout";
-import { Turnstile } from "./Turnstile";
 
 // Cloudflare Turnstile test keys: https://developers.cloudflare.com/turnstile/troubleshooting/testing/
 // Always passes (visible): 1x00000000000000000000AA
@@ -121,10 +121,11 @@ export function AccessGate({ onAuthenticated }: AccessGateProps) {
           <Turnstile
             key={turnstileKey}
             siteKey={TURNSTILE_SITE_KEY}
-            onVerify={handleTurnstileVerify}
+            onSuccess={handleTurnstileVerify}
             onExpire={() => {
               turnstileTokenRef.current = null;
             }}
+            options={{ theme: "dark" }}
           />
 
           {loading ? (
