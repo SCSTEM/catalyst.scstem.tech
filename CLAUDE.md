@@ -38,14 +38,14 @@ SLACK_BOT_TOKEN=xoxb-... bun run backfill
 Each package has its own `CLAUDE.md` with detailed patterns and conventions:
 
 - **`packages/worker/CLAUDE.md`** — Adding routes, Drizzle patterns, Bindings, schema changes
-- **`packages/web/CLAUDE.md`** — Component organization, TanStack Query patterns, shadcn/ui, styling
+- **`packages/web/CLAUDE.md`** — Routing (TanStack Router), data fetching (TanStack Query), components, styling
 
 ## Architecture
 
 Bun monorepo with two packages:
 
 - **`packages/worker`** — Cloudflare Worker: Hono API + Slack event handler, backed by D1 (SQLite). Deployed to `api.catalyst.scstem.org`.
-- **`packages/web`** — React 19 + Vite SPA. Uses Hono's typed RPC client for end-to-end type safety with the worker API.
+- **`packages/web`** — React 19 + Vite SPA. TanStack Router (file-based routing) + TanStack Query. Uses Hono's typed RPC client for end-to-end type safety with the worker API.
 
 ### Type-safe RPC chain
 

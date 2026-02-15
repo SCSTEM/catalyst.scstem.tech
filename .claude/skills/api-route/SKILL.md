@@ -92,6 +92,8 @@ const res = await api.api.auth.verify.$post({
 });
 ```
 
+If the new API route also needs a new page, create a TanStack Router route file. See the `tanstack-router` skill for details.
+
 ## Step 4: Add a Test
 
 Add test cases to `packages/worker/test/api.test.ts`:
