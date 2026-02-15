@@ -73,8 +73,9 @@ export function App() {
           setEmojiDetail(null);
           setUserDetail(null);
         }}
+        className="flex flex-col gap-4 md:gap-6"
       >
-        <div className="mb-6 h-14">
+        <div className="h-14">
           <TabsList className="size-full">
             {tabs.map((tab) => (
               <TabsTrigger
@@ -87,15 +88,7 @@ export function App() {
             ))}
           </TabsList>
         </div>
-        <Button
-          size="icon"
-          className="fixed bottom-6 right-6 z-50 size-12"
-          onClick={() => queryClient.invalidateQueries()}
-        >
-          <RefreshCw />
-        </Button>
-
-        <Card className="p-4">
+        <Card className="p-2 md:p-4">
           {tabs.map((tab) => (
             <TabsContent key={tab.value} value={tab.value}>
               {tab.content}
@@ -103,6 +96,14 @@ export function App() {
           ))}
         </Card>
       </Tabs>
+
+      <Button
+        size="icon"
+        className="fixed bottom-6 right-6 z-50 size-12"
+        onClick={() => queryClient.invalidateQueries()}
+      >
+        <RefreshCw />
+      </Button>
     </Layout>
   );
 }
