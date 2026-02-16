@@ -44,7 +44,7 @@ Each package has its own `CLAUDE.md` with detailed patterns and conventions:
 
 Bun monorepo with two packages:
 
-- **`packages/worker`** — Cloudflare Worker: Hono API + Slack event handler, backed by D1 (SQLite). Deployed to `api.catalyst.scstem.org`.
+- **`packages/worker`** — Cloudflare Worker: Hono API + Slack event handler, backed by D1 (SQLite). Deployed to `api.catalyst.scstem.tech`.
 - **`packages/web`** — React 19 + Vite SPA. TanStack Router (file-based routing) + TanStack Query. Uses Hono's typed RPC client for end-to-end type safety with the worker API.
 
 ### Type-safe RPC chain
