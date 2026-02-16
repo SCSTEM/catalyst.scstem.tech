@@ -4,6 +4,9 @@ import { LeaderboardRow } from "@/components/stats/LeaderboardRow";
 import { useUserRankings } from "@/hooks/queries";
 
 export const Route = createFileRoute("/stats/users/")({
+  head: () => ({
+    meta: [{ title: "Top Reactors | Catalyst" }],
+  }),
   component: UsersPage,
 });
 

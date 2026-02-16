@@ -6,6 +6,9 @@ import { LeaderboardRow } from "@/components/stats/LeaderboardRow";
 import { useEmojiUsers } from "@/hooks/queries";
 
 export const Route = createFileRoute("/stats/emojis/$emoji")({
+  head: ({ params }) => ({
+    meta: [{ title: `:${params.emoji}: | Catalyst` }],
+  }),
   component: EmojiDetailPage,
 });
 

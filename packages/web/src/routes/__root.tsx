@@ -1,4 +1,4 @@
-import { createRootRoute, Outlet } from "@tanstack/react-router";
+import { createRootRoute, HeadContent, Outlet } from "@tanstack/react-router";
 import { lazy, useState } from "react";
 import { AccessGate } from "@/components/AccessGate";
 import { isPreview } from "@/lib/api";
@@ -8,6 +8,15 @@ const DevTools = import.meta.env.PROD
   : lazy(() => import("@/components/DevTools"));
 
 export const Route = createRootRoute({
+  head: () => ({
+    meta: [
+      { title: "Catalyst" },
+      {
+        name: "description",
+        content: "Slack bot (and more) that gets the whole team moving!",
+      },
+    ],
+  }),
   component: RootLayout,
   notFoundComponent: NotFound,
 });
@@ -23,6 +32,7 @@ function RootLayout() {
 
   return (
     <>
+      <HeadContent />
       <Outlet />
       <DevTools />
     </>
