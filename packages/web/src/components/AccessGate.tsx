@@ -126,6 +126,7 @@ export function AccessGate({ onAuthenticated }: AccessGateProps) {
               turnstileTokenRef.current = null;
             }}
             options={{ theme: "dark" }}
+            hidden
           />
 
           {loading ? (
