@@ -4,6 +4,9 @@ import { LeaderboardRow } from "@/components/stats/LeaderboardRow";
 import { useEmojiRankings } from "@/hooks/queries";
 
 export const Route = createFileRoute("/stats/emojis/")({
+  head: () => ({
+    meta: [{ title: "Top Reactions | Catalyst" }],
+  }),
   component: EmojisPage,
 });
 
