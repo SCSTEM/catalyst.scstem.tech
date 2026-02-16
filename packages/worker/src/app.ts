@@ -16,7 +16,7 @@ type Bindings = {
 };
 
 const ALLOWED_ORIGINS = new Set([
-  "https://catalyst.scstem.org",
+  "https://catalyst.scstem.tech",
   "http://localhost:5173",
 ]);
 
