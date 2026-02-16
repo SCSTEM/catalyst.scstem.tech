@@ -2,6 +2,7 @@
   "name": "catalyst-api",
   "main": "./src/index.ts",
   "compatibility_date": "2025-04-01",
+  "preview_urls": false,
   "d1_databases": [
     {
       "binding": "DB",
