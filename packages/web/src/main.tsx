@@ -16,7 +16,27 @@ const queryClient = new QueryClient({
   },
 });
 
-const router = createRouter({ routeTree });
+const router = createRouter({
+  routeTree,
+  defaultViewTransition: {
+    types: ({ fromLocation, toLocation, pathChanged }) => {
+      if (!pathChanged) {
+        return false;
+      }
+      const fromDepth = (fromLocation?.pathname ?? "")
+        .split("/")
+        .filter(Boolean).length;
+      const toDepth = toLocation.pathname.split("/").filter(Boolean).length;
+      if (toDepth > fromDepth) {
+        return ["drill-down"];
+      }
+      if (toDepth < fromDepth) {
+        return ["drill-up"];
+      }
+      return ["tab-switch"];
+    },
+  },
+});
 
 declare module "@tanstack/react-router" {
   interface Register {

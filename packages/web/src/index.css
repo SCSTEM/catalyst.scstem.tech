@@ -74,6 +74,10 @@
 
   body {
     @apply text-foreground font-base bg-background;
+    background-image:
+      linear-gradient(to right, #80808033 1px, transparent 1px),
+      linear-gradient(to bottom, #80808033 1px, transparent 1px);
+    background-size: 70px 70px;
   }
 
   h1,
@@ -83,5 +87,101 @@
   h5,
   h6 {
     @apply font-heading;
+  }
+}
+
+/* ── View Transitions ─────────────────────────────────────── */
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes fade-out {
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes slide-from-right {
+  from {
+    transform: translateX(30%);
+  }
+}
+
+@keyframes slide-to-left {
+  to {
+    transform: translateX(-30%);
+  }
+}
+
+@keyframes slide-from-left {
+  from {
+    transform: translateX(-30%);
+  }
+}
+
+@keyframes slide-to-right {
+  to {
+    transform: translateX(30%);
+  }
+}
+
+/* Default cross-fade for all transitions (tab-switch) */
+::view-transition-old(root),
+::view-transition-new(root) {
+  mix-blend-mode: plus-lighter;
+}
+
+::view-transition-old(root) {
+  animation: 200ms ease both fade-out;
+}
+
+::view-transition-new(root) {
+  animation: 200ms ease both fade-in;
+}
+
+/* Drill-down: old slides left + fades, new slides in from right */
+::view-transition-old(root):active-view-transition-type(drill-down) {
+  animation:
+    180ms ease both fade-out,
+    300ms ease both slide-to-left;
+}
+
+::view-transition-new(root):active-view-transition-type(drill-down) {
+  animation:
+    300ms ease both fade-in,
+    300ms ease both slide-from-right;
+}
+
+/* Drill-up: old slides right + fades, new slides in from left */
+::view-transition-old(root):active-view-transition-type(drill-up) {
+  animation:
+    180ms ease both fade-out,
+    300ms ease both slide-to-right;
+}
+
+::view-transition-new(root):active-view-transition-type(drill-up) {
+  animation:
+    300ms ease both fade-in,
+    300ms ease both slide-from-left;
+}
+
+/* Pin tabs bar and page title so they stay static during transitions */
+::view-transition-group(tabs-bar),
+::view-transition-group(page-title) {
+  animation: none;
+}
+
+/* Reduced motion: disable all transition animations */
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-old(root),
+  ::view-transition-new(root),
+  ::view-transition-old(root):active-view-transition-type(drill-down),
+  ::view-transition-new(root):active-view-transition-type(drill-down),
+  ::view-transition-old(root):active-view-transition-type(drill-up),
+  ::view-transition-new(root):active-view-transition-type(drill-up) {
+    animation: none;
   }
 }

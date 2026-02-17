@@ -49,7 +49,7 @@ function RouteComponent() {
         }}
         className="flex flex-col gap-4 md:gap-6"
       >
-        <div className="h-14">
+        <div className="h-14" style={{ viewTransitionName: "tabs-bar" }}>
           <TabsList className="size-full">
             {tabs.map((tab) => (
               <TabsTrigger
