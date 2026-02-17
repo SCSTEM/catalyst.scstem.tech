@@ -32,7 +32,16 @@ export function DetailView({
           <Button
             variant="neutral"
             size="sm"
-            onClick={() => router.history.back()}
+            onClick={() => {
+              if (document.startViewTransition) {
+                document.startViewTransition({
+                  update: () => router.history.back(),
+                  types: ["drill-up"],
+                });
+              } else {
+                router.history.back();
+              }
+            }}
           >
             <ArrowLeft />
           </Button>

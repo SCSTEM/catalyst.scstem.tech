@@ -1,5 +1,6 @@
 import { Turnstile } from "@marsidev/react-turnstile";
 import { REGEXP_ONLY_DIGITS } from "input-otp";
+import { Loader2 } from "lucide-react";
 import { useRef, useState } from "react";
 import { Card } from "@/components/ui/card";
 import {
@@ -8,6 +9,7 @@ import {
   InputOTPSlot,
 } from "@/components/ui/input-otp";
 import { api, setSessionToken } from "@/lib/api";
+import { cn } from "@/lib/utils";
 import { StatsLayout } from "./layouts/StatsLayout";
 
 // Cloudflare Turnstile test keys: https://developers.cloudflare.com/turnstile/troubleshooting/testing/
@@ -36,13 +38,13 @@ export function AccessGate({ onAuthenticated }: AccessGateProps) {
   const [password, setPassword] = useState(getPassParam);
   const turnstileTokenRef = useRef<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
   const loadingRef = useRef(false);
   const [turnstileKey, setTurnstileKey] = useState(0);
 
+  const codeComplete = password.length === 6 && !error;
+
   async function submit(pass: string, token: string) {
     loadingRef.current = true;
-    setLoading(true);
     setError(null);
 
     try {
@@ -71,7 +73,6 @@ export function AccessGate({ onAuthenticated }: AccessGateProps) {
       setTurnstileKey((k) => k + 1);
     } finally {
       loadingRef.current = false;
-      setLoading(false);
     }
   }
 
@@ -95,28 +96,46 @@ export function AccessGate({ onAuthenticated }: AccessGateProps) {
   }
 
   return (
-    <StatsLayout title="Emoji Leaderboard 😎">
+    <StatsLayout title="Password Required">
       <Card className="mx-auto max-w-sm p-8">
         <div className="flex flex-col items-center gap-6">
           <p className="text-center text-sm text-muted-foreground">
             Enter the password to continue
           </p>
 
-          <InputOTP
-            maxLength={6}
-            pattern={REGEXP_ONLY_DIGITS}
-            value={password}
-            onChange={handlePasswordChange}
-          >
-            <InputOTPGroup>
-              <InputOTPSlot index={0} />
-              <InputOTPSlot index={1} />
-              <InputOTPSlot index={2} />
-              <InputOTPSlot index={3} />
-              <InputOTPSlot index={4} />
-              <InputOTPSlot index={5} />
-            </InputOTPGroup>
-          </InputOTP>
+          <div className="relative">
+            <div
+              className={cn(
+                "inset-0 z-10 bg-overlay/50 rounded-base flex items-center",
+                codeComplete && loadingRef.current ? "absolute" : "hidden",
+              )}
+            >
+              <Loader2 className="mx-auto animate-spin" />
+            </div>
+            <InputOTP
+              autoFocus
+              maxLength={6}
+              pattern={REGEXP_ONLY_DIGITS}
+              value={password}
+              onChange={handlePasswordChange}
+              className="absolute inset-0"
+              pushPasswordManagerStrategy="none"
+              autoComplete="off"
+            >
+              <InputOTPGroup>
+                <InputOTPSlot index={0} />
+                <InputOTPSlot index={1} />
+                <InputOTPSlot index={2} />
+                <InputOTPSlot index={3} />
+                <InputOTPSlot index={4} />
+                <InputOTPSlot index={5} />
+              </InputOTPGroup>
+            </InputOTP>
+          </div>
+
+          {error ? (
+            <p className="text-center text-sm text-[#ff6669]">{error}</p>
+          ) : null}
 
           <Turnstile
             key={turnstileKey}
@@ -128,14 +147,6 @@ export function AccessGate({ onAuthenticated }: AccessGateProps) {
             options={{ theme: "dark" }}
             hidden
           />
-
-          {loading ? (
-            <p className="text-center text-sm text-muted-foreground">
-              Verifying...
-            </p>
-          ) : error ? (
-            <p className="text-center text-sm text-[#ff6669]">{error}</p>
-          ) : null}
         </div>
       </Card>
     </StatsLayout>

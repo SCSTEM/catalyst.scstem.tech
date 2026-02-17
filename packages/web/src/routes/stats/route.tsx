@@ -6,6 +6,7 @@ import {
   useNavigate,
 } from "@tanstack/react-router";
 import { RefreshCw } from "lucide-react";
+import { useState } from "react";
 import { StatsLayout } from "@/components/layouts/StatsLayout";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -33,9 +34,19 @@ function getActiveTab(pathname: string): string {
 
 function RouteComponent() {
   const queryClient = useQueryClient();
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
   const activeTab = getActiveTab(location.pathname);
+
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    await Promise.all([
+      queryClient.refetchQueries({ type: "active" }),
+      new Promise((r) => setTimeout(r, 500)),
+    ]);
+    setIsRefreshing(false);
+  };
 
   return (
     <StatsLayout title="Emoji Leaderboard 😎">
@@ -49,7 +60,7 @@ function RouteComponent() {
         }}
         className="flex flex-col gap-4 md:gap-6"
       >
-        <div className="h-14">
+        <div className="h-14" style={{ viewTransitionName: "tabs-bar" }}>
           <TabsList className="size-full">
             {tabs.map((tab) => (
               <TabsTrigger
@@ -70,9 +81,10 @@ function RouteComponent() {
       <Button
         size="icon"
         className="fixed bottom-6 right-6 z-50 size-12"
-        onClick={() => queryClient.invalidateQueries({ queryKey: ["stats"] })}
+        disabled={isRefreshing}
+        onClick={handleRefresh}
       >
-        <RefreshCw />
+        <RefreshCw className={isRefreshing ? "animate-spin" : ""} />
       </Button>
     </StatsLayout>
   );
