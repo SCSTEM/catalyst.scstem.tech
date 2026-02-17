@@ -309,8 +309,6 @@ if (effectiveSince) {
 }
 lines.push(`-- Checkpoint: ${newCheckpoint}`);
 lines.push("");
-lines.push("BEGIN;");
-lines.push("");
 
 // Reactions (batched INSERT OR IGNORE)
 if (allReactions.length > 0) {
@@ -374,8 +372,6 @@ if (emojiRows.length > 0) {
     lines.push("");
   }
 }
-
-lines.push("COMMIT;");
 
 const sqlContent = lines.join("\n");
 writeFileSync(OUTPUT_FILE, sqlContent);
