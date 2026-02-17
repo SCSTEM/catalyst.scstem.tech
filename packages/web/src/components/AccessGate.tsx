@@ -107,7 +107,7 @@ export function AccessGate({ onAuthenticated }: AccessGateProps) {
             <div
               className={cn(
                 "inset-0 z-10 bg-overlay/50 rounded-base flex items-center",
-                codeComplete && loadingRef.current ? "absolute" : "hidden",
+                codeComplete ? "absolute" : "hidden",
               )}
             >
               <Loader2 className="mx-auto animate-spin" />
