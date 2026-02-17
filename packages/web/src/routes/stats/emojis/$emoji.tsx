@@ -4,10 +4,16 @@ import { DetailView } from "@/components/stats/DetailView";
 import { Emoji } from "@/components/stats/Emoji";
 import { LeaderboardRow } from "@/components/stats/LeaderboardRow";
 import { useEmojiUsers } from "@/hooks/queries";
+import { resolveEmojiUnicode } from "@/lib/emoji";
+
+function emojiTitle(name: string): string {
+  const unicode = resolveEmojiUnicode(name);
+  return unicode ? `${unicode} | Catalyst` : `:${name}: | Catalyst`;
+}
 
 export const Route = createFileRoute("/stats/emojis/$emoji")({
   head: ({ params }) => ({
-    meta: [{ title: `:${params.emoji}: | Catalyst` }],
+    meta: [{ title: emojiTitle(params.emoji) }],
   }),
   component: EmojiDetailPage,
 });

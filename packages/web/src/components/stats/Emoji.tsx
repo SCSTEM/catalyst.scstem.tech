@@ -1,17 +1,10 @@
-import { nameToEmoji } from "gemoji";
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { useSlackCustomEmojis } from "@/hooks/queries";
-
-const REMAP: Record<string, string> = {
-  rolling_on_the_floor_laughing: "rofl",
-  biohazard_sign: "biohazard",
-  robot_face: "robot",
-  thinking_face: "thinking",
-};
+import { resolveEmojiUnicode } from "@/lib/emoji";
 
 type EmojiProps = {
   name: string;
@@ -22,7 +15,7 @@ type EmojiProps = {
 export function Emoji({ name, hideTooltip = false, size = 24 }: EmojiProps) {
   const { data: emojiMap } = useSlackCustomEmojis();
   const customUrl = emojiMap?.[name];
-  const unicode = !customUrl ? nameToEmoji[REMAP[name] ?? name] : undefined;
+  const unicode = !customUrl ? resolveEmojiUnicode(name) : undefined;
 
   const element = customUrl ? (
     <img
