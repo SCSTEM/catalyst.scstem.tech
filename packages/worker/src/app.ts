@@ -17,14 +17,29 @@ type Bindings = {
 
 const ALLOWED_ORIGINS = new Set([
   "https://catalyst.scstem.tech",
+  "https://staging.catalyst.scstem.tech",
   "http://localhost:5173",
 ]);
+
+function isAllowedOrigin(origin: string): boolean {
+  if (ALLOWED_ORIGINS.has(origin)) {
+    return true;
+  }
+  // Allow Cloudflare Pages preview deployment origins
+  if (
+    origin.startsWith("https://") &&
+    origin.endsWith(".catalyst-scstem-tech.pages.dev")
+  ) {
+    return true;
+  }
+  return false;
+}
 
 const app = new Hono<{ Bindings: Bindings }>()
   .use(
     "/api/*",
     cors({
-      origin: (origin) => (ALLOWED_ORIGINS.has(origin) ? origin : ""),
+      origin: (origin) => (isAllowedOrigin(origin) ? origin : ""),
       allowMethods: ["GET", "POST", "OPTIONS"],
       allowHeaders: ["Content-Type", "Authorization"],
       maxAge: 86400,

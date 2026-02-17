@@ -35,5 +35,7 @@ logs
 
 *.local.*
 .mise.toml
+backfill.sql
+.backfill-checkpoint
 *.gen.ts
 **/*.tanstack/

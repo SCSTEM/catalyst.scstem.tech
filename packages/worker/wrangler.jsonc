@@ -1,13 +1,37 @@
 {
+  "$schema": "../../node_modules/wrangler/config-schema.json",
+
   "name": "catalyst-api",
   "main": "./src/index.ts",
-  "compatibility_date": "2025-04-01",
+  "compatibility_date": "2026-02-16",
+
   "preview_urls": false,
+  "upload_source_maps": true,
+  "observability": {
+    "enabled": true,
+    "logs": {
+      "invocation_logs": true,
+      "head_sampling_rate": 1
+    }
+  },
+
   "d1_databases": [
     {
       "binding": "DB",
       "database_name": "catalyst-db",
       "database_id": "d2f4ce25-1b02-4e5e-9662-f925e871d0da"
     }
-  ]
+  ],
+
+  "env": {
+    "staging": {
+      "d1_databases": [
+        {
+          "binding": "DB",
+          "database_name": "catalyst-db-staging",
+          "database_id": ""
+        }
+      ]
+    }
+  }
 }

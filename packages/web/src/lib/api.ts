@@ -1,14 +1,11 @@
 import type { AppType } from "@catalyst/worker/app";
 import { hc } from "hono/client";
-import { createMockFetch } from "./mock-data";
 
 const SESSION_TOKEN_KEY = "catalyst-token";
 
 const baseUrl = import.meta.env.VITE_API_URL
   ? import.meta.env.VITE_API_URL
   : "/";
-
-export const isPreview = import.meta.env.VITE_PREVIEW === "true";
 
 export function getSessionToken(): string | null {
   return sessionStorage.getItem(SESSION_TOKEN_KEY);
@@ -33,7 +30,7 @@ function authFetch(input: RequestInfo | URL, init?: RequestInit) {
 }
 
 export const api = hc<AppType>(baseUrl, {
-  fetch: isPreview ? (createMockFetch() as typeof fetch) : authFetch,
+  fetch: authFetch,
 });
 
 export async function fetchJson<T>(

@@ -44,7 +44,7 @@ app.command("/<command-name>", async ({ payload, context }) => {
 ### Key notes for slash commands:
 
 - The command must be registered in the Slack App settings (api.slack.com) first
-- The request URL should be `https://api.catalyst.scstem.org/slack/events`
+- The request URL should be `https://catalyst-api.scstem.workers.dev/slack/events`
 - Slack expects a response within 3 seconds — for long operations, acknowledge immediately and use `context.respond()` for a delayed response
 - Access D1 via `env.DB` (passed to `createSlackApp`)
 
@@ -76,7 +76,7 @@ app.event("<event-type>", async ({ payload, context }) => {
 
 1. Go to api.slack.com → Your App → Event Subscriptions
 2. Enable events
-3. Set Request URL to `https://api.catalyst.scstem.org/slack/events`
+3. Set Request URL to `https://catalyst-api.scstem.workers.dev/slack/events`
 4. Subscribe to the event types you need under "Subscribe to bot events"
 
 ## Database Operations
