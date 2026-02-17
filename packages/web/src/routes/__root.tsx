@@ -21,9 +21,12 @@ export const Route = createRootRoute({
 });
 
 function RootLayout() {
-  const [isAuthenticated, setIsAuthenticated] = useState(
-    () => sessionStorage.getItem("catalyst-auth") === "1",
-  );
+  const [isAuthenticated, setIsAuthenticated] = useState(() => {
+    if (new URLSearchParams(window.location.search).has("pass")) {
+      return false;
+    }
+    return sessionStorage.getItem("catalyst-auth") === "1";
+  });
 
   if (!isAuthenticated) {
     return <AccessGate onAuthenticated={() => setIsAuthenticated(true)} />;
