@@ -1,4 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { useEffect } from "react";
 import { Avatar } from "@/components/Avatar";
 import { DetailView } from "@/components/stats/DetailView";
 import { Emoji } from "@/components/stats/Emoji";
@@ -6,8 +7,8 @@ import { LeaderboardRow } from "@/components/stats/LeaderboardRow";
 import { useUserEmojis } from "@/hooks/queries";
 
 export const Route = createFileRoute("/stats/users/$userId")({
-  head: ({ params }) => ({
-    meta: [{ title: `${params.userId} | Catalyst` }],
+  head: () => ({
+    meta: [{ title: "Catalyst" }],
   }),
   component: UserDetailPage,
 });
@@ -16,6 +17,11 @@ function UserDetailPage() {
   const { userId } = Route.useParams();
   const navigate = useNavigate();
   const { data, isPending, error } = useUserEmojis(userId);
+
+  const displayName = data?.user?.displayName;
+  useEffect(() => {
+    document.title = displayName ? `${displayName} | Catalyst` : "Catalyst";
+  }, [displayName]);
 
   const user = data?.user;
   const emojis = data?.emojis ?? [];
