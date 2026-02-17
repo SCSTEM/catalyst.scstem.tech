@@ -5,11 +5,7 @@ import { Hono } from "hono";
 import { emojiImages, userEmojiCounts, users } from "../db/schema";
 import { limitQuery } from "./util";
 
-type Bindings = {
-  DB: D1Database;
-};
-
-export const emojisRoute = new Hono<{ Bindings: Bindings }>()
+export const emojisRoute = new Hono<{ Bindings: Env }>()
   .get("/", async (c) => {
     const db = drizzle(c.env.DB);
 

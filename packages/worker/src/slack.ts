@@ -7,14 +7,9 @@ import {
   renameEmoji,
 } from "./lib/db";
 
-type Env = {
-  SLACK_SIGNING_SECRET: string;
-  SLACK_BOT_TOKEN: string;
-  DB: D1Database;
-};
-
-export function createSlackApp(env: Env): SlackApp<Env> {
+export function createSlackApp(env: Env) {
   const app = new SlackApp({ env });
+  const db = env.DB;
 
   // ── Slash command ──
 
@@ -29,7 +24,7 @@ export function createSlackApp(env: Env): SlackApp<Env> {
       return;
     }
     try {
-      await addReaction(env.DB, {
+      await addReaction(db, {
         userId: payload.user,
         emoji: payload.reaction,
         channelId: payload.item.channel,
@@ -47,11 +42,11 @@ export function createSlackApp(env: Env): SlackApp<Env> {
         if (payload.value.startsWith("alias:")) {
           return;
         }
-        await addEmoji(env.DB, payload.name, payload.value);
+        await addEmoji(db, payload.name, payload.value);
         console.log("emoji_added", payload.name);
       } else if (payload.subtype === "remove" && payload.names) {
         for (const name of payload.names) {
-          await removeEmoji(env.DB, name);
+          await removeEmoji(db, name);
         }
         console.log("emoji_removed", payload.names.join(", "));
       } else if (
@@ -59,7 +54,7 @@ export function createSlackApp(env: Env): SlackApp<Env> {
         payload.old_name &&
         payload.new_name
       ) {
-        await renameEmoji(env.DB, payload.old_name, payload.new_name);
+        await renameEmoji(db, payload.old_name, payload.new_name);
         console.log("emoji_renamed", payload.old_name, "→", payload.new_name);
       }
     } catch (e) {
@@ -72,7 +67,7 @@ export function createSlackApp(env: Env): SlackApp<Env> {
       return;
     }
     try {
-      await removeReaction(env.DB, {
+      await removeReaction(db, {
         userId: payload.user,
         emoji: payload.reaction,
         channelId: payload.item.channel,

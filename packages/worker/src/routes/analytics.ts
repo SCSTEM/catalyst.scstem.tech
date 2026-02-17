@@ -2,6 +2,7 @@ import { zValidator } from "@hono/zod-validator";
 import { desc, inArray, sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/d1";
 import { Hono } from "hono";
+import { cache } from "hono/cache";
 import { z } from "zod";
 import {
   reactions,
@@ -9,10 +10,6 @@ import {
   userEmojiCounts,
   users,
 } from "../db/schema";
-
-type Bindings = {
-  DB: D1Database;
-};
 
 const bucketExpr = {
   day: sql<string>`strftime('%Y-%m-%d', created_at)`,
@@ -38,20 +35,14 @@ const trendsQuery = z
   .optional()
   .default({});
 
-const CACHE_TTL = 300; // 5 minutes
-
-export const analyticsRoute = new Hono<{ Bindings: Bindings }>()
-  .use("/*", async (c, next) => {
-    const cache = caches.default;
-    const cached = await cache.match(c.req.url);
-    if (cached) {
-      return new Response(cached.body, cached);
-    }
-    await next();
-    const res = c.res.clone();
-    res.headers.set("Cache-Control", `public, max-age=${CACHE_TTL}`);
-    c.executionCtx.waitUntil(cache.put(c.req.url, res));
-  })
+export const analyticsRoute = new Hono<{ Bindings: Env }>()
+  .use(
+    "/*",
+    cache({
+      cacheName: "catalyst-analytics",
+      cacheControl: "public, max-age=300",
+    }),
+  )
   .get("/emoji-trends", zValidator("query", trendsQuery), async (c) => {
     const db = drizzle(c.env.DB);
     const {

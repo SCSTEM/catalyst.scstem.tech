@@ -3,18 +3,12 @@ import { Hono } from "hono";
 import z from "zod";
 import { createSessionToken } from "../lib/auth";
 
-type Bindings = {
-  SITE_PASSWORD: string;
-  TURNSTILE_SECRET_KEY: string;
-  SESSION_TTL_HOURS: string;
-};
-
 const verifyBody = z.object({
   password: z.string(),
   turnstileToken: z.string(),
 });
 
-export const authRoute = new Hono<{ Bindings: Bindings }>().post(
+export const authRoute = new Hono<{ Bindings: Env }>().post(
   "/verify",
   zValidator("json", verifyBody),
   async (c) => {

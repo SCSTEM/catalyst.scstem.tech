@@ -5,11 +5,7 @@ import { Hono } from "hono";
 import { userEmojiCounts, users } from "../db/schema";
 import { limitQuery } from "./util";
 
-type Bindings = {
-  DB: D1Database;
-};
-
-export const usersRoute = new Hono<{ Bindings: Bindings }>().get(
+export const usersRoute = new Hono<{ Bindings: Env }>().get(
   "/:userId/emojis",
   zValidator("query", limitQuery),
   async (c) => {
