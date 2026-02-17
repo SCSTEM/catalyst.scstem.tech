@@ -38,7 +38,20 @@ const trendsQuery = z
   .optional()
   .default({});
 
+const CACHE_TTL = 300; // 5 minutes
+
 export const analyticsRoute = new Hono<{ Bindings: Bindings }>()
+  .use("/*", async (c, next) => {
+    const cache = caches.default;
+    const cached = await cache.match(c.req.url);
+    if (cached) {
+      return new Response(cached.body, cached);
+    }
+    await next();
+    const res = c.res.clone();
+    res.headers.set("Cache-Control", `public, max-age=${CACHE_TTL}`);
+    c.executionCtx.waitUntil(cache.put(c.req.url, res));
+  })
   .get("/emoji-trends", zValidator("query", trendsQuery), async (c) => {
     const db = drizzle(c.env.DB);
     const {
