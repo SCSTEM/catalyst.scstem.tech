@@ -1,7 +1,7 @@
 import { zValidator } from "@hono/zod-validator";
 import { Hono } from "hono";
 import z from "zod";
-import { createSessionToken } from "../lib/auth";
+import { createSessionToken, timeSafeEqual } from "../lib/auth";
 
 const verifyBody = z.object({
   password: z.string(),
@@ -22,6 +22,7 @@ export const authRoute = new Hono<{ Bindings: Env }>().post(
         body: JSON.stringify({
           secret: c.env.TURNSTILE_SECRET_KEY,
           response: turnstileToken,
+          remoteip: c.req.header("CF-Connecting-IP"),
         }),
       },
     );
@@ -32,7 +33,7 @@ export const authRoute = new Hono<{ Bindings: Env }>().post(
       return c.json({ ok: false, error: "Turnstile verification failed" }, 403);
     }
 
-    if (password !== c.env.SITE_PASSWORD) {
+    if (!timeSafeEqual(password, c.env.SITE_PASSWORD)) {
       return c.json({ ok: false, error: "Incorrect password" }, 401);
     }
 

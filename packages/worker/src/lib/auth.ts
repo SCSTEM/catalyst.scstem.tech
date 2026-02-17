@@ -19,7 +19,7 @@ async function hmac(secret: string, data: string): Promise<string> {
     .join("");
 }
 
-function timeSafeEqual(a: string, b: string): boolean {
+export function timeSafeEqual(a: string, b: string): boolean {
   if (a.length !== b.length) {
     return false;
   }

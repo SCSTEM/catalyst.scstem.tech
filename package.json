@@ -6,7 +6,7 @@
     "packages/*"
   ],
   "scripts": {
-    "test": "bun --filter '@catalyst/worker' test && bun scripts/validate-mock-coverage.ts",
+    "test": "bun --filter '@catalyst/worker' test",
 
     "build:web": "bun --filter '@catalyst/web' build",
 

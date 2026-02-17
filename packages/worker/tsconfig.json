@@ -16,5 +16,5 @@
     "emitDeclarationOnly": true,
     "declarationDir": ".types"
   },
-  "include": ["src", "test", "worker-configuration.d.ts"]
+  "include": ["src", "test", "env.d.ts", "worker-configuration.d.ts"]
 }
