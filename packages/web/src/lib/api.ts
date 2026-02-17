@@ -20,6 +20,15 @@ export function clearSession(): void {
   sessionStorage.removeItem("catalyst-auth");
 }
 
+let sessionExpiredCallback: (() => void) | null = null;
+
+export function onSessionExpired(cb: () => void): () => void {
+  sessionExpiredCallback = cb;
+  return () => {
+    sessionExpiredCallback = null;
+  };
+}
+
 function authFetch(input: RequestInfo | URL, init?: RequestInit) {
   const token = getSessionToken();
   const headers = new Headers(init?.headers);
@@ -39,7 +48,7 @@ export async function fetchJson<T>(
   if (!response.ok) {
     if (response.status === 401) {
       clearSession();
-      window.location.reload();
+      sessionExpiredCallback?.();
     }
     throw new Error(`API error: ${response.status}`);
   }

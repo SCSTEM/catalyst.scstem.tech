@@ -1,6 +1,7 @@
 import { createRootRoute, HeadContent, Outlet } from "@tanstack/react-router";
-import { lazy, useState } from "react";
+import { lazy, useEffect, useState } from "react";
 import { AccessGate } from "@/components/AccessGate";
+import { onSessionExpired } from "@/lib/api";
 
 const DevTools = import.meta.env.PROD
   ? () => null
@@ -27,6 +28,10 @@ function RootLayout() {
     }
     return sessionStorage.getItem("catalyst-auth") === "1";
   });
+
+  useEffect(() => {
+    return onSessionExpired(() => setIsAuthenticated(false));
+  }, []);
 
   if (!isAuthenticated) {
     return <AccessGate onAuthenticated={() => setIsAuthenticated(true)} />;

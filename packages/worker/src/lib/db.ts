@@ -17,8 +17,19 @@ type ReactionEvent = {
 export async function addReaction(d1: D1Database, event: ReactionEvent) {
   const db = drizzle(d1);
 
+  // Insert the reaction row first — if it already exists (duplicate event from
+  // Slack), .returning() yields an empty array so we skip aggregate updates.
+  const [inserted] = await db
+    .insert(reactions)
+    .values(event)
+    .onConflictDoNothing()
+    .returning({ emoji: reactions.emoji });
+
+  if (!inserted) {
+    return;
+  }
+
   await db.batch([
-    db.insert(reactions).values(event).onConflictDoNothing(),
     db
       .insert(reactionTotals)
       .values({ emoji: event.emoji, count: 1 })
@@ -74,17 +85,26 @@ export async function renameEmoji(
 export async function removeReaction(d1: D1Database, event: ReactionEvent) {
   const db = drizzle(d1);
 
-  await db.batch([
-    db
-      .delete(reactions)
-      .where(
-        and(
-          eq(reactions.userId, event.userId),
-          eq(reactions.emoji, event.emoji),
-          eq(reactions.channelId, event.channelId),
-          eq(reactions.messageTs, event.messageTs),
-        ),
+  // Delete the reaction row first — if it didn't exist (duplicate remove event
+  // or reaction from before backfill), .returning() yields an empty array so
+  // we skip aggregate updates.
+  const [deleted] = await db
+    .delete(reactions)
+    .where(
+      and(
+        eq(reactions.userId, event.userId),
+        eq(reactions.emoji, event.emoji),
+        eq(reactions.channelId, event.channelId),
+        eq(reactions.messageTs, event.messageTs),
       ),
+    )
+    .returning({ emoji: reactions.emoji });
+
+  if (!deleted) {
+    return;
+  }
+
+  await db.batch([
     db
       .update(reactionTotals)
       .set({ count: sql`MAX(0, ${reactionTotals.count} - 1)` })
