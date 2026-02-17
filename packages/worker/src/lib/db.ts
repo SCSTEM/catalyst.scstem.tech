@@ -1,6 +1,11 @@
 import { and, eq, sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/d1";
-import { reactions, reactionTotals, userEmojiCounts } from "../db/schema";
+import {
+  emojiImages,
+  reactions,
+  reactionTotals,
+  userEmojiCounts,
+} from "../db/schema";
 
 type ReactionEvent = {
   userId: string;
@@ -28,6 +33,41 @@ export async function addReaction(d1: D1Database, event: ReactionEvent) {
         target: [userEmojiCounts.userId, userEmojiCounts.emoji],
         set: { count: sql`${userEmojiCounts.count} + 1` },
       }),
+  ]);
+}
+
+export async function addEmoji(d1: D1Database, name: string, imageUrl: string) {
+  const db = drizzle(d1);
+  await db
+    .insert(emojiImages)
+    .values({ name, imageUrl })
+    .onConflictDoUpdate({
+      target: emojiImages.name,
+      set: { imageUrl, updatedAt: sql`(datetime('now'))` },
+    });
+}
+
+export async function removeEmoji(d1: D1Database, name: string) {
+  const db = drizzle(d1);
+  await db.delete(emojiImages).where(eq(emojiImages.name, name));
+}
+
+export async function renameEmoji(
+  d1: D1Database,
+  oldName: string,
+  newName: string,
+) {
+  const db = drizzle(d1);
+  const [old] = await db
+    .select({ imageUrl: emojiImages.imageUrl })
+    .from(emojiImages)
+    .where(eq(emojiImages.name, oldName));
+  if (!old) {
+    return;
+  }
+  await db.batch([
+    db.delete(emojiImages).where(eq(emojiImages.name, oldName)),
+    db.insert(emojiImages).values({ name: newName, imageUrl: old.imageUrl }),
   ]);
 }
 
