@@ -63,7 +63,8 @@
 
 @layer base {
   html {
-    font-size: 106.25%;
+    font-size: 100%;
+    scrollbar-gutter: stable;
   }
 
   @media (min-width: 768px) {
