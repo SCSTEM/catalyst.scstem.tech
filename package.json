@@ -21,7 +21,6 @@
     "format": "biome format --write .",
     "lint": "biome lint --write .",
 
-    "db:seed": "bun scripts/seed.ts",
     "db:generate": "bun --filter '@catalyst/worker' db:generate",
     "db:migrate:local": "bun --filter '@catalyst/worker' db:migrate:local",
     "db:migrate:remote": "bun --filter '@catalyst/worker' db:migrate:remote",

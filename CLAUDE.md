@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Commands
 
-All commands run from the repo root:
+All commands run from the repo root. See `package.json` scripts for the full list.
 
 ```bash
 # Verify changes (run both before marking work done)
@@ -17,17 +17,10 @@ bun run dev              # Both worker + web in parallel
 bun run dev:worker       # Wrangler on :8787
 bun run dev:web          # Vite on :5173
 
-# Build & deploy
-bun run build            # Vite production build (web)
-bun run deploy           # Deploy worker to Cloudflare
-
 # Database
 bun run db:generate          # Generate Drizzle migration from schema
 bun run db:migrate:local     # Apply migrations to local D1
 bun run db:migrate:remote    # Apply migrations to production D1
-
-# Seed local database with sample data (no Slack token needed)
-bun run db:seed
 
 # Backfill historical Slack data
 SLACK_BOT_TOKEN=xoxb-... bun run backfill
@@ -37,14 +30,14 @@ SLACK_BOT_TOKEN=xoxb-... bun run backfill
 
 Each package has its own `CLAUDE.md` with detailed patterns and conventions:
 
-- **`packages/worker/CLAUDE.md`** — Adding routes, Drizzle patterns, Bindings, schema changes
+- **`packages/worker/CLAUDE.md`** — Adding routes, Drizzle patterns, schema changes
 - **`packages/web/CLAUDE.md`** — Routing (TanStack Router), data fetching (TanStack Query), components, styling
 
 ## Architecture
 
 Bun monorepo with two packages:
 
-- **`packages/worker`** — Cloudflare Worker: Hono API + Slack event handler, backed by D1 (SQLite). Deployed to `catalyst-api.scstem.workers.dev` (staging: `staging.catalyst-api.scstem.workers.dev`).
+- **`packages/worker`** — Cloudflare Worker: Hono API + Slack event handler, backed by D1 (SQLite).
 - **`packages/web`** — React 19 + Vite SPA. TanStack Router (file-based routing) + TanStack Query. Uses Hono's typed RPC client for end-to-end type safety with the worker API.
 
 ### Type-safe RPC chain
@@ -64,8 +57,6 @@ Reactions use delete-on-remove (not event sourcing). Two pre-aggregated tables (
 ### API routes
 
 All routes are defined in `packages/worker/src/app.ts`. Each `.route()` call mounts a route file from `src/routes/`. Read `app.ts` to see the full list — it's the single source of truth. Don't duplicate the route list elsewhere.
-
-`/slack/events` is handled separately in `src/index.ts` (before the Hono app) via the `slack-cloudflare-workers` SDK.
 
 ## Conventions
 
