@@ -30,10 +30,12 @@ export const authRoute = new Hono<{ Bindings: Env }>().post(
     const turnstileResult = await turnstileRes.json<{ success: boolean }>();
 
     if (!turnstileResult.success) {
+      c.header("Cache-Control", "no-store");
       return c.json({ ok: false, error: "Turnstile verification failed" }, 403);
     }
 
     if (!timeSafeEqual(password, c.env.SITE_PASSWORD)) {
+      c.header("Cache-Control", "no-store");
       return c.json({ ok: false, error: "Incorrect password" }, 401);
     }
 

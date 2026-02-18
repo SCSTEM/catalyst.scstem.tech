@@ -20,14 +20,16 @@ async function hmac(secret: string, data: string): Promise<string> {
 }
 
 export function timeSafeEqual(a: string, b: string): boolean {
-  if (a.length !== b.length) {
+  const encoder = new TextEncoder();
+  const aBuf = encoder.encode(a);
+  const bBuf = encoder.encode(b);
+  if (aBuf.byteLength !== bBuf.byteLength) {
+    // Compare against self to burn the same time as a real comparison,
+    // avoiding length-leaking via early return.
+    crypto.subtle.timingSafeEqual(aBuf, aBuf);
     return false;
   }
-  let mismatch = 0;
-  for (let i = 0; i < a.length; i++) {
-    mismatch |= a.charCodeAt(i) ^ b.charCodeAt(i);
-  }
-  return mismatch === 0;
+  return crypto.subtle.timingSafeEqual(aBuf, bBuf);
 }
 
 /**

@@ -69,17 +69,25 @@ export async function renameEmoji(
   newName: string,
 ) {
   const db = drizzle(d1);
-  const [old] = await db
-    .select({ imageUrl: emojiImages.imageUrl })
-    .from(emojiImages)
-    .where(eq(emojiImages.name, oldName));
-  if (!old) {
+  // Atomic delete-then-insert: the batch runs in a single implicit transaction.
+  // Use onConflictDoUpdate on the insert in case newName already exists.
+  const [deleted] = await db
+    .delete(emojiImages)
+    .where(eq(emojiImages.name, oldName))
+    .returning({ imageUrl: emojiImages.imageUrl });
+  if (!deleted) {
     return;
   }
-  await db.batch([
-    db.delete(emojiImages).where(eq(emojiImages.name, oldName)),
-    db.insert(emojiImages).values({ name: newName, imageUrl: old.imageUrl }),
-  ]);
+  await db
+    .insert(emojiImages)
+    .values({ name: newName, imageUrl: deleted.imageUrl })
+    .onConflictDoUpdate({
+      target: emojiImages.name,
+      set: {
+        imageUrl: deleted.imageUrl,
+        updatedAt: sql`(datetime('now'))`,
+      },
+    });
 }
 
 export async function removeReaction(d1: D1Database, event: ReactionEvent) {
@@ -118,5 +126,7 @@ export async function removeReaction(d1: D1Database, event: ReactionEvent) {
           eq(userEmojiCounts.emoji, event.emoji),
         ),
       ),
+    db.delete(reactionTotals).where(eq(reactionTotals.count, 0)),
+    db.delete(userEmojiCounts).where(eq(userEmojiCounts.count, 0)),
   ]);
 }

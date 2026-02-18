@@ -47,7 +47,7 @@ The worker exports `AppType` from `app.ts`. The web package references the worke
 ### Worker request routing
 
 `src/index.ts` splits traffic by path:
-- `/slack/events` → `slack-cloudflare-workers` SDK (signature verification, challenge, event dispatch)
+- `/api/slack/events` → `slack-cloudflare-workers` SDK (signature verification, challenge, event dispatch)
 - Everything else → Hono app (`src/app.ts`)
 
 ### Data model

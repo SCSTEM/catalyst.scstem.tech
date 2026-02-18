@@ -28,7 +28,7 @@ Use `@hono/zod-validator` for query/body validation. See `src/routes/util.ts` fo
 ### Request Routing (`src/index.ts`)
 
 The entry point splits traffic:
-- `/slack/events` → `slack-cloudflare-workers` SDK (lazy-initialized)
+- `/api/slack/events` → `slack-cloudflare-workers` SDK (lazy-initialized)
 - Everything else → Hono app (`src/app.ts`)
 
 This split exists because the Slack SDK needs raw request handling for signature verification.

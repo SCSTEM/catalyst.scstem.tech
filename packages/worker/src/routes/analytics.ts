@@ -4,12 +4,7 @@ import { drizzle } from "drizzle-orm/d1";
 import { Hono } from "hono";
 import { cache } from "hono/cache";
 import { z } from "zod";
-import {
-  reactions,
-  reactionTotals,
-  userEmojiCounts,
-  users,
-} from "../db/schema";
+import { reactions, userEmojiCounts, users } from "../db/schema";
 
 const bucketExpr = {
   day: sql<string>`strftime('%Y-%m-%d', created_at)`,
@@ -54,11 +49,16 @@ export const analyticsRoute = new Hono<{ Bindings: Env }>()
     const cutoff = sql`datetime('now', '-' || ${String(days)} || ' days')`;
     const bucket = bucketExpr[period];
 
-    // Find top N emojis overall
+    // Find top N emojis within the requested date range
     const topEmojis = await db
-      .select({ emoji: reactionTotals.emoji })
-      .from(reactionTotals)
-      .orderBy(desc(reactionTotals.count))
+      .select({
+        emoji: reactions.emoji,
+        count: sql<number>`COUNT(*)`,
+      })
+      .from(reactions)
+      .where(sql`${reactions.createdAt} >= ${cutoff}`)
+      .groupBy(reactions.emoji)
+      .orderBy(desc(sql`COUNT(*)`))
       .limit(limit);
 
     const emojiNames = topEmojis.map((r) => r.emoji);
@@ -67,7 +67,7 @@ export const analyticsRoute = new Hono<{ Bindings: Env }>()
     }
 
     // Batch: per-bucket counts for top emojis + total per bucket (independent queries)
-    const [rows, totalRows] = (await db.batch([
+    const [rows, totalRows] = await db.batch([
       db
         .select({
           period: bucket,
@@ -92,10 +92,7 @@ export const analyticsRoute = new Hono<{ Bindings: Env }>()
         .where(sql`${reactions.createdAt} >= ${cutoff}`)
         .groupBy(bucket)
         .orderBy(bucket),
-    ])) as [
-      { period: string; emoji: string; count: number }[],
-      { period: string; count: number }[],
-    ];
+    ]);
 
     // Merge into series
     const periodMap = new Map<string, Record<string, number>>();
@@ -150,7 +147,7 @@ export const analyticsRoute = new Hono<{ Bindings: Env }>()
     }
 
     // Batch: user metadata + per-bucket counts (independent queries)
-    const [userRows, rows] = (await db.batch([
+    const [userRows, rows] = await db.batch([
       db
         .select({
           userId: users.userId,
@@ -174,10 +171,7 @@ export const analyticsRoute = new Hono<{ Bindings: Env }>()
         )
         .groupBy(bucket, reactions.userId)
         .orderBy(bucket),
-    ])) as [
-      { userId: string; displayName: string; avatarUrl: string }[],
-      { period: string; userId: string; count: number }[],
-    ];
+    ]);
 
     const userMap: Record<string, { name: string; avatar: string | null }> = {};
     for (const u of userRows) {
