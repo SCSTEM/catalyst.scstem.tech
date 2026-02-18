@@ -7,7 +7,7 @@ export default {
   async fetch(request, env, ctx): Promise<Response> {
     const url = new URL(request.url);
 
-    if (url.pathname === "/slack/events") {
+    if (url.pathname === "/api/slack/events") {
       slackApp ??= createSlackApp(env);
       return slackApp.run(request, ctx);
     }

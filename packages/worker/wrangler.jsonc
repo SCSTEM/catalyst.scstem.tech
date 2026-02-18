@@ -1,11 +1,13 @@
 {
   "$schema": "../../node_modules/wrangler/config-schema.json",
-
   "name": "catalyst-api",
   "main": "./src/index.ts",
   "compatibility_date": "2026-02-12",
-
   "preview_urls": false,
+  "route": {
+    "pattern": "catalyst.scstem.tech/api/*",
+    "zone_name": "scstem.tech"
+  },
   "upload_source_maps": true,
   "observability": {
     "enabled": true,
@@ -14,21 +16,22 @@
       "head_sampling_rate": 1
     }
   },
-
   "vars": {
     "PRODUCTION": true
   },
-
   "d1_databases": [
     {
       "binding": "DB",
-      "database_name": "catalyst-db",
-      "database_id": "d2f4ce25-1b02-4e5e-9662-f925e871d0da"
+      "database_name": "catalyst-db-staging",
+      "database_id": "b615c2e8-4a44-400b-b2c7-c34aa7292a21"
     }
   ],
-
   "env": {
     "staging": {
+      "route": {
+        "pattern": "staging.catalyst.scstem.tech/api/*",
+        "zone_name": "scstem.tech"
+      },
       "vars": {
         "PRODUCTION": false
       },
@@ -36,7 +39,7 @@
         {
           "binding": "DB",
           "database_name": "catalyst-db-staging",
-          "database_id": ""
+          "database_id": "b615c2e8-4a44-400b-b2c7-c34aa7292a21"
         }
       ]
     }
