@@ -7,7 +7,7 @@ export function useEmojiRankings() {
   return useQuery({
     queryKey: ["stats", "rankings", "emojis"],
     queryFn: async () => {
-      const res = await api.api.rankings.emojis.$get();
+      const res = await api.api.rankings.emojis.$get({ query: {} });
       return fetchJson(res);
     },
   });
@@ -29,6 +29,7 @@ export function useEmojiUsers(emoji: string) {
     queryFn: async () => {
       const res = await api.api.emojis[":emoji"].users.$get({
         param: { emoji },
+        query: {},
       });
       return fetchJson(res);
     },
@@ -41,6 +42,7 @@ export function useUserEmojis(userId: string) {
     queryFn: async () => {
       const res = await api.api.users[":userId"].emojis.$get({
         param: { userId },
+        query: {},
       });
       return fetchJson(res);
     },

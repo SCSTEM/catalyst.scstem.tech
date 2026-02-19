@@ -104,35 +104,24 @@
       "indexes": {
         "idx_reactions_emoji": {
           "name": "idx_reactions_emoji",
-          "columns": [
-            "emoji"
-          ],
+          "columns": ["emoji"],
           "isUnique": false
         },
         "idx_reactions_user": {
           "name": "idx_reactions_user",
-          "columns": [
-            "user_id"
-          ],
+          "columns": ["user_id"],
           "isUnique": false
         },
         "idx_reactions_created_at": {
           "name": "idx_reactions_created_at",
-          "columns": [
-            "created_at"
-          ],
+          "columns": ["created_at"],
           "isUnique": false
         }
       },
       "foreignKeys": {},
       "compositePrimaryKeys": {
         "reactions_user_id_emoji_channel_id_message_ts_pk": {
-          "columns": [
-            "user_id",
-            "emoji",
-            "channel_id",
-            "message_ts"
-          ],
+          "columns": ["user_id", "emoji", "channel_id", "message_ts"],
           "name": "reactions_user_id_emoji_channel_id_message_ts_pk"
         }
       },
@@ -168,26 +157,19 @@
       "indexes": {
         "idx_uec_user": {
           "name": "idx_uec_user",
-          "columns": [
-            "user_id"
-          ],
+          "columns": ["user_id"],
           "isUnique": false
         },
         "idx_uec_emoji": {
           "name": "idx_uec_emoji",
-          "columns": [
-            "emoji"
-          ],
+          "columns": ["emoji"],
           "isUnique": false
         }
       },
       "foreignKeys": {},
       "compositePrimaryKeys": {
         "user_emoji_counts_user_id_emoji_pk": {
-          "columns": [
-            "user_id",
-            "emoji"
-          ],
+          "columns": ["user_id", "emoji"],
           "name": "user_emoji_counts_user_id_emoji_pk"
         }
       },

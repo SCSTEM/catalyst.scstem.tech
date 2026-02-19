@@ -8,7 +8,7 @@ import { limitQuery } from "./util";
 export const rankingsRoute = new Hono<{ Bindings: Env }>()
   .get("/emojis", zValidator("query", limitQuery), async (c) => {
     const db = drizzle(c.env.DB);
-    const limit = c.req.valid("query")?.limit ?? 50;
+    const { limit } = c.req.valid("query");
 
     const results = await db
       .select({
@@ -24,7 +24,7 @@ export const rankingsRoute = new Hono<{ Bindings: Env }>()
   })
   .get("/users", zValidator("query", limitQuery), async (c) => {
     const db = drizzle(c.env.DB);
-    const limit = c.req.valid("query")?.limit ?? 50;
+    const { limit } = c.req.valid("query");
 
     const results = await db
       .select({

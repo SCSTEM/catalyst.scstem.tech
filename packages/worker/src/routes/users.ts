@@ -11,7 +11,7 @@ export const usersRoute = new Hono<{ Bindings: Env }>().get(
   async (c) => {
     const db = drizzle(c.env.DB);
     const userId = c.req.param("userId");
-    const limit = c.req.valid("query")?.limit ?? 50;
+    const { limit } = c.req.valid("query");
 
     const [emojis, [user]] = (await db.batch([
       db

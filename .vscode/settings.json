@@ -8,15 +8,23 @@
   "editor.tabSize": 2,
   "typescript.tsdk": "./node_modules/typescript/lib",
   "files.exclude": {
-    "**/routeTree.gen.ts": true
+    "**/routeTree.gen.ts": true,
+    "**/*.tsbuildinfo": true,
+    "**/.tanstack": true
   },
   "files.readonlyInclude": {
-    "**/routeTree.gen.ts": true
+    "**/routeTree.gen.ts": true,
+    "**/*.tsbuildinfo": true,
+    "**/.tanstack": true
   },
   "files.watcherExclude": {
-    "**/routeTree.gen.ts": true
+    "**/routeTree.gen.ts": true,
+    "**/*.tsbuildinfo": true,
+    "**/.tanstack": true
   },
   "search.exclude": {
-    "**/routeTree.gen.ts": true
+    "**/routeTree.gen.ts": true,
+    "**/*.tsbuildinfo": true,
+    "**/.tanstack": true
   }
 }

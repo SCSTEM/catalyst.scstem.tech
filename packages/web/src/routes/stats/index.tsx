@@ -1,9 +1,7 @@
-import { createFileRoute, Navigate } from "@tanstack/react-router";
+import { createFileRoute, redirect } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/stats/")({
-  component: IndexRedirect,
+  beforeLoad: () => {
+    throw redirect({ to: "/stats/emojis" });
+  },
 });
-
-function IndexRedirect() {
-  return <Navigate to="/stats/emojis" />;
-}

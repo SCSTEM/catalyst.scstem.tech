@@ -35,6 +35,18 @@ describe("auth middleware", () => {
     });
     expect(res.status).toBe(401);
   });
+
+  it("does not require bearer token for /api/auth/verify", async () => {
+    // Send an invalid body to trigger 400 (validation error) rather than
+    // 401. This proves the auth route sits before the bearerAuth middleware
+    // without making an external Turnstile request.
+    const res = await SELF.fetch("http://localhost/api/auth/verify", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({}),
+    });
+    expect(res.status).not.toBe(401);
+  });
 });
 
 describe("GET /api/rankings/emojis", () => {
@@ -63,6 +75,28 @@ describe("GET /api/rankings/emojis", () => {
     );
     const data = (await res.json()) as unknown[];
     expect(data.length).toBe(2);
+  });
+
+  it("rejects limit below 1", async () => {
+    const res = await authedFetch(
+      "http://localhost/api/rankings/emojis?limit=0",
+    );
+    expect(res.status).toBe(400);
+  });
+
+  it("rejects limit above 200", async () => {
+    const res = await authedFetch(
+      "http://localhost/api/rankings/emojis?limit=201",
+    );
+    expect(res.status).toBe(400);
+  });
+
+  it("uses default limit when not provided", async () => {
+    const res = await authedFetch("http://localhost/api/rankings/emojis");
+    expect(res.status).toBe(200);
+    const data = (await res.json()) as unknown[];
+    // Seed has 4 emojis, default limit is 50, so all should be returned
+    expect(data.length).toBe(4);
   });
 });
 
@@ -149,8 +183,13 @@ describe("GET /api/users/:userId/emojis", () => {
   });
 });
 
+// NOTE: Analytics routes use Hono's cache() middleware which relies on the
+// Cache API. Miniflare's cache can stall when the same cacheName is hit
+// multiple times in a single test run, so we keep one test per endpoint
+// with unique query strings to avoid cache collisions.
+
 describe("GET /api/analytics/emoji-trends", () => {
-  it("returns emoji trend series", async () => {
+  it("returns emoji trend series with period data", async () => {
     const res = await authedFetch(
       "http://localhost/api/analytics/emoji-trends?period=day&days=30",
     );
@@ -161,7 +200,6 @@ describe("GET /api/analytics/emoji-trends", () => {
     };
     expect(data.emojis.length).toBeGreaterThan(0);
     expect(data.series.length).toBeGreaterThan(0);
-    // Each series entry should have a period key
     for (const point of data.series) {
       expect(point).toHaveProperty("period");
     }
@@ -169,7 +207,7 @@ describe("GET /api/analytics/emoji-trends", () => {
 });
 
 describe("GET /api/analytics/user-trends", () => {
-  it("returns user trend series", async () => {
+  it("returns user trend series with metadata", async () => {
     const res = await authedFetch(
       "http://localhost/api/analytics/user-trends?period=day&days=30",
     );
@@ -180,5 +218,35 @@ describe("GET /api/analytics/user-trends", () => {
     };
     expect(Object.keys(data.users).length).toBeGreaterThan(0);
     expect(data.series.length).toBeGreaterThan(0);
+    // Should include display names
+    const userEntries = Object.values(data.users);
+    expect(userEntries.some((u) => u.name.length > 0)).toBe(true);
+  });
+});
+
+describe("CORS", () => {
+  it("includes CORS headers for allowed origin", async () => {
+    const res = await SELF.fetch("http://localhost/api/health", {
+      headers: { Origin: "https://catalyst.scstem.tech" },
+    });
+    expect(res.headers.get("Access-Control-Allow-Origin")).toBe(
+      "https://catalyst.scstem.tech",
+    );
+  });
+
+  it("rejects disallowed origin", async () => {
+    const res = await SELF.fetch("http://localhost/api/health", {
+      headers: { Origin: "https://evil.example.com" },
+    });
+    expect(res.headers.get("Access-Control-Allow-Origin")).not.toBe(
+      "https://evil.example.com",
+    );
+  });
+});
+
+describe("Cache-Control headers", () => {
+  it("sets default Cache-Control on API responses", async () => {
+    const res = await authedFetch("http://localhost/api/rankings/emojis");
+    expect(res.headers.get("Cache-Control")).toBe("public, max-age=60");
   });
 });

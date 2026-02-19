@@ -27,7 +27,7 @@ export const emojisRoute = new Hono<{ Bindings: Env }>()
   .get("/:emoji/users", zValidator("query", limitQuery), async (c) => {
     const db = drizzle(c.env.DB);
     const emoji = c.req.param("emoji");
-    const limit = c.req.valid("query")?.limit ?? 50;
+    const { limit } = c.req.valid("query");
 
     const results = await db
       .select({

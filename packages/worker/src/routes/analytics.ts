@@ -4,12 +4,7 @@ import { drizzle } from "drizzle-orm/d1";
 import { Hono } from "hono";
 import { cache } from "hono/cache";
 import { z } from "zod";
-import {
-  reactions,
-  reactionTotals,
-  userEmojiCounts,
-  users,
-} from "../db/schema";
+import { reactions, userEmojiCounts, users } from "../db/schema";
 
 const bucketExpr = {
   day: sql<string>`strftime('%Y-%m-%d', created_at)`,
@@ -26,14 +21,11 @@ function parsePeriod(raw: string | undefined): Period {
   return "week";
 }
 
-const trendsQuery = z
-  .object({
-    period: z.string().optional(),
-    days: z.string().optional(),
-    limit: z.string().optional(),
-  })
-  .optional()
-  .default({});
+const trendsQuery = z.object({
+  period: z.string().optional(),
+  days: z.string().optional(),
+  limit: z.string().optional(),
+});
 
 export const analyticsRoute = new Hono<{ Bindings: Env }>()
   .use(
@@ -57,11 +49,16 @@ export const analyticsRoute = new Hono<{ Bindings: Env }>()
     const cutoff = sql`datetime('now', '-' || ${String(days)} || ' days')`;
     const bucket = bucketExpr[period];
 
-    // Find top N emojis overall
+    // Find top N emojis within the requested date range
     const topEmojis = await db
-      .select({ emoji: reactionTotals.emoji })
-      .from(reactionTotals)
-      .orderBy(desc(reactionTotals.count))
+      .select({
+        emoji: reactions.emoji,
+        count: sql<number>`COUNT(*)`,
+      })
+      .from(reactions)
+      .where(sql`${reactions.createdAt} >= ${cutoff}`)
+      .groupBy(reactions.emoji)
+      .orderBy(desc(sql`COUNT(*)`))
       .limit(limit);
 
     const emojiNames = topEmojis.map((r) => r.emoji);
@@ -69,33 +66,33 @@ export const analyticsRoute = new Hono<{ Bindings: Env }>()
       return c.json({ emojis: [], series: [] });
     }
 
-    // Get per-bucket counts for top emojis
-    const rows = await db
-      .select({
-        period: bucket,
-        emoji: reactions.emoji,
-        count: sql<number>`COUNT(*)`,
-      })
-      .from(reactions)
-      .where(
-        sql`${reactions.createdAt} >= ${cutoff} AND ${reactions.emoji} IN (${sql.join(
-          emojiNames.map((e) => sql`${e}`),
-          sql`,`,
-        )})`,
-      )
-      .groupBy(bucket, reactions.emoji)
-      .orderBy(bucket);
-
-    // Get total per bucket (all emojis, not just top N)
-    const totalRows = await db
-      .select({
-        period: bucket,
-        count: sql<number>`COUNT(*)`,
-      })
-      .from(reactions)
-      .where(sql`${reactions.createdAt} >= ${cutoff}`)
-      .groupBy(bucket)
-      .orderBy(bucket);
+    // Batch: per-bucket counts for top emojis + total per bucket (independent queries)
+    const [rows, totalRows] = await db.batch([
+      db
+        .select({
+          period: bucket,
+          emoji: reactions.emoji,
+          count: sql<number>`COUNT(*)`,
+        })
+        .from(reactions)
+        .where(
+          sql`${reactions.createdAt} >= ${cutoff} AND ${reactions.emoji} IN (${sql.join(
+            emojiNames.map((e) => sql`${e}`),
+            sql`,`,
+          )})`,
+        )
+        .groupBy(bucket, reactions.emoji)
+        .orderBy(bucket),
+      db
+        .select({
+          period: bucket,
+          count: sql<number>`COUNT(*)`,
+        })
+        .from(reactions)
+        .where(sql`${reactions.createdAt} >= ${cutoff}`)
+        .groupBy(bucket)
+        .orderBy(bucket),
+    ]);
 
     // Merge into series
     const periodMap = new Map<string, Record<string, number>>();
@@ -149,15 +146,32 @@ export const analyticsRoute = new Hono<{ Bindings: Env }>()
       });
     }
 
-    // Get display names + avatars
-    const userRows = await db
-      .select({
-        userId: users.userId,
-        displayName: users.displayName,
-        avatarUrl: users.avatarUrl,
-      })
-      .from(users)
-      .where(inArray(users.userId, userIds));
+    // Batch: user metadata + per-bucket counts (independent queries)
+    const [userRows, rows] = await db.batch([
+      db
+        .select({
+          userId: users.userId,
+          displayName: users.displayName,
+          avatarUrl: users.avatarUrl,
+        })
+        .from(users)
+        .where(inArray(users.userId, userIds)),
+      db
+        .select({
+          period: bucket,
+          userId: reactions.userId,
+          count: sql<number>`COUNT(*)`,
+        })
+        .from(reactions)
+        .where(
+          sql`${reactions.createdAt} >= ${cutoff} AND ${reactions.userId} IN (${sql.join(
+            userIds.map((id) => sql`${id}`),
+            sql`,`,
+          )})`,
+        )
+        .groupBy(bucket, reactions.userId)
+        .orderBy(bucket),
+    ]);
 
     const userMap: Record<string, { name: string; avatar: string | null }> = {};
     for (const u of userRows) {
@@ -166,23 +180,6 @@ export const analyticsRoute = new Hono<{ Bindings: Env }>()
         avatar: u.avatarUrl,
       };
     }
-
-    // Get per-bucket counts
-    const rows = await db
-      .select({
-        period: bucket,
-        userId: reactions.userId,
-        count: sql<number>`COUNT(*)`,
-      })
-      .from(reactions)
-      .where(
-        sql`${reactions.createdAt} >= ${cutoff} AND ${reactions.userId} IN (${sql.join(
-          userIds.map((id) => sql`${id}`),
-          sql`,`,
-        )})`,
-      )
-      .groupBy(bucket, reactions.userId)
-      .orderBy(bucket);
 
     const periodMap = new Map<string, Record<string, number>>();
     for (const row of rows) {

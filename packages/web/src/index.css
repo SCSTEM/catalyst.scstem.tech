@@ -63,7 +63,9 @@
 
 @layer base {
   html {
-    font-size: 106.25%;
+    font-size: 100%;
+    scrollbar-gutter: stable;
+    view-transition-name: none;
   }
 
   @media (min-width: 768px) {
@@ -87,6 +89,10 @@
   h5,
   h6 {
     @apply font-heading;
+  }
+
+  #root {
+    view-transition-name: root;
   }
 }
 
@@ -143,45 +149,54 @@
 }
 
 /* Drill-down: old slides left + fades, new slides in from right */
-::view-transition-old(root):active-view-transition-type(drill-down) {
-  animation:
-    180ms ease both fade-out,
-    300ms ease both slide-to-left;
-}
+:root:active-view-transition-type(drill-down) {
+  &::view-transition-old(root) {
+    animation:
+      180ms ease both fade-out,
+      300ms ease both slide-to-left;
+  }
 
-::view-transition-new(root):active-view-transition-type(drill-down) {
-  animation:
-    300ms ease both fade-in,
-    300ms ease both slide-from-right;
+  &::view-transition-new(root) {
+    animation:
+      300ms ease both fade-in,
+      300ms ease both slide-from-right;
+  }
 }
 
 /* Drill-up: old slides right + fades, new slides in from left */
-::view-transition-old(root):active-view-transition-type(drill-up) {
-  animation:
-    180ms ease both fade-out,
-    300ms ease both slide-to-right;
+:root:active-view-transition-type(drill-up) {
+  &::view-transition-old(root) {
+    animation:
+      180ms ease both fade-out,
+      300ms ease both slide-to-right;
+  }
+
+  &::view-transition-new(root) {
+    animation:
+      300ms ease both fade-in,
+      300ms ease both slide-from-left;
+  }
 }
 
-::view-transition-new(root):active-view-transition-type(drill-up) {
-  animation:
-    300ms ease both fade-in,
-    300ms ease both slide-from-left;
-}
-
-/* Pin tabs bar and page title so they stay static during transitions */
+/* Pin static elements so they stay put during transitions */
 ::view-transition-group(tabs-bar),
-::view-transition-group(page-title) {
+::view-transition-group(page-title),
+::view-transition-group(refresh-btn) {
   animation: none;
 }
 
 /* Reduced motion: disable all transition animations */
 @media (prefers-reduced-motion: reduce) {
   ::view-transition-old(root),
-  ::view-transition-new(root),
-  ::view-transition-old(root):active-view-transition-type(drill-down),
-  ::view-transition-new(root):active-view-transition-type(drill-down),
-  ::view-transition-old(root):active-view-transition-type(drill-up),
-  ::view-transition-new(root):active-view-transition-type(drill-up) {
+  ::view-transition-new(root) {
     animation: none;
+  }
+
+  :root:active-view-transition-type(drill-down),
+  :root:active-view-transition-type(drill-up) {
+    &::view-transition-old(root),
+    &::view-transition-new(root) {
+      animation: none;
+    }
   }
 }
