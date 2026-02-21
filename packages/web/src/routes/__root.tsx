@@ -1,7 +1,7 @@
 import { createRootRoute, HeadContent, Outlet } from "@tanstack/react-router";
 import { lazy, useEffect, useState } from "react";
 import { AccessGate } from "@/components/AccessGate";
-import { onSessionExpired } from "@/lib/api";
+import { onSessionExpired, SESSION_AUTH_KEY } from "@/lib/api";
 
 const DevTools = import.meta.env.PROD
   ? () => null
@@ -26,7 +26,7 @@ function RootLayout() {
     if (new URLSearchParams(window.location.search).has("pass")) {
       return false;
     }
-    return sessionStorage.getItem("catalyst-auth") === "1";
+    return localStorage.getItem(SESSION_AUTH_KEY) === "1";
   });
 
   useEffect(() => {
