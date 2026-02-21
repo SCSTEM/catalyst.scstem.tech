@@ -2,6 +2,7 @@ import type { AppType } from "@catalyst/worker/app";
 import { hc } from "hono/client";
 
 const SESSION_TOKEN_KEY = "catalyst-token";
+export const SESSION_AUTH_KEY = "catalyst-auth";
 
 const baseUrl = import.meta.env.VITE_API_URL
   ? import.meta.env.VITE_API_URL
@@ -17,7 +18,7 @@ export function setSessionToken(token: string): void {
 
 export function clearSession(): void {
   localStorage.removeItem(SESSION_TOKEN_KEY);
-  localStorage.removeItem("catalyst-auth");
+  localStorage.removeItem(SESSION_AUTH_KEY);
 }
 
 let sessionExpiredCallback: (() => void) | null = null;

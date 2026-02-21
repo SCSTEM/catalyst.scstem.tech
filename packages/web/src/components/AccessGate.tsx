@@ -8,7 +8,7 @@ import {
   InputOTPGroup,
   InputOTPSlot,
 } from "@/components/ui/input-otp";
-import { api, setSessionToken } from "@/lib/api";
+import { api, SESSION_AUTH_KEY, setSessionToken } from "@/lib/api";
 import { cn } from "@/lib/utils";
 import { StatsLayout } from "./layouts/StatsLayout";
 
@@ -57,7 +57,7 @@ export function AccessGate({ onAuthenticated }: AccessGateProps) {
         if (data.token) {
           setSessionToken(data.token);
         }
-        localStorage.setItem("catalyst-auth", "1");
+        localStorage.setItem(SESSION_AUTH_KEY, "1");
         onAuthenticated();
       } else {
         const data = (await res.json()) as { error?: string };
