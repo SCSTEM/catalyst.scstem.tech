@@ -2,8 +2,8 @@
  * Backfill script: fetches historical Slack reactions and generates a .sql file.
  *
  * The generated file can be applied to local or remote D1 via wrangler:
- *   bunx wrangler d1 execute catalyst-db --file=./backfill.sql --local
- *   bunx wrangler d1 execute catalyst-db --file=./backfill.sql --remote
+ *   bunx wrangler d1 execute DB --file=./backfill.sql --local
+ *   bunx wrangler d1 execute DB --file=./backfill.sql --remote
  *
  * Usage: bun scripts/backfill.ts
  *
@@ -383,9 +383,5 @@ console.log(`  ${allReactions.length} reactions`);
 console.log(`  ${userProfiles.length} users`);
 console.log(`  ${emojiRows.length} custom emojis`);
 console.log("\nApply with:");
-console.log(
-  `  bunx wrangler d1 execute catalyst-db --file=./${OUTPUT_FILE} --local`,
-);
-console.log(
-  `  bunx wrangler d1 execute catalyst-db --file=./${OUTPUT_FILE} --remote`,
-);
+console.log(`  bunx wrangler d1 execute DB --file=./${OUTPUT_FILE} --local`);
+console.log(`  bunx wrangler d1 execute DB --file=./${OUTPUT_FILE} --remote`);
