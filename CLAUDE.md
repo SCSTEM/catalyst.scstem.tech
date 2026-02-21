@@ -4,27 +4,44 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Commands
 
-All commands run from the repo root. See `package.json` scripts for the full list.
+All commands run from the repo root via [mise](https://mise.jdx.dev/). Run `mise tasks` to list all available tasks with descriptions.
 
 ```bash
 # Verify changes (run both before marking work done)
 bun run typecheck        # tsc -b across all packages
 bun run check            # biome lint + format (auto-fixes)
-bun run test             # Vitest integration tests (worker API)
+mise run test            # Vitest integration tests (auto-migrates local D1 first)
+mise run verify          # All three above
 
 # Development
-bun run dev              # Both worker + web in parallel
-bun run dev:worker       # Wrangler on :8787
-bun run dev:web          # Vite on :5173
+mise run dev             # Both worker + web in parallel
+mise run dev:worker      # Wrangler on :8787
+mise run dev:web         # Vite on :5173
 
 # Database
-bun run db:generate          # Generate Drizzle migration from schema
-bun run db:migrate:local     # Apply migrations to local D1
-bun run db:migrate:remote    # Apply migrations to production D1
+mise run db:generate             # Generate Drizzle migration from schema
+mise run db:migrate              # Apply migrations to local D1 (default)
+mise run db:migrate staging      # Apply migrations to staging D1
+mise run db:migrate prod         # Apply migrations to production D1
 
-# Backfill historical Slack data
-SLACK_BOT_TOKEN=xoxb-... bun run backfill
+# Backfill historical Slack data (requires SLACK_BOT_TOKEN env var)
+mise run backfill                # Generate SQL + apply to local D1 (default)
+mise run backfill staging        # Generate SQL + apply to staging D1
+mise run backfill prod           # Generate SQL + apply to production D1
+
+# Deploy (defaults to staging; requires clean git state)
+mise run deploy:worker           # Deploy worker to staging
+mise run deploy:worker prod      # Deploy worker to production
+mise run deploy:web              # Build + deploy Pages to staging
+mise run deploy:web prod         # Build + deploy Pages to production
 ```
+
+### Environment targeting
+
+- **Local is the default** for all D1 commands (`db:migrate`, `backfill`).
+- **Staging is the default** for all deploy commands (`deploy:worker`, `deploy:web`).
+- **Production** always requires explicit `prod` argument and an interactive confirmation.
+- **Remote targets** (staging/prod) require a clean git working directory.
 
 ## Per-Package Documentation
 
