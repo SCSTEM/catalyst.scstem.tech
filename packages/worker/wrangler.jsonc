@@ -21,7 +21,8 @@
     }
   },
   "vars": {
-    "PRODUCTION": true
+    "PRODUCTION": true,
+    "SESSION_TTL_HOURS": 672
   },
   "d1_databases": [
     {
@@ -37,7 +38,8 @@
         "zone_name": "scstem.tech"
       },
       "vars": {
-        "PRODUCTION": false
+        "PRODUCTION": false,
+        "SESSION_TTL_HOURS": 8
       },
       "d1_databases": [
         {
