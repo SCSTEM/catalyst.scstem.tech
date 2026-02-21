@@ -1,0 +1,24 @@
+#!/usr/bin/env bash
+#MISE description="Deploy CF Worker [staging (default)|prod]"
+#MISE depends=["verify"]
+#MISE dir="packages/worker"
+set -euo pipefail
+source "$MISE_PROJECT_ROOT/mise-tasks/_helpers.sh"
+
+ENV="${1:-staging}"
+
+require_clean_git "$ENV"
+
+case "$ENV" in
+  staging)
+    bunx wrangler deploy --env staging
+    ;;
+  prod)
+    require_prod_confirmation
+    bunx wrangler deploy --env=''
+    ;;
+  *)
+    echo "Usage: mise run deploy:worker [staging|prod]" >&2
+    exit 1
+    ;;
+esac

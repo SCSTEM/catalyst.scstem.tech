@@ -1,0 +1,35 @@
+#!/usr/bin/env bash
+#MISE description="Backfill Slack data + apply to D1 [local|staging|prod]"
+set -euo pipefail
+source "$MISE_PROJECT_ROOT/mise-tasks/_helpers.sh"
+
+ENV="${1:-local}"
+
+if [[ "$ENV" != "local" ]]; then
+  require_clean_git "$ENV"
+fi
+if [[ "$ENV" == "prod" ]]; then
+  require_prod_confirmation
+fi
+
+# Generate backfill.sql
+bun scripts/backfill.ts
+
+case "$ENV" in
+  local)
+    bunx wrangler d1 execute DB --file=./backfill.sql --local \
+      --config packages/worker/wrangler.jsonc
+    ;;
+  staging)
+    bunx wrangler d1 execute DB --file=./backfill.sql --remote --env staging \
+      --config packages/worker/wrangler.jsonc
+    ;;
+  prod)
+    bunx wrangler d1 execute DB --file=./backfill.sql --remote \
+      --config packages/worker/wrangler.jsonc
+    ;;
+  *)
+    echo "Usage: mise run backfill [local|staging|prod]" >&2
+    exit 1
+    ;;
+esac
