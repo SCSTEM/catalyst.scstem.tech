@@ -26,7 +26,7 @@ function RootLayout() {
     if (new URLSearchParams(window.location.search).has("pass")) {
       return false;
     }
-    return sessionStorage.getItem("catalyst-auth") === "1";
+    return localStorage.getItem("catalyst-auth") === "1";
   });
 
   useEffect(() => {

@@ -57,7 +57,7 @@ export function AccessGate({ onAuthenticated }: AccessGateProps) {
         if (data.token) {
           setSessionToken(data.token);
         }
-        sessionStorage.setItem("catalyst-auth", "1");
+        localStorage.setItem("catalyst-auth", "1");
         onAuthenticated();
       } else {
         const data = (await res.json()) as { error?: string };

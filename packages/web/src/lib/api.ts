@@ -8,16 +8,16 @@ const baseUrl = import.meta.env.VITE_API_URL
   : "/";
 
 export function getSessionToken(): string | null {
-  return sessionStorage.getItem(SESSION_TOKEN_KEY);
+  return localStorage.getItem(SESSION_TOKEN_KEY);
 }
 
 export function setSessionToken(token: string): void {
-  sessionStorage.setItem(SESSION_TOKEN_KEY, token);
+  localStorage.setItem(SESSION_TOKEN_KEY, token);
 }
 
 export function clearSession(): void {
-  sessionStorage.removeItem(SESSION_TOKEN_KEY);
-  sessionStorage.removeItem("catalyst-auth");
+  localStorage.removeItem(SESSION_TOKEN_KEY);
+  localStorage.removeItem("catalyst-auth");
 }
 
 let sessionExpiredCallback: (() => void) | null = null;
