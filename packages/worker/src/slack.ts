@@ -1,13 +1,13 @@
 import { SlackApp } from "slack-cloudflare-workers";
-import { addReaction, removeReaction } from "./lib/db";
+import {
+  addEmoji,
+  addReaction,
+  removeEmoji,
+  removeReaction,
+  renameEmoji,
+} from "./lib/db";
 
-type Env = {
-  SLACK_SIGNING_SECRET: string;
-  SLACK_BOT_TOKEN: string;
-  DB: D1Database;
-};
-
-export function createSlackApp(env: Env): SlackApp<Env> {
+export function createSlackApp(env: Env) {
   const app = new SlackApp({ env });
 
   // ── Slash command ──
@@ -32,6 +32,32 @@ export function createSlackApp(env: Env): SlackApp<Env> {
       console.log("reaction_added", payload.reaction, payload.user);
     } catch (e) {
       console.error("reaction_added failed", e);
+    }
+  });
+
+  app.event("emoji_changed", async ({ payload }) => {
+    try {
+      if (payload.subtype === "add" && payload.name && payload.value) {
+        if (payload.value.startsWith("alias:")) {
+          return;
+        }
+        await addEmoji(env.DB, payload.name, payload.value);
+        console.log("emoji_added", payload.name);
+      } else if (payload.subtype === "remove" && payload.names) {
+        for (const name of payload.names) {
+          await removeEmoji(env.DB, name);
+        }
+        console.log("emoji_removed", payload.names.join(", "));
+      } else if (
+        payload.subtype === "rename" &&
+        payload.old_name &&
+        payload.new_name
+      ) {
+        await renameEmoji(env.DB, payload.old_name, payload.new_name);
+        console.log("emoji_renamed", payload.old_name, "→", payload.new_name);
+      }
+    } catch (e) {
+      console.error("emoji_changed failed", e);
     }
   });
 

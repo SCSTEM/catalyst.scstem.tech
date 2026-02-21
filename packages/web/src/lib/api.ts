@@ -20,6 +20,15 @@ export function clearSession(): void {
   sessionStorage.removeItem("catalyst-auth");
 }
 
+let sessionExpiredCallback: (() => void) | null = null;
+
+export function onSessionExpired(cb: () => void): () => void {
+  sessionExpiredCallback = cb;
+  return () => {
+    sessionExpiredCallback = null;
+  };
+}
+
 function authFetch(input: RequestInfo | URL, init?: RequestInit) {
   const token = getSessionToken();
   const headers = new Headers(init?.headers);
@@ -39,7 +48,10 @@ export async function fetchJson<T>(
   if (!response.ok) {
     if (response.status === 401) {
       clearSession();
-      window.location.reload();
+      sessionExpiredCallback?.();
+      // Return a never-resolving promise so TanStack Query doesn't render an
+      // error flash while the auth state change navigates to the login screen.
+      return new Promise<never>(() => {});
     }
     throw new Error(`API error: ${response.status}`);
   }

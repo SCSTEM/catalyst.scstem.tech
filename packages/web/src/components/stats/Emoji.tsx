@@ -20,6 +20,7 @@ export function Emoji({ name, hideTooltip = false, size = 24 }: EmojiProps) {
   const element = customUrl ? (
     <img
       src={customUrl}
+      alt={`:${name}:`}
       width={size}
       height={size}
       className="inline-block"

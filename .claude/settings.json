@@ -4,7 +4,7 @@
       "Bash(bun run typecheck:*)",
       "Bash(bun run build:*)",
       "Bash(bun run check:*)",
-      "Bash(bun run db:seed:*)",
+      "Bash(bun run test:*)",
       "Bash(bun run db:migrate:local:*)"
     ]
   },

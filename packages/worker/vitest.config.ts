@@ -18,7 +18,12 @@ export default defineWorkersConfig({
           configPath: "./wrangler.jsonc",
         },
         miniflare: {
-          bindings: { MIGRATION_SQL: migrationSql },
+          bindings: {
+            MIGRATION_SQL: migrationSql,
+            SLACK_BOT_TOKEN: "xoxb-test-token",
+            SLACK_SIGNING_SECRET: "test-signing-secret",
+            SITE_PASSWORD: "000000",
+          },
         },
       },
     },

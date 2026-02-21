@@ -1,0 +1,1 @@
+CREATE INDEX `idx_uec_emoji` ON `user_emoji_counts` (`emoji`);

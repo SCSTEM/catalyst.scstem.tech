@@ -81,6 +81,7 @@ function RouteComponent() {
       <Button
         size="icon"
         className="fixed bottom-6 right-6 z-50 size-12"
+        style={{ viewTransitionName: "refresh-btn" }}
         disabled={isRefreshing}
         onClick={handleRefresh}
       >

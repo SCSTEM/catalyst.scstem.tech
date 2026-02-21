@@ -7,8 +7,7 @@ type AvatarProps = {
 };
 
 export function Avatar({ url, name, size = 28 }: AvatarProps) {
-  const sizeClass =
-    size === 40 ? "h-10 w-10" : size === 28 ? "h-7 w-7" : "h-7 w-7";
+  const sizeClass = size === 40 ? "h-10 w-10" : "h-7 w-7";
 
   if (!url && !name) {
     return null;

@@ -1,20 +1,14 @@
 import { zValidator } from "@hono/zod-validator";
 import { Hono } from "hono";
 import z from "zod";
-import { createSessionToken } from "../lib/auth";
-
-type Bindings = {
-  SITE_PASSWORD: string;
-  TURNSTILE_SECRET_KEY: string;
-  SESSION_TTL_HOURS: string;
-};
+import { createSessionToken, timeSafeEqual } from "../lib/auth";
 
 const verifyBody = z.object({
   password: z.string(),
   turnstileToken: z.string(),
 });
 
-export const authRoute = new Hono<{ Bindings: Bindings }>().post(
+export const authRoute = new Hono<{ Bindings: Env }>().post(
   "/verify",
   zValidator("json", verifyBody),
   async (c) => {
@@ -28,6 +22,7 @@ export const authRoute = new Hono<{ Bindings: Bindings }>().post(
         body: JSON.stringify({
           secret: c.env.TURNSTILE_SECRET_KEY,
           response: turnstileToken,
+          remoteip: c.req.header("CF-Connecting-IP"),
         }),
       },
     );
@@ -35,10 +30,12 @@ export const authRoute = new Hono<{ Bindings: Bindings }>().post(
     const turnstileResult = await turnstileRes.json<{ success: boolean }>();
 
     if (!turnstileResult.success) {
+      c.header("Cache-Control", "no-store");
       return c.json({ ok: false, error: "Turnstile verification failed" }, 403);
     }
 
-    if (password !== c.env.SITE_PASSWORD) {
+    if (!timeSafeEqual(password, c.env.SITE_PASSWORD)) {
+      c.header("Cache-Control", "no-store");
       return c.json({ ok: false, error: "Incorrect password" }, 401);
     }
 

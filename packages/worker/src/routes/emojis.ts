@@ -5,11 +5,7 @@ import { Hono } from "hono";
 import { emojiImages, userEmojiCounts, users } from "../db/schema";
 import { limitQuery } from "./util";
 
-type Bindings = {
-  DB: D1Database;
-};
-
-export const emojisRoute = new Hono<{ Bindings: Bindings }>()
+export const emojisRoute = new Hono<{ Bindings: Env }>()
   .get("/", async (c) => {
     const db = drizzle(c.env.DB);
 
@@ -31,7 +27,7 @@ export const emojisRoute = new Hono<{ Bindings: Bindings }>()
   .get("/:emoji/users", zValidator("query", limitQuery), async (c) => {
     const db = drizzle(c.env.DB);
     const emoji = c.req.param("emoji");
-    const limit = c.req.valid("query")?.limit ?? 50;
+    const { limit } = c.req.valid("query");
 
     const results = await db
       .select({

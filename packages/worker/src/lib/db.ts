@@ -1,6 +1,11 @@
 import { and, eq, sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/d1";
-import { reactions, reactionTotals, userEmojiCounts } from "../db/schema";
+import {
+  emojiImages,
+  reactions,
+  reactionTotals,
+  userEmojiCounts,
+} from "../db/schema";
 
 type ReactionEvent = {
   userId: string;
@@ -12,8 +17,19 @@ type ReactionEvent = {
 export async function addReaction(d1: D1Database, event: ReactionEvent) {
   const db = drizzle(d1);
 
+  // Insert the reaction row first — if it already exists (duplicate event from
+  // Slack), .returning() yields an empty array so we skip aggregate updates.
+  const [inserted] = await db
+    .insert(reactions)
+    .values(event)
+    .onConflictDoNothing()
+    .returning({ emoji: reactions.emoji });
+
+  if (!inserted) {
+    return;
+  }
+
   await db.batch([
-    db.insert(reactions).values(event).onConflictDoNothing(),
     db
       .insert(reactionTotals)
       .values({ emoji: event.emoji, count: 1 })
@@ -31,20 +47,72 @@ export async function addReaction(d1: D1Database, event: ReactionEvent) {
   ]);
 }
 
+export async function addEmoji(d1: D1Database, name: string, imageUrl: string) {
+  const db = drizzle(d1);
+  await db
+    .insert(emojiImages)
+    .values({ name, imageUrl })
+    .onConflictDoUpdate({
+      target: emojiImages.name,
+      set: { imageUrl, updatedAt: sql`(datetime('now'))` },
+    });
+}
+
+export async function removeEmoji(d1: D1Database, name: string) {
+  const db = drizzle(d1);
+  await db.delete(emojiImages).where(eq(emojiImages.name, name));
+}
+
+export async function renameEmoji(
+  d1: D1Database,
+  oldName: string,
+  newName: string,
+) {
+  const db = drizzle(d1);
+  // Atomic delete-then-insert: the batch runs in a single implicit transaction.
+  // Use onConflictDoUpdate on the insert in case newName already exists.
+  const [deleted] = await db
+    .delete(emojiImages)
+    .where(eq(emojiImages.name, oldName))
+    .returning({ imageUrl: emojiImages.imageUrl });
+  if (!deleted) {
+    return;
+  }
+  await db
+    .insert(emojiImages)
+    .values({ name: newName, imageUrl: deleted.imageUrl })
+    .onConflictDoUpdate({
+      target: emojiImages.name,
+      set: {
+        imageUrl: deleted.imageUrl,
+        updatedAt: sql`(datetime('now'))`,
+      },
+    });
+}
+
 export async function removeReaction(d1: D1Database, event: ReactionEvent) {
   const db = drizzle(d1);
 
-  await db.batch([
-    db
-      .delete(reactions)
-      .where(
-        and(
-          eq(reactions.userId, event.userId),
-          eq(reactions.emoji, event.emoji),
-          eq(reactions.channelId, event.channelId),
-          eq(reactions.messageTs, event.messageTs),
-        ),
+  // Delete the reaction row first — if it didn't exist (duplicate remove event
+  // or reaction from before backfill), .returning() yields an empty array so
+  // we skip aggregate updates.
+  const [deleted] = await db
+    .delete(reactions)
+    .where(
+      and(
+        eq(reactions.userId, event.userId),
+        eq(reactions.emoji, event.emoji),
+        eq(reactions.channelId, event.channelId),
+        eq(reactions.messageTs, event.messageTs),
       ),
+    )
+    .returning({ emoji: reactions.emoji });
+
+  if (!deleted) {
+    return;
+  }
+
+  await db.batch([
     db
       .update(reactionTotals)
       .set({ count: sql`MAX(0, ${reactionTotals.count} - 1)` })
@@ -58,5 +126,7 @@ export async function removeReaction(d1: D1Database, event: ReactionEvent) {
           eq(userEmojiCounts.emoji, event.emoji),
         ),
       ),
+    db.delete(reactionTotals).where(eq(reactionTotals.count, 0)),
+    db.delete(userEmojiCounts).where(eq(userEmojiCounts.count, 0)),
   ]);
 }

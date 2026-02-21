@@ -5,7 +5,7 @@ import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { routeTree } from "./routeTree.gen";
 
-import "./index.css";
+import "./styles/index.css";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -20,12 +20,10 @@ const router = createRouter({
   routeTree,
   defaultViewTransition: {
     types: ({ fromLocation, toLocation, pathChanged }) => {
-      if (!pathChanged) {
+      if (!pathChanged || !fromLocation) {
         return false;
       }
-      const fromDepth = (fromLocation?.pathname ?? "")
-        .split("/")
-        .filter(Boolean).length;
+      const fromDepth = fromLocation.pathname.split("/").filter(Boolean).length;
       const toDepth = toLocation.pathname.split("/").filter(Boolean).length;
       if (toDepth > fromDepth) {
         return ["drill-down"];

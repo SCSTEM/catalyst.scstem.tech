@@ -41,6 +41,7 @@ export const userEmojiCounts = sqliteTable(
   (table) => [
     primaryKey({ columns: [table.userId, table.emoji] }),
     index("idx_uec_user").on(table.userId),
+    index("idx_uec_emoji").on(table.emoji),
   ],
 );
 
