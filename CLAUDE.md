@@ -84,4 +84,4 @@ All routes are defined in `packages/worker/src/app.ts`. Each `.route()` call mou
 - **`import type` for type-only imports.** Enforced by biome (`useImportType`). Use `import type { Foo }` when importing only types.
 - **No unused imports.** Enforced by biome (`noUnusedImports`). Remove imports that are no longer used after refactoring.
 - **`@/` alias for cross-directory imports** in the web package. Only use relative imports for same-directory siblings. See `packages/web/CLAUDE.md` for details.
-- Schema changes require deleting all migrations and regenerating a single clean migration with `bun run db:generate` (fresh project, no production migration history to preserve yet).
+- Schema changes require deleting all migrations and regenerating a single clean migration with `mise run db:generate` (fresh project, no production migration history to preserve yet).

@@ -62,4 +62,4 @@ When adding new components, follow the existing visual style: bold borders, box 
 
 ## Development
 
-The Vite dev server proxies all `/api/*` requests to `localhost:8787` (the worker dev server). Run both `dev:web` and `dev:worker` together, or use `bun run dev` to start both.
+The Vite dev server proxies all `/api/*` requests to `localhost:8787` (the worker dev server). Run both `dev:web` and `dev:worker` together, or use `mise run dev` to start both.

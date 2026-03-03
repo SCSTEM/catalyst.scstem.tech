@@ -15,7 +15,7 @@ case "$ENV" in
     ;;
   prod)
     require_prod_confirmation
-    bunx wrangler deploy --env=''
+    bunx wrangler deploy
     ;;
   *)
     echo "Usage: mise run deploy:worker [staging|prod]" >&2
