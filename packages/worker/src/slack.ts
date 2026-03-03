@@ -3,6 +3,7 @@ import {
   addEmoji,
   addReaction,
   removeEmoji,
+  removeMessageReactions,
   removeReaction,
   renameEmoji,
 } from "./lib/db";
@@ -75,6 +76,25 @@ export function createSlackApp(env: Env) {
       console.log("reaction_removed", payload.reaction, payload.user);
     } catch (e) {
       console.error("reaction_removed failed", e);
+    }
+  });
+
+  app.event("message", async ({ payload }) => {
+    if (payload.subtype !== "message_deleted") {
+      return;
+    }
+
+    const channel = payload.channel as string | undefined;
+    const deletedTs = payload.deleted_ts as string | undefined;
+    if (!channel || !deletedTs) {
+      return;
+    }
+
+    try {
+      await removeMessageReactions(env.DB, channel, deletedTs);
+      console.log("message_deleted", channel, deletedTs);
+    } catch (e) {
+      console.error("message_deleted failed", e);
     }
   });
 
