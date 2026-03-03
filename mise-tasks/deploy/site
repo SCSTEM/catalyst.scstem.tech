@@ -1,0 +1,53 @@
+#!/usr/bin/env bash
+#MISE description="Full deploy: verify → migrate → worker → pages [staging (default)|prod]"
+set -euo pipefail
+source "$MISE_PROJECT_ROOT/mise-tasks/_helpers.sh"
+
+ENV="${1:-staging}"
+
+case "$ENV" in
+  staging|prod) ;;
+  *)
+    echo "Usage: mise run deploy:site [staging|prod]" >&2
+    exit 1
+    ;;
+esac
+
+require_clean_git "$ENV"
+if [[ "$ENV" == "prod" ]]; then
+  require_prod_confirmation
+fi
+
+# Resolve wrangler flags once
+if [[ "$ENV" == "staging" ]]; then
+  WRANGLER_ENV="--env staging"
+  PAGES_BRANCH="--branch=staging"
+else
+  WRANGLER_ENV=""
+  PAGES_BRANCH=""
+fi
+
+echo "==> [$ENV] Running quality checks..."
+mise run verify
+
+echo "==> [$ENV] Applying D1 migrations..."
+cd packages/worker
+# shellcheck disable=SC2086
+bunx wrangler d1 migrations apply DB --remote $WRANGLER_ENV
+cd "$MISE_PROJECT_ROOT"
+
+echo "==> [$ENV] Deploying worker..."
+cd packages/worker
+# shellcheck disable=SC2086
+bunx wrangler deploy $WRANGLER_ENV
+cd "$MISE_PROJECT_ROOT"
+
+echo "==> [$ENV] Building web..."
+bun --filter '@catalyst/web' build
+
+echo "==> [$ENV] Deploying pages..."
+# shellcheck disable=SC2086
+bunx wrangler pages deploy packages/web/dist \
+  --project-name="$MISE_VARS_PAGES_PROJECT" $PAGES_BRANCH
+
+echo "==> [$ENV] Deploy complete!"
