@@ -1,0 +1,26 @@
+#!/usr/bin/env bash
+#MISE description="Apply D1 migrations [local|staging|prod]"
+#MISE dir="packages/worker"
+set -euo pipefail
+source "$MISE_PROJECT_ROOT/mise-tasks/_helpers.sh"
+
+ENV="${1:-local}"
+
+case "$ENV" in
+  local)
+    bunx wrangler d1 migrations apply DB --local
+    ;;
+  staging)
+    require_clean_git "staging"
+    bunx wrangler d1 migrations apply DB --remote --env staging
+    ;;
+  prod)
+    require_clean_git "production"
+    require_prod_confirmation
+    bunx wrangler d1 migrations apply DB --remote
+    ;;
+  *)
+    echo "Usage: mise run db:migrate [local|staging|prod]" >&2
+    exit 1
+    ;;
+esac

@@ -90,6 +90,80 @@ export async function renameEmoji(
     });
 }
 
+export async function removeMessageReactions(
+  d1: D1Database,
+  channelId: string,
+  messageTs: string,
+) {
+  const db = drizzle(d1);
+
+  // Fetch all reactions on the deleted message so we know which aggregates
+  // to decrement.
+  const rows = await db
+    .select({ userId: reactions.userId, emoji: reactions.emoji })
+    .from(reactions)
+    .where(
+      and(
+        eq(reactions.channelId, channelId),
+        eq(reactions.messageTs, messageTs),
+      ),
+    );
+
+  if (rows.length === 0) {
+    return;
+  }
+
+  // Count how many times each emoji was used (for reaction_totals).
+  const emojiCounts = new Map<string, number>();
+  for (const row of rows) {
+    emojiCounts.set(row.emoji, (emojiCounts.get(row.emoji) ?? 0) + 1);
+  }
+
+  // Each row is a unique (userId, emoji) pair due to the PK constraint,
+  // so user_emoji_counts decrements by 1 per row.
+
+  await db.batch([
+    // Delete all reactions for this message
+    db
+      .delete(reactions)
+      .where(
+        and(
+          eq(reactions.channelId, channelId),
+          eq(reactions.messageTs, messageTs),
+        ),
+      ),
+
+    // Decrement reaction_totals for each emoji
+    ...[...emojiCounts.entries()].map(([emoji, count]) =>
+      db
+        .update(reactionTotals)
+        .set({
+          count: sql`MAX(0, ${reactionTotals.count} - ${count})`,
+        })
+        .where(eq(reactionTotals.emoji, emoji)),
+    ),
+
+    // Decrement user_emoji_counts for each (userId, emoji) pair
+    ...rows.map((row) =>
+      db
+        .update(userEmojiCounts)
+        .set({
+          count: sql`MAX(0, ${userEmojiCounts.count} - 1)`,
+        })
+        .where(
+          and(
+            eq(userEmojiCounts.userId, row.userId),
+            eq(userEmojiCounts.emoji, row.emoji),
+          ),
+        ),
+    ),
+
+    // Clean up zero-count rows
+    db.delete(reactionTotals).where(eq(reactionTotals.count, 0)),
+    db.delete(userEmojiCounts).where(eq(userEmojiCounts.count, 0)),
+  ]);
+}
+
 export async function removeReaction(d1: D1Database, event: ReactionEvent) {
   const db = drizzle(d1);
 

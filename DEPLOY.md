@@ -1,208 +1,165 @@
 # Deployment Guide — Catalyst on Cloudflare
 
-## Prerequisites
+## Day-to-Day Deployment
+
+All deploy commands run from the repo root via [mise](https://mise.jdx.dev/).
+
+The **frontend auto-deploys** via Cloudflare Pages git integration for both staging and production. The commands below handle the worker and database — the parts that require manual deploys.
+
+### Standard deploy
+
+```bash
+mise run deploy:site             # Staging (default)
+mise run deploy:site prod        # Production
+```
+
+This runs, in order:
+
+1. **Verify** — typecheck + lint (`mise run verify`)
+2. **Migrate** — applies D1 migrations to the remote database
+3. **Worker** — deploys the Cloudflare Worker via `wrangler deploy`
+
+Migrations run before new code goes live, so the database schema always matches the deployed worker.
+
+To also force-deploy Pages (bypassing auto-deploy), add `--pages`:
+
+```bash
+mise run deploy:site --pages
+mise run deploy:site prod --pages
+```
+
+### Worker only
+
+If there are no schema changes:
+
+```bash
+mise run deploy:worker           # Staging (default)
+mise run deploy:worker prod      # Production
+```
+
+Runs `mise run verify` as a dependency before deploying.
+
+### Migrations only
+
+```bash
+mise run db:migrate              # Local D1 (default)
+mise run db:migrate staging      # Staging D1
+mise run db:migrate prod         # Production D1
+```
+
+### Backfill historical Slack data
+
+```bash
+SLACK_BOT_TOKEN=xoxb-... mise run backfill              # Local (default)
+SLACK_BOT_TOKEN=xoxb-... mise run backfill staging       # Staging
+SLACK_BOT_TOKEN=xoxb-... mise run backfill prod          # Production
+```
+
+### Safety guardrails
+
+- **Staging is the default** for all deploy commands.
+- **Local is the default** for `db:migrate` and `backfill`.
+- **Production requires explicit `prod`** argument and an interactive `y/N` confirmation.
+- **All remote operations require a clean git working directory.** Commit or stash first.
+- **Verify runs automatically** — you don't need to run it separately before deploying.
+
+### When to use what
+
+| Scenario | Command |
+|---|---|
+| Normal deploy (schema + worker changes) | `mise run deploy:site` |
+| Worker-only change (no migration) | `mise run deploy:worker` |
+| Schema change, code not ready to deploy | `mise run db:migrate staging` |
+| Promote staging to production | `mise run deploy:site prod` |
+| Force Pages redeploy | `mise run deploy:site --pages` |
+
+---
+
+## Initial Setup
+
+Follow these steps when setting up the project on a new Cloudflare account.
+
+### Prerequisites
 
 - A [Cloudflare account](https://dash.cloudflare.com/sign-up)
 - [Bun](https://bun.sh) installed
-- [Wrangler CLI](https://developers.cloudflare.com/workers/wrangler/install-and-update/) installed (`bun add -g wrangler`)
+- [Wrangler CLI](https://developers.cloudflare.com/workers/wrangler/install-and-update/) (`bun add -g wrangler`)
 - Wrangler authenticated: `wrangler login`
 
----
-
-## 1. Create the D1 Database
+### 1. Create D1 Databases
 
 ```bash
+# Production
 wrangler d1 create catalyst-db
+
+# Staging
+wrangler d1 create catalyst-db-staging
 ```
 
-This outputs a `database_id`. Update `packages/worker/wrangler.jsonc` with the new ID:
+Update `packages/worker/wrangler.jsonc` with the database IDs:
+- Top-level `d1_databases[0].database_id` → production ID
+- `env.staging.d1_databases[0].database_id` → staging ID
 
-```jsonc
-"d1_databases": [
-  {
-    "binding": "DB",
-    "database_name": "catalyst-db",
-    "database_id": "<your-database-id>"
-  }
-]
-```
-
-Apply the schema migration:
+Apply migrations:
 
 ```bash
-bun run db:migrate:remote
+mise run db:migrate staging
+mise run db:migrate prod
 ```
 
----
-
-## 2. Set Worker Secrets
-
-These are sensitive values that must NOT go in `wrangler.jsonc`. Set each one interactively:
+### 2. Set Worker Secrets
 
 ```bash
-# Site access password (users enter this to access the dashboard)
+# Production
 wrangler secret put SITE_PASSWORD
-
-# Cloudflare Turnstile secret key (from dashboard.cloudflare.com → Turnstile)
 wrangler secret put TURNSTILE_SECRET_KEY
-
-# Slack app credentials (from api.slack.com → your app → Basic Information / OAuth)
 wrangler secret put SLACK_SIGNING_SECRET
 wrangler secret put SLACK_BOT_TOKEN
+
+# Staging
+wrangler secret put SITE_PASSWORD --env staging
+wrangler secret put TURNSTILE_SECRET_KEY --env staging
+wrangler secret put SLACK_SIGNING_SECRET --env staging
+wrangler secret put SLACK_BOT_TOKEN --env staging
 ```
 
-Optionally override `SESSION_TTL_HOURS` (defaults to `"0"` = no expiration):
+### 3. Create a Cloudflare Pages Project
 
 ```bash
-wrangler secret put SESSION_TTL_HOURS
+wrangler pages project create catalyst-scstem-tech
 ```
 
----
+Set build-time environment variables in the Cloudflare dashboard under **Workers & Pages → Settings → Environment variables**:
 
-## 3. Deploy the Worker
-
-```bash
-bun run deploy
-```
-
-This runs `wrangler deploy` from the worker package. The worker is now live.
-
-### Custom domain (optional)
-
-The worker is deployed to `catalyst-api.scstem.workers.dev`. The staging environment deploys to `staging.catalyst-api.scstem.workers.dev`.
-
----
-
-## 4. Create a Cloudflare Pages Project
-
-From the repo root:
-
-```bash
-wrangler pages project create catalyst
-```
-
-Or create it via the dashboard: **Workers & Pages → Create → Pages → Connect to Git** (if you want automatic deploys from GitHub).
-
----
-
-## 5. Build & Deploy the Frontend
-
-### Set environment variables
-
-The frontend needs build-time variables. In the Cloudflare dashboard:
-
-**Workers & Pages → catalyst → Settings → Environment variables**
-
-| Variable | Value | Notes |
+| Variable | Production | Preview/Staging |
 |---|---|---|
-| `VITE_API_URL` | `https://catalyst-api.scstem.workers.dev` | Worker API base URL |
-| `VITE_TURNSTILE_SITE_KEY` | Your Turnstile site key | From dashboard → Turnstile |
+| `VITE_API_URL` | `https://catalyst.scstem.tech/api` | `https://staging.catalyst.scstem.tech/api` |
+| `VITE_TURNSTILE_SITE_KEY` | Your Turnstile site key | Your Turnstile site key |
 
-### Deploy
-
-```bash
-# Build the frontend
-bun run build
-
-# Deploy to Pages
-wrangler pages deploy packages/web/dist --project-name catalyst
-```
-
----
-
-## 6. Configure CORS
-
-The worker allows requests from origins in the `ALLOWED_ORIGINS` set in `packages/worker/src/app.ts`, plus any `*.catalyst-scstem-tech.pages.dev` preview deployment origin and `staging.catalyst.scstem.tech`. If your frontend domain differs, add it there before deploying the worker.
-
----
-
-## 7. Set Up Slack App
+### 4. Set Up Slack App
 
 1. Go to [api.slack.com/apps](https://api.slack.com/apps) and create (or select) your app
-2. **Event Subscriptions** → Enable → Request URL: `https://catalyst-api.scstem.workers.dev/slack/events`
+2. **Event Subscriptions** → Enable → Request URL: `https://catalyst.scstem.tech/api/slack/events`
 3. Subscribe to **bot events**: `reaction_added`, `reaction_removed`
-4. **Slash Commands** → Create: `/catalyst` with URL `https://catalyst-api.scstem.workers.dev/slack/events`
+4. **Slash Commands** → Create: `/catalyst` with URL `https://catalyst.scstem.tech/api/slack/events`
 5. **OAuth & Permissions** → Bot token scopes: `reactions:read`, `users:read`, `emoji:read`, `commands`
 6. Install the app to your workspace and use the Bot User OAuth Token as `SLACK_BOT_TOKEN`
 
----
-
-## 8. Backfill Historical Data (Optional)
-
-To populate the database with existing reactions from Slack:
+### 5. First Deploy
 
 ```bash
-SLACK_BOT_TOKEN=xoxb-... bun run backfill
+mise run deploy:site --pages
+mise run deploy:site prod --pages
 ```
 
-This runs locally and writes directly to the remote D1 database.
-
 ---
 
-## Staging Environment
-
-The worker has a staging environment (`env.staging` in `wrangler.jsonc`) with a separate D1 database. Cloudflare Pages preview deployments use this staging worker.
-
-### Setup
-
-1. **Create the staging D1 database:**
-
-   ```bash
-   wrangler d1 create catalyst-db-staging
-   ```
-
-   Update the `database_id` in `wrangler.jsonc` under `env.staging`.
-
-2. **Set staging secrets:**
-
-   ```bash
-   wrangler secret put SITE_PASSWORD --env staging
-   wrangler secret put TURNSTILE_SECRET_KEY --env staging
-   wrangler secret put SLACK_SIGNING_SECRET --env staging
-   wrangler secret put SLACK_BOT_TOKEN --env staging
-   ```
-
-3. **Apply migrations to staging DB:**
-
-   ```bash
-   wrangler d1 migrations apply DB --remote --env staging
-   ```
-
-4. **Deploy the staging worker:**
-
-   ```bash
-   cd packages/worker && wrangler deploy --env staging
-   ```
-
-5. **Set Pages preview env var:**
-
-   In the Cloudflare dashboard under **Workers & Pages → catalyst → Settings → Environment variables → Preview**, set:
-
-   | Variable | Value |
-   |---|---|
-   | `VITE_API_URL` | `https://staging.catalyst-api.scstem.workers.dev` |
-
----
-
-## Summary
+## Infrastructure Summary
 
 | Component | Service | Domain |
 |---|---|---|
-| API + Slack handler | Cloudflare Worker (`catalyst-api`) | `catalyst-api.scstem.workers.dev` |
-| Frontend SPA | Cloudflare Pages (`catalyst`) | `catalyst.scstem.tech` / `staging.catalyst.scstem.tech` |
-| Database (production) | Cloudflare D1 (`catalyst-db`) | — |
-| Database (staging) | Cloudflare D1 (`catalyst-db-staging`) | — |
+| API + Slack handler | Cloudflare Worker | `catalyst.scstem.tech/api/*` (prod) / `staging.catalyst.scstem.tech/api/*` (staging) |
+| Frontend SPA | Cloudflare Pages (auto-deploy) | `catalyst.scstem.tech` (prod) / `staging.catalyst.scstem.tech` (staging) |
+| Database (production) | Cloudflare D1 | `catalyst-db` |
+| Database (staging) | Cloudflare D1 | `catalyst-db-staging` |
 | Captcha | Cloudflare Turnstile | — |
-
-## Redeployment
-
-```bash
-# Worker (after API changes)
-bun run deploy
-
-# Frontend (after UI changes)
-bun run build && wrangler pages deploy packages/web/dist --project-name catalyst
-
-# Database (after schema changes)
-bun run db:migrate:remote
-```

@@ -1,0 +1,30 @@
+#!/usr/bin/env bash
+#MISE description="Build + deploy CF Pages [staging (default)|prod]"
+#MISE depends=["verify"]
+set -euo pipefail
+source "$MISE_PROJECT_ROOT/mise-tasks/_helpers.sh"
+
+ENV="${1:-staging}"
+
+require_clean_git "$ENV"
+if [[ "$ENV" == "prod" ]]; then
+  require_prod_confirmation
+fi
+
+# Build
+bun --filter '@catalyst/web' build
+
+case "$ENV" in
+  staging)
+    bunx wrangler pages deploy packages/web/dist \
+      --project-name="$MISE_VARS_PAGES_PROJECT" --branch=staging
+    ;;
+  prod)
+    bunx wrangler pages deploy packages/web/dist \
+      --project-name="$MISE_VARS_PAGES_PROJECT"
+    ;;
+  *)
+    echo "Usage: mise run deploy:web [staging|prod]" >&2
+    exit 1
+    ;;
+esac

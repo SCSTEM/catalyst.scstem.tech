@@ -4,27 +4,45 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Commands
 
-All commands run from the repo root. See `package.json` scripts for the full list.
+All commands run from the repo root via [mise](https://mise.jdx.dev/). Run `mise tasks` to list all available tasks with descriptions.
 
 ```bash
 # Verify changes (run both before marking work done)
 bun run typecheck        # tsc -b across all packages
 bun run check            # biome lint + format (auto-fixes)
-bun run test             # Vitest integration tests (worker API)
+mise run verify          # Both above
 
 # Development
-bun run dev              # Both worker + web in parallel
-bun run dev:worker       # Wrangler on :8787
-bun run dev:web          # Vite on :5173
+mise run dev             # Both worker + web in parallel
+mise run dev:worker      # Wrangler on :8787
+mise run dev:web         # Vite on :5173
 
 # Database
-bun run db:generate          # Generate Drizzle migration from schema
-bun run db:migrate:local     # Apply migrations to local D1
-bun run db:migrate:remote    # Apply migrations to production D1
+mise run db:generate             # Generate Drizzle migration from schema
+mise run db:migrate              # Apply migrations to local D1 (default)
+mise run db:migrate staging      # Apply migrations to staging D1
+mise run db:migrate prod         # Apply migrations to production D1
 
-# Backfill historical Slack data
-SLACK_BOT_TOKEN=xoxb-... bun run backfill
+# Backfill historical Slack data (requires SLACK_BOT_TOKEN env var)
+mise run backfill                # Generate SQL + apply to local D1 (default)
+mise run backfill staging        # Generate SQL + apply to staging D1
+mise run backfill prod           # Generate SQL + apply to production D1
+
+# Deploy (defaults to staging; requires clean git state)
+# Pages auto-deploys via git — these handle worker + DB
+mise run deploy:site             # Verify → migrate → deploy worker (staging)
+mise run deploy:site prod        # Verify → migrate → deploy worker (production)
+mise run deploy:site --pages     # Also force-deploy Pages
+mise run deploy:worker           # Deploy worker only to staging
+mise run deploy:worker prod      # Deploy worker only to production
 ```
+
+### Environment targeting
+
+- **Local is the default** for all D1 commands (`db:migrate`, `backfill`).
+- **Staging is the default** for all deploy commands (`deploy:worker`, `deploy:web`).
+- **Production** always requires explicit `prod` argument and an interactive confirmation.
+- **Remote targets** (staging/prod) require a clean git working directory.
 
 ## Per-Package Documentation
 
@@ -67,4 +85,4 @@ All routes are defined in `packages/worker/src/app.ts`. Each `.route()` call mou
 - **`import type` for type-only imports.** Enforced by biome (`useImportType`). Use `import type { Foo }` when importing only types.
 - **No unused imports.** Enforced by biome (`noUnusedImports`). Remove imports that are no longer used after refactoring.
 - **`@/` alias for cross-directory imports** in the web package. Only use relative imports for same-directory siblings. See `packages/web/CLAUDE.md` for details.
-- Schema changes require deleting all migrations and regenerating a single clean migration with `bun run db:generate` (fresh project, no production migration history to preserve yet).
+- Schema changes require deleting all migrations and regenerating a single clean migration with `mise run db:generate` (fresh project, no production migration history to preserve yet).

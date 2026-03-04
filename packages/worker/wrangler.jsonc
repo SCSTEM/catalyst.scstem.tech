@@ -4,11 +4,15 @@
   "main": "./src/index.ts",
   "compatibility_date": "2026-02-12",
   "preview_urls": false,
+  "workers_dev": false,
+  "upload_source_maps": true,
+  "placement": {
+    "mode": "smart"
+  },
   "route": {
     "pattern": "catalyst.scstem.tech/api/*",
     "zone_name": "scstem.tech"
   },
-  "upload_source_maps": true,
   "observability": {
     "enabled": true,
     "logs": {
@@ -17,7 +21,8 @@
     }
   },
   "vars": {
-    "PRODUCTION": true
+    "PRODUCTION": true,
+    "SESSION_TTL_HOURS": 672
   },
   "d1_databases": [
     {
@@ -33,7 +38,8 @@
         "zone_name": "scstem.tech"
       },
       "vars": {
-        "PRODUCTION": false
+        "PRODUCTION": false,
+        "SESSION_TTL_HOURS": 8
       },
       "d1_databases": [
         {

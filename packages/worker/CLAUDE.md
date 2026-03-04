@@ -37,5 +37,5 @@ This split exists because the Slack SDK needs raw request handling for signature
 
 1. Edit `src/db/schema.ts`
 2. Delete all files in `migrations/` and `migrations/meta/`
-3. Run `bun run db:generate` to create a fresh migration
-4. Run `bun run db:migrate:local` to apply locally
+3. Run `mise run db:generate` to create a fresh migration
+4. Run `mise run db:migrate` to apply locally
