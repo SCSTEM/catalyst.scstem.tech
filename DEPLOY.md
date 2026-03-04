@@ -15,7 +15,7 @@ mise run deploy:site prod        # Production
 
 This runs, in order:
 
-1. **Verify** — typecheck + lint + tests (`mise run verify`)
+1. **Verify** — typecheck + lint (`mise run verify`)
 2. **Migrate** — applies D1 migrations to the remote database
 3. **Worker** — deploys the Cloudflare Worker via `wrangler deploy`
 

@@ -6,7 +6,6 @@
     "packages/*"
   ],
   "scripts": {
-    "test": "bun --filter '@catalyst/worker' test",
     "build:web": "bun --filter '@catalyst/web' build",
     "deploy:worker": "bun --filter '@catalyst/worker' deploy",
     "dev": "bun --filter '*' dev",

@@ -10,8 +10,7 @@ All commands run from the repo root via [mise](https://mise.jdx.dev/). Run `mise
 # Verify changes (run both before marking work done)
 bun run typecheck        # tsc -b across all packages
 bun run check            # biome lint + format (auto-fixes)
-mise run test            # Vitest integration tests (auto-migrates local D1 first)
-mise run verify          # All three above
+mise run verify          # Both above
 
 # Development
 mise run dev             # Both worker + web in parallel

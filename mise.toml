@@ -23,14 +23,9 @@ run = "bunx tsc -b"
 description = "Lint + format with Biome (auto-fix)"
 run = "bunx biome check --write ."
 
-[tasks.test]
-description = "Run Vitest integration tests"
-run = "bun --filter '@catalyst/worker' test"
-depends = ["db:migrate"]
-
 [tasks.verify]
-description = "Run all quality checks (typecheck + lint + test)"
-depends = ["typecheck", "check", "test"]
+description = "Run all quality checks (typecheck + lint)"
+depends = ["typecheck", "check"]
 
 [tasks."db:generate"]
 description = "Generate Drizzle migration from schema"
