@@ -17,7 +17,7 @@ run = "bun --filter '@catalyst/web' dev"
 
 [tasks.typecheck]
 description = "Type-check all packages (tsc -b)"
-run = "tsc -b"
+run = "bunx tsc -b"
 
 [tasks.check]
 description = "Lint + format with Biome (auto-fix)"
@@ -34,7 +34,7 @@ depends = ["typecheck", "check", "test"]
 
 [tasks."db:generate"]
 description = "Generate Drizzle migration from schema"
-run = "drizzle-kit generate"
+run = "bunx drizzle-kit generate"
 dir = "packages/worker"
 
 [tasks.cf-typegen]
