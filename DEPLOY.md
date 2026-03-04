@@ -4,11 +4,13 @@
 
 All deploy commands run from the repo root via [mise](https://mise.jdx.dev/).
 
-### Full deploy (recommended)
+The **frontend auto-deploys** via Cloudflare Pages git integration for both staging and production. The commands below handle the worker and database — the parts that require manual deploys.
+
+### Standard deploy
 
 ```bash
-mise run deploy:site             # Deploy everything to staging
-mise run deploy:site prod        # Deploy everything to production
+mise run deploy:site             # Staging (default)
+mise run deploy:site prod        # Production
 ```
 
 This runs, in order:
@@ -16,22 +18,26 @@ This runs, in order:
 1. **Verify** — typecheck + lint + tests (`mise run verify`)
 2. **Migrate** — applies D1 migrations to the remote database
 3. **Worker** — deploys the Cloudflare Worker via `wrangler deploy`
-4. **Pages** — builds the web package and deploys to Cloudflare Pages
 
-Use this for most deploys. It ensures migrations run before new code goes live, so the database schema always matches the deployed worker.
+Migrations run before new code goes live, so the database schema always matches the deployed worker.
 
-### Partial deploys
-
-If only one half changed and you're confident there are no schema changes:
+To also force-deploy Pages (bypassing auto-deploy), add `--pages`:
 
 ```bash
-mise run deploy:worker           # Worker only → staging
-mise run deploy:worker prod      # Worker only → production
-mise run deploy:web              # Pages only → staging
-mise run deploy:web prod         # Pages only → production
+mise run deploy:site --pages
+mise run deploy:site prod --pages
 ```
 
-Both run `mise run verify` as a dependency before deploying.
+### Worker only
+
+If there are no schema changes:
+
+```bash
+mise run deploy:worker           # Staging (default)
+mise run deploy:worker prod      # Production
+```
+
+Runs `mise run verify` as a dependency before deploying.
 
 ### Migrations only
 
@@ -61,10 +67,11 @@ SLACK_BOT_TOKEN=xoxb-... mise run backfill prod          # Production
 
 | Scenario | Command |
 |---|---|
-| Normal deploy with schema + code changes | `mise run deploy:site` |
-| Code-only change (no migration) | `mise run deploy:worker` or `mise run deploy:web` |
+| Normal deploy (schema + worker changes) | `mise run deploy:site` |
+| Worker-only change (no migration) | `mise run deploy:worker` |
 | Schema change, code not ready to deploy | `mise run db:migrate staging` |
 | Promote staging to production | `mise run deploy:site prod` |
+| Force Pages redeploy | `mise run deploy:site --pages` |
 
 ---
 
@@ -141,8 +148,8 @@ Set build-time environment variables in the Cloudflare dashboard under **Workers
 ### 5. First Deploy
 
 ```bash
-mise run deploy:site
-mise run deploy:site prod
+mise run deploy:site --pages
+mise run deploy:site prod --pages
 ```
 
 ---
@@ -152,7 +159,7 @@ mise run deploy:site prod
 | Component | Service | Domain |
 |---|---|---|
 | API + Slack handler | Cloudflare Worker | `catalyst.scstem.tech/api/*` (prod) / `staging.catalyst.scstem.tech/api/*` (staging) |
-| Frontend SPA | Cloudflare Pages | `catalyst.scstem.tech` (prod) / `staging.catalyst.scstem.tech` (staging) |
+| Frontend SPA | Cloudflare Pages (auto-deploy) | `catalyst.scstem.tech` (prod) / `staging.catalyst.scstem.tech` (staging) |
 | Database (production) | Cloudflare D1 | `catalyst-db` |
 | Database (staging) | Cloudflare D1 | `catalyst-db-staging` |
 | Captcha | Cloudflare Turnstile | — |

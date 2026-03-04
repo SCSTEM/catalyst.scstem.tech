@@ -1,17 +1,29 @@
 #!/usr/bin/env bash
-#MISE description="Full deploy: verify → migrate → worker → pages [staging (default)|prod]"
+#MISE description="Deploy: verify → migrate → worker [--pages to include Pages] [staging (default)|prod]"
 set -euo pipefail
 source "$MISE_PROJECT_ROOT/mise-tasks/_helpers.sh"
 
-ENV="${1:-staging}"
+DEPLOY_PAGES=false
+ENV=""
 
-case "$ENV" in
-  staging|prod) ;;
-  *)
-    echo "Usage: mise run deploy:site [staging|prod]" >&2
-    exit 1
-    ;;
-esac
+for arg in "$@"; do
+  case "$arg" in
+    --pages) DEPLOY_PAGES=true ;;
+    staging|prod)
+      if [[ -n "$ENV" ]]; then
+        echo "Error: multiple environments specified" >&2
+        exit 1
+      fi
+      ENV="$arg"
+      ;;
+    *)
+      echo "Usage: mise run deploy:site [staging|prod] [--pages]" >&2
+      exit 1
+      ;;
+  esac
+done
+
+ENV="${ENV:-staging}"
 
 require_clean_git "$ENV"
 if [[ "$ENV" == "prod" ]]; then
@@ -42,12 +54,14 @@ cd packages/worker
 bunx wrangler deploy $WRANGLER_ENV
 cd "$MISE_PROJECT_ROOT"
 
-echo "==> [$ENV] Building web..."
-bun --filter '@catalyst/web' build
+if [[ "$DEPLOY_PAGES" == "true" ]]; then
+  echo "==> [$ENV] Building web..."
+  bun --filter '@catalyst/web' build
 
-echo "==> [$ENV] Deploying pages..."
-# shellcheck disable=SC2086
-bunx wrangler pages deploy packages/web/dist \
-  --project-name="$MISE_VARS_PAGES_PROJECT" $PAGES_BRANCH
+  echo "==> [$ENV] Deploying pages..."
+  # shellcheck disable=SC2086
+  bunx wrangler pages deploy packages/web/dist \
+    --project-name="$MISE_VARS_PAGES_PROJECT" $PAGES_BRANCH
+fi
 
 echo "==> [$ENV] Deploy complete!"
