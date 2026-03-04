@@ -1,0 +1,43 @@
+min_version = "2025.1.0"
+
+[vars]
+PAGES_PROJECT = "catalyst-scstem-tech"
+
+[tasks.dev]
+description = "Start worker + web dev servers"
+run = "bun --filter '*' dev"
+
+[tasks."dev:worker"]
+description = "Start Wrangler dev server on :8787"
+run = "bun --filter '@catalyst/worker' dev"
+
+[tasks."dev:web"]
+description = "Start Vite dev server on :5173"
+run = "bun --filter '@catalyst/web' dev"
+
+[tasks.typecheck]
+description = "Type-check all packages (tsc -b)"
+run = "tsc -b"
+
+[tasks.check]
+description = "Lint + format with Biome (auto-fix)"
+run = "bunx biome check --write ."
+
+[tasks.test]
+description = "Run Vitest integration tests"
+run = "bun --filter '@catalyst/worker' test"
+depends = ["db:migrate"]
+
+[tasks.verify]
+description = "Run all quality checks (typecheck + lint + test)"
+depends = ["typecheck", "check", "test"]
+
+[tasks."db:generate"]
+description = "Generate Drizzle migration from schema"
+run = "drizzle-kit generate"
+dir = "packages/worker"
+
+[tasks.cf-typegen]
+description = "Generate Cloudflare Worker types"
+run = "bunx wrangler types"
+dir = "packages/worker"
