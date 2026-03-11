@@ -1,6 +1,6 @@
 import type { WorkflowEvent, WorkflowStep } from "cloudflare:workers";
 import { WorkflowEntrypoint } from "cloudflare:workers";
-import { sql } from "drizzle-orm";
+import { count } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/d1";
 import { reactions, reactionTotals, userEmojiCounts } from "../db/schema";
 import { slackApi } from "../lib/slack-api";
@@ -122,15 +122,26 @@ export class BackfillChannelWorkflow extends WorkflowEntrypoint<
 
     await step.do("rebuild-aggregates", async () => {
       const db = drizzle(this.env.DB);
+
+      const emojiCounts = db
+        .select({ emoji: reactions.emoji, count: count() })
+        .from(reactions)
+        .groupBy(reactions.emoji);
+
+      const userEmoji = db
+        .select({
+          userId: reactions.userId,
+          emoji: reactions.emoji,
+          count: count(),
+        })
+        .from(reactions)
+        .groupBy(reactions.userId, reactions.emoji);
+
       await db.batch([
         db.delete(reactionTotals),
-        db.run(
-          sql`INSERT INTO reaction_totals (emoji, count) SELECT emoji, COUNT(*) FROM reactions GROUP BY emoji`,
-        ),
+        db.insert(reactionTotals).select(emojiCounts),
         db.delete(userEmojiCounts),
-        db.run(
-          sql`INSERT INTO user_emoji_counts (user_id, emoji, count) SELECT user_id, emoji, COUNT(*) FROM reactions GROUP BY user_id, emoji`,
-        ),
+        db.insert(userEmojiCounts).select(userEmoji),
       ]);
     });
 
