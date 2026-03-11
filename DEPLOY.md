@@ -55,6 +55,14 @@ SLACK_BOT_TOKEN=xoxb-... mise run backfill staging       # Staging
 SLACK_BOT_TOKEN=xoxb-... mise run backfill prod          # Production
 ```
 
+### Workflows (Slack-triggered backfill)
+
+The `/backfill` slash command in Slack triggers a durable [Cloudflare Workflow](https://developers.cloudflare.com/workflows/) (`BackfillChannelWorkflow`) that backfills a single channel server-side. It pages through message history, writes reactions to D1, rebuilds aggregates, and posts a completion message — all with automatic retries.
+
+The workflow deploys automatically as part of `wrangler deploy` (it's declared in `wrangler.jsonc`). No extra deployment steps are needed.
+
+Use **`/backfill`** for on-demand single-channel backfills from Slack. Use **`mise run backfill`** for bulk backfills across all channels from the CLI.
+
 ### Safety guardrails
 
 - **Staging is the default** for all deploy commands.
@@ -72,6 +80,7 @@ SLACK_BOT_TOKEN=xoxb-... mise run backfill prod          # Production
 | Schema change, code not ready to deploy | `mise run db:migrate staging` |
 | Promote staging to production | `mise run deploy:site prod` |
 | Force Pages redeploy | `mise run deploy:site --pages` |
+| Backfill a single channel (from Slack) | `/backfill` slash command in the channel |
 
 ---
 
@@ -162,4 +171,5 @@ mise run deploy:site prod --pages
 | Frontend SPA | Cloudflare Pages (auto-deploy) | `catalyst.scstem.tech` (prod) / `staging.catalyst.scstem.tech` (staging) |
 | Database (production) | Cloudflare D1 | `catalyst-db` |
 | Database (staging) | Cloudflare D1 | `catalyst-db-staging` |
+| Backfill workflow | Cloudflare Workflows | `backfill-channel-workflow` |
 | Captcha | Cloudflare Turnstile | — |
