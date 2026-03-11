@@ -24,6 +24,13 @@
     "PRODUCTION": true,
     "SESSION_TTL_HOURS": 672
   },
+  "workflows": [
+    {
+      "binding": "BACKFILL_WORKFLOW",
+      "name": "backfill-channel-workflow",
+      "class_name": "BackfillChannelWorkflow"
+    }
+  ],
   "d1_databases": [
     {
       "binding": "DB",

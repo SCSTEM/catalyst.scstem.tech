@@ -1,6 +1,8 @@
 import honoApp from "./app";
 import { createSlackApp } from "./slack";
 
+export { BackfillChannelWorkflow } from "./workflows/backfill-channel";
+
 let slackApp: ReturnType<typeof createSlackApp>;
 
 export default {
