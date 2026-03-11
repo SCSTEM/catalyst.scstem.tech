@@ -10,7 +10,6 @@ const MAX_PAGES = 500;
 type BackfillParams = {
   channelId: string;
   since: string;
-  token: string;
   channelName: string;
 };
 
@@ -36,14 +35,15 @@ export class BackfillChannelWorkflow extends WorkflowEntrypoint<
   BackfillParams
 > {
   override async run(event: WorkflowEvent<BackfillParams>, step: WorkflowStep) {
-    const { channelId, since, token, channelName } = event.payload;
+    const { channelId, since, channelName } = event.payload;
+    const token = this.env.SLACK_BOT_TOKEN;
     const oldest = String(Math.floor(new Date(since).getTime() / 1000));
 
-    // ── Fetch messages page by page ──
+    // ── Fetch messages page by page, writing to D1 as we go ──
 
-    const allReactions: ReactionRow[] = [];
     let cursor = "";
     let pageCount = 0;
+    let totalReactions = 0;
 
     do {
       const currentCursor = cursor;
@@ -83,13 +83,23 @@ export class BackfillChannelWorkflow extends WorkflowEntrypoint<
           }
         }
 
+        // Write this page's reactions to D1 immediately
+        if (pageReactions.length > 0) {
+          const db = drizzle(this.env.DB);
+          const batchSize = 100;
+          for (let i = 0; i < pageReactions.length; i += batchSize) {
+            const batch = pageReactions.slice(i, i + batchSize);
+            await db.insert(reactions).values(batch).onConflictDoNothing();
+          }
+        }
+
         return {
-          reactions: pageReactions,
+          count: pageReactions.length,
           nextCursor: res.response_metadata?.next_cursor ?? "",
         };
       });
 
-      allReactions.push(...page.reactions);
+      totalReactions += page.count;
       cursor = page.nextCursor;
       pageCount++;
 
@@ -98,7 +108,7 @@ export class BackfillChannelWorkflow extends WorkflowEntrypoint<
       }
     } while (cursor && pageCount < MAX_PAGES);
 
-    if (allReactions.length === 0) {
+    if (totalReactions === 0) {
       await step.do("notify-empty", async () => {
         await slackApi(token, "chat.postMessage", {
           channel: channelId,
@@ -107,17 +117,6 @@ export class BackfillChannelWorkflow extends WorkflowEntrypoint<
       });
       return;
     }
-
-    // ── Write reactions to D1 ──
-
-    await step.do("write-reactions", async () => {
-      const db = drizzle(this.env.DB);
-      const batchSize = 100;
-      for (let i = 0; i < allReactions.length; i += batchSize) {
-        const batch = allReactions.slice(i, i + batchSize);
-        await db.insert(reactions).values(batch).onConflictDoNothing();
-      }
-    });
 
     // ── Rebuild aggregate tables ──
 
@@ -139,7 +138,7 @@ export class BackfillChannelWorkflow extends WorkflowEntrypoint<
 
     const truncated = pageCount >= MAX_PAGES;
     await step.do("notify-complete", async () => {
-      let text = `Backfill complete for #${channelName}: found ${allReactions.length} reactions across ${pageCount} pages since ${since}.`;
+      let text = `Backfill complete for #${channelName}: found ${totalReactions} reactions across ${pageCount} pages since ${since}.`;
       if (truncated) {
         text += `\n:warning: Hit the ${MAX_PAGES}-page limit. Some older messages may not have been processed. Use the CLI backfill script for very large channels.`;
       }

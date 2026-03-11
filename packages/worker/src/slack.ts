@@ -7,6 +7,7 @@ import {
   removeReaction,
   renameEmoji,
 } from "./lib/db";
+import { slackApi } from "./lib/slack-api";
 
 export function createSlackApp(env: Env) {
   const app = new SlackApp({ env });
@@ -87,19 +88,12 @@ export function createSlackApp(env: Env) {
       // Look up the channel name for user-friendly messages
       let channelName = metadata.channelId;
       try {
-        const info = await fetch(
-          `https://slack.com/api/conversations.info?channel=${metadata.channelId}`,
-          {
-            headers: {
-              Authorization: `Bearer ${env.SLACK_BOT_TOKEN}`,
-            },
-          },
+        const data = await slackApi<{ channel?: { name?: string } }>(
+          env.SLACK_BOT_TOKEN,
+          "conversations.info",
+          { channel: metadata.channelId },
         );
-        const data = (await info.json()) as {
-          ok: boolean;
-          channel?: { name?: string };
-        };
-        if (data.ok && data.channel?.name) {
+        if (data.channel?.name) {
           channelName = data.channel.name;
         }
       } catch {
@@ -116,21 +110,12 @@ export function createSlackApp(env: Env) {
           params: {
             channelId: metadata.channelId,
             since: dateValue,
-            token: env.SLACK_BOT_TOKEN,
             channelName,
           },
         });
-        // Post confirmation to channel
-        await fetch("https://slack.com/api/chat.postMessage", {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${env.SLACK_BOT_TOKEN}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            channel: metadata.channelId,
-            text: `Starting backfill for #${channelName} since ${dateValue}. This may take a few minutes...`,
-          }),
+        await slackApi(env.SLACK_BOT_TOKEN, "chat.postMessage", {
+          channel: metadata.channelId,
+          text: `Starting backfill for #${channelName} since ${dateValue}. This may take a few minutes...`,
         });
       } catch (e) {
         console.error("Failed to start backfill workflow", e);
