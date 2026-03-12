@@ -1,6 +1,6 @@
 min_version = "2025.1.0"
 
-[vars]
+[env]
 PAGES_PROJECT = "catalyst-scstem-tech"
 
 [tasks.dev]

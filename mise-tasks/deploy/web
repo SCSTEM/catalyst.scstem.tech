@@ -17,11 +17,11 @@ bun --filter '@catalyst/web' build
 case "$ENV" in
   staging)
     bunx wrangler pages deploy packages/web/dist \
-      --project-name="$MISE_VARS_PAGES_PROJECT" --branch=staging
+      --project-name="$PAGES_PROJECT" --branch=staging
     ;;
   prod)
     bunx wrangler pages deploy packages/web/dist \
-      --project-name="$MISE_VARS_PAGES_PROJECT"
+      --project-name="$PAGES_PROJECT"
     ;;
   *)
     echo "Usage: mise run deploy:web [staging|prod]" >&2

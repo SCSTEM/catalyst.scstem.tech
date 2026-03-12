@@ -29,10 +29,9 @@ mise run backfill staging        # Generate SQL + apply to staging D1
 mise run backfill prod           # Generate SQL + apply to production D1
 
 # Deploy (defaults to staging; requires clean git state)
-# Pages auto-deploys via git — these handle worker + DB
-mise run deploy:site             # Verify → migrate → deploy worker (staging)
-mise run deploy:site prod        # Verify → migrate → deploy worker (production)
-mise run deploy:site --pages     # Also force-deploy Pages
+mise run deploy:site             # Verify → migrate → deploy worker + Pages (staging)
+mise run deploy:site prod        # Verify → migrate → deploy worker + Pages (production)
+mise run deploy:site --no-pages  # Skip Pages deploy
 mise run deploy:worker           # Deploy worker only to staging
 mise run deploy:worker prod      # Deploy worker only to production
 ```

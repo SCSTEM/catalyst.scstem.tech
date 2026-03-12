@@ -63,5 +63,15 @@
       "!**/routeTree.gen.ts",
       "!packages/worker/migrations"
     ]
-  }
+  },
+  "overrides": [
+    {
+      "includes": ["**/wrangler.jsonc"],
+      "json": {
+        "formatter": {
+          "trailingCommas": "none"
+        }
+      }
+    }
+  ]
 }
