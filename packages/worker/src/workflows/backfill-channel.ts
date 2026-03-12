@@ -11,6 +11,7 @@ type BackfillParams = {
   channelId: string;
   since: string;
   channelName: string;
+  userId: string;
 };
 
 type ReactionRow = {
@@ -35,7 +36,7 @@ export class BackfillChannelWorkflow extends WorkflowEntrypoint<
   BackfillParams
 > {
   override async run(event: WorkflowEvent<BackfillParams>, step: WorkflowStep) {
-    const { channelId, since, channelName } = event.payload;
+    const { channelId, since, channelName, userId } = event.payload;
     const token = this.env.SLACK_BOT_TOKEN;
     const oldest = String(Math.floor(new Date(since).getTime() / 1000));
 
@@ -110,8 +111,9 @@ export class BackfillChannelWorkflow extends WorkflowEntrypoint<
 
     if (totalReactions === 0) {
       await step.do("notify-empty", async () => {
-        await slackApi(token, "chat.postMessage", {
+        await slackApi(token, "chat.postEphemeral", {
           channel: channelId,
+          user: userId,
           text: `Backfill complete for #${channelName} — no reactions found since ${since}.`,
         });
       });
@@ -124,7 +126,7 @@ export class BackfillChannelWorkflow extends WorkflowEntrypoint<
       const db = drizzle(this.env.DB);
 
       const emojiCounts = db
-        .select({ emoji: reactions.emoji, count: count() })
+        .select({ emoji: reactions.emoji, count: count().as("count") })
         .from(reactions)
         .groupBy(reactions.emoji);
 
@@ -132,7 +134,7 @@ export class BackfillChannelWorkflow extends WorkflowEntrypoint<
         .select({
           userId: reactions.userId,
           emoji: reactions.emoji,
-          count: count(),
+          count: count().as("count"),
         })
         .from(reactions)
         .groupBy(reactions.userId, reactions.emoji);
@@ -153,8 +155,9 @@ export class BackfillChannelWorkflow extends WorkflowEntrypoint<
       if (truncated) {
         text += `\n:warning: Hit the ${MAX_PAGES}-page limit. Some older messages may not have been processed. Use the CLI backfill script for very large channels.`;
       }
-      await slackApi(token, "chat.postMessage", {
+      await slackApi(token, "chat.postEphemeral", {
         channel: channelId,
+        user: userId,
         text,
       });
     });

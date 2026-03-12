@@ -52,6 +52,7 @@ export function createSlackApp(env: Env) {
           ],
           private_metadata: JSON.stringify({
             channelId: payload.channel_id,
+            userId: payload.user_id,
           }),
         },
       });
@@ -77,6 +78,7 @@ export function createSlackApp(env: Env) {
         payload.view.state.values.date_block?.backfill_date?.selected_date;
       const metadata = JSON.parse(payload.view.private_metadata) as {
         channelId: string;
+        userId: string;
       };
 
       if (!dateValue || !metadata.channelId) {
@@ -111,10 +113,12 @@ export function createSlackApp(env: Env) {
             channelId: metadata.channelId,
             since: dateValue,
             channelName,
+            userId: metadata.userId,
           },
         });
-        await slackApi(env.SLACK_BOT_TOKEN, "chat.postMessage", {
+        await slackApi(env.SLACK_BOT_TOKEN, "chat.postEphemeral", {
           channel: metadata.channelId,
+          user: metadata.userId,
           text: `Starting backfill for #${channelName} since ${dateValue}. This may take a few minutes...`,
         });
       } catch (e) {
