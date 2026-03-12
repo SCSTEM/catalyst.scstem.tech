@@ -68,6 +68,11 @@ export function createSlackApp(env: Env) {
       return { response_action: "clear" };
     },
     async ({ payload }) => {
+      if (!env.BACKFILL_WORKFLOW) {
+        console.error("BACKFILL_WORKFLOW binding not configured");
+        return;
+      }
+
       const dateValue =
         payload.view.state.values.date_block?.backfill_date?.selected_date;
       const metadata = JSON.parse(payload.view.private_metadata) as {
@@ -98,11 +103,6 @@ export function createSlackApp(env: Env) {
         }
       } catch {
         // Fall back to channel ID
-      }
-
-      if (!env.BACKFILL_WORKFLOW) {
-        console.error("BACKFILL_WORKFLOW binding not configured");
-        return;
       }
 
       try {
