@@ -51,7 +51,7 @@ Under **OAuth & Permissions**, add these **Bot Token Scopes**:
 Under **Event Subscriptions**:
 
 1. Toggle **Enable Events** on
-2. Set the **Request URL** to `https://catalyst-api.scstem.workers.dev/slack/events` (come back to this after deploying in step 5)
+2. Set the **Request URL** to `https://catalyst.scstem.tech/api/slack/events` (come back to this after deploying in step 5)
 3. Under **Subscribe to bot events**, add:
    - `reaction_added`
    - `reaction_removed`
@@ -63,7 +63,7 @@ Under **Slash Commands**, click **Create New Command**:
 | Field | Value |
 |-------|-------|
 | Command | `/catalyst` |
-| Request URL | `https://catalyst-api.scstem.workers.dev/slack/events` |
+| Request URL | `https://catalyst.scstem.tech/api/slack/events` |
 | Short Description | Ping the Catalyst bot |
 
 Then create a second command:
@@ -71,7 +71,7 @@ Then create a second command:
 | Field | Value |
 |-------|-------|
 | Command | `/backfill` |
-| Request URL | `https://catalyst-api.scstem.workers.dev/slack/events` |
+| Request URL | `https://catalyst.scstem.tech/api/slack/events` |
 | Short Description | Backfill emoji reactions for this channel |
 
 > The slash commands and events share the same endpoint — the SDK dispatches by payload type.
