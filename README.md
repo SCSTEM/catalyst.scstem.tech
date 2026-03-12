@@ -37,7 +37,8 @@ Under **OAuth & Permissions**, add these **Bot Token Scopes**:
 | Scope | Used for |
 |-------|----------|
 | `reactions:read` | Receiving reaction events |
-| `commands` | Slash command (`/catalyst`) |
+| `chat:write` | Bot messages (backfill status, slash command responses) |
+| `commands` | Slash commands (`/catalyst`, `/backfill`) |
 | `channels:history` | Backfill: reading message history |
 | `groups:history` | Backfill: private channel history |
 | `channels:read` | Backfill: listing channels |
@@ -65,7 +66,15 @@ Under **Slash Commands**, click **Create New Command**:
 | Request URL | `https://catalyst-api.scstem.workers.dev/slack/events` |
 | Short Description | Ping the Catalyst bot |
 
-> The slash command and events share the same endpoint — the SDK dispatches by payload type.
+Then create a second command:
+
+| Field | Value |
+|-------|-------|
+| Command | `/backfill` |
+| Request URL | `https://catalyst-api.scstem.workers.dev/slack/events` |
+| Short Description | Backfill emoji reactions for this channel |
+
+> The slash commands and events share the same endpoint — the SDK dispatches by payload type.
 
 ### Install to workspace
 

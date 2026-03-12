@@ -7,15 +7,125 @@ import {
   removeReaction,
   renameEmoji,
 } from "./lib/db";
+import { slackApi } from "./lib/slack-api";
 
 export function createSlackApp(env: Env) {
   const app = new SlackApp({ env });
 
-  // ── Slash command ──
+  // ── Slash commands ──
 
   app.command("/catalyst", async () => {
     return ":wave:";
   });
+
+  app.command("/backfill", async ({ payload, context }) => {
+    try {
+      await context.client.views.open({
+        trigger_id: payload.trigger_id,
+        view: {
+          type: "modal",
+          callback_id: "backfill-modal",
+          title: { type: "plain_text", text: "Backfill Reactions" },
+          submit: { type: "plain_text", text: "Start" },
+          close: { type: "plain_text", text: "Cancel" },
+          blocks: [
+            {
+              type: "section",
+              text: {
+                type: "mrkdwn",
+                text: "Fetch historical reactions for this channel back to a specific date.",
+              },
+            },
+            {
+              type: "input",
+              block_id: "date_block",
+              element: {
+                type: "datepicker",
+                action_id: "backfill_date",
+                placeholder: {
+                  type: "plain_text",
+                  text: "Select a date",
+                },
+              },
+              label: { type: "plain_text", text: "Backfill since" },
+            },
+          ],
+          private_metadata: JSON.stringify({
+            channelId: payload.channel_id,
+            userId: payload.user_id,
+          }),
+        },
+      });
+    } catch (e) {
+      console.error("Failed to open backfill modal", e);
+      return "Failed to open the backfill modal. Please try again.";
+    }
+    return "";
+  });
+
+  app.viewSubmission(
+    "backfill-modal",
+    async () => {
+      return { response_action: "clear" };
+    },
+    async ({ payload }) => {
+      if (!env.BACKFILL_WORKFLOW) {
+        console.error("BACKFILL_WORKFLOW binding not configured");
+        return;
+      }
+
+      const dateValue =
+        payload.view.state.values.date_block?.backfill_date?.selected_date;
+      const metadata = JSON.parse(payload.view.private_metadata) as {
+        channelId: string;
+        userId: string;
+      };
+
+      if (!dateValue || !metadata.channelId) {
+        console.error("Missing date or channel in backfill submission");
+        return;
+      }
+
+      const since = new Date(dateValue);
+      if (Number.isNaN(since.getTime()) || since > new Date()) {
+        console.error("Invalid or future date in backfill submission");
+        return;
+      }
+
+      // Look up the channel name for user-friendly messages
+      let channelName = metadata.channelId;
+      try {
+        const data = await slackApi<{ channel?: { name?: string } }>(
+          env.SLACK_BOT_TOKEN,
+          "conversations.info",
+          { channel: metadata.channelId },
+        );
+        if (data.channel?.name) {
+          channelName = data.channel.name;
+        }
+      } catch {
+        // Fall back to channel ID
+      }
+
+      try {
+        await env.BACKFILL_WORKFLOW.create({
+          params: {
+            channelId: metadata.channelId,
+            since: dateValue,
+            channelName,
+            userId: metadata.userId,
+          },
+        });
+        await slackApi(env.SLACK_BOT_TOKEN, "chat.postEphemeral", {
+          channel: metadata.channelId,
+          user: metadata.userId,
+          text: `Starting backfill for #${channelName} since ${dateValue}. This may take a few minutes...`,
+        });
+      } catch (e) {
+        console.error("Failed to start backfill workflow", e);
+      }
+    },
+  );
 
   // ── Events ──
 

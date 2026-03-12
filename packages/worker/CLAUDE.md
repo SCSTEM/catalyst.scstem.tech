@@ -33,6 +33,18 @@ The entry point splits traffic:
 
 This split exists because the Slack SDK needs raw request handling for signature verification.
 
+### Workflows
+
+Durable multi-step tasks use [Cloudflare Workflows](https://developers.cloudflare.com/workflows/). To add a new workflow:
+
+1. Create a class in `src/workflows/` extending `WorkflowEntrypoint<Env, Params>`
+2. Export it from `src/index.ts`
+3. Declare it in `wrangler.jsonc` under `workflows` (binding, name, class_name)
+4. Run `wrangler types` to regenerate `worker-configuration.d.ts` with the new `Env` binding
+5. Trigger it via the env binding: `env.MY_WORKFLOW.create({ params: { ... } })`
+
+Existing workflow: `BackfillChannelWorkflow` — triggered by the `/backfill` slash command.
+
 ## Schema Changes
 
 1. Edit `src/db/schema.ts`

@@ -7,47 +7,61 @@
   "workers_dev": false,
   "upload_source_maps": true,
   "placement": {
-    "mode": "smart"
+    "mode": "smart",
   },
   "route": {
     "pattern": "catalyst.scstem.tech/api/*",
-    "zone_name": "scstem.tech"
+    "zone_name": "scstem.tech",
   },
   "observability": {
     "enabled": true,
     "logs": {
       "invocation_logs": true,
-      "head_sampling_rate": 1
-    }
+      "head_sampling_rate": 1,
+    },
   },
   "vars": {
     "PRODUCTION": true,
-    "SESSION_TTL_HOURS": 672
+    "SESSION_TTL_HOURS": 672,
   },
+  "workflows": [
+    {
+      "binding": "BACKFILL_WORKFLOW",
+      "name": "catalyst-backfill-workflow",
+      "class_name": "BackfillChannelWorkflow",
+    },
+  ],
   "d1_databases": [
     {
       "binding": "DB",
       "database_name": "catalyst-db",
-      "database_id": "d2f4ce25-1b02-4e5e-9662-f925e871d0da"
-    }
+      "database_id": "d2f4ce25-1b02-4e5e-9662-f925e871d0da",
+    },
   ],
   "env": {
     "staging": {
       "route": {
         "pattern": "staging.catalyst.scstem.tech/api/*",
-        "zone_name": "scstem.tech"
+        "zone_name": "scstem.tech",
       },
       "vars": {
         "PRODUCTION": false,
-        "SESSION_TTL_HOURS": 8
+        "SESSION_TTL_HOURS": 8,
       },
       "d1_databases": [
         {
           "binding": "DB",
           "database_name": "catalyst-db-staging",
-          "database_id": "b615c2e8-4a44-400b-b2c7-c34aa7292a21"
-        }
-      ]
-    }
-  }
+          "database_id": "b615c2e8-4a44-400b-b2c7-c34aa7292a21",
+        },
+      ],
+      "workflows": [
+        {
+          "binding": "BACKFILL_WORKFLOW",
+          "name": "catalyst-backfill-workflow-staging",
+          "class_name": "BackfillChannelWorkflow",
+        },
+      ],
+    },
+  },
 }
