@@ -1,0 +1,1 @@
+CREATE INDEX `idx_reactions_user_created` ON `reactions` (`user_id`,`created_at`);

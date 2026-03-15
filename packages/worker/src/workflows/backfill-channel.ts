@@ -1,8 +1,9 @@
 import type { WorkflowEvent, WorkflowStep } from "cloudflare:workers";
 import { WorkflowEntrypoint } from "cloudflare:workers";
-import { count } from "drizzle-orm";
+import { count, sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/d1";
 import { reactions, reactionTotals, userEmojiCounts } from "../db/schema";
+import { BUZZKILL_CLEANUP_SQL } from "../lib/buzzkill";
 import { slackApi } from "../lib/slack-api";
 
 const MAX_PAGES = 500;
@@ -119,6 +120,13 @@ export class BackfillChannelWorkflow extends WorkflowEntrypoint<
       });
       return;
     }
+
+    // ── Anti-buzzkill cleanup ──
+
+    await step.do("buzzkill-cleanup", async () => {
+      const db = drizzle(this.env.DB);
+      await db.run(sql.raw(BUZZKILL_CLEANUP_SQL));
+    });
 
     // ── Rebuild aggregate tables ──
 
