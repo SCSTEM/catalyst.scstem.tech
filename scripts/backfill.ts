@@ -13,6 +13,7 @@
  */
 
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
+import { BUZZKILL_CLEANUP_SQL } from "@catalyst/worker/lib/buzzkill";
 
 const MAX_RETRIES = 5;
 const SQL_BATCH_SIZE = 500;
@@ -327,30 +328,8 @@ if (allReactions.length > 0) {
 }
 
 // Anti-buzzkill cleanup: remove excess reactions in burst windows
-// Constants must match packages/worker/src/lib/buzzkill.ts
-const BUZZKILL_WINDOW_SECONDS = 60;
-const BUZZKILL_THRESHOLD = 10;
 lines.push("-- Anti-buzzkill cleanup");
-lines.push("DELETE FROM reactions WHERE rowid IN (");
-lines.push("  SELECT rowid FROM (");
-lines.push("    SELECT rowid,");
-lines.push("      ROW_NUMBER() OVER (");
-lines.push(
-  `        PARTITION BY user_id, (CAST(strftime('%s', created_at) AS INTEGER) / ${BUZZKILL_WINDOW_SECONDS})`,
-);
-lines.push("        ORDER BY created_at, message_ts");
-lines.push("      ) AS rn,");
-lines.push("      COUNT(*) OVER (");
-lines.push(
-  `        PARTITION BY user_id, (CAST(strftime('%s', created_at) AS INTEGER) / ${BUZZKILL_WINDOW_SECONDS})`,
-);
-lines.push("      ) AS bucket_count");
-lines.push("    FROM reactions");
-lines.push("  )");
-lines.push(
-  `  WHERE bucket_count > ${BUZZKILL_THRESHOLD} AND rn > ${BUZZKILL_THRESHOLD}`,
-);
-lines.push(");");
+lines.push(BUZZKILL_CLEANUP_SQL);
 lines.push("");
 
 // Rebuild aggregate: reaction_totals

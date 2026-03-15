@@ -30,12 +30,18 @@ export async function isRateLimited(
 }
 
 /**
- * SQL fragment that deletes buzzkill reactions from the reactions table.
+ * Returns SQL that deletes buzzkill reactions from the reactions table.
  * For each user, in each time bucket of BUZZKILL_WINDOW_SECONDS, if the
  * bucket contains more than BUZZKILL_THRESHOLD reactions, only the first
  * BUZZKILL_THRESHOLD are kept.
+ *
+ * @param channelId — if provided, scopes cleanup to a single channel
  */
-export const BUZZKILL_CLEANUP_SQL = `
+export function buzzkillCleanupSQL(channelId?: string): string {
+  const channelFilter = channelId
+    ? `WHERE channel_id = '${channelId.replace(/'/g, "''")}'`
+    : "";
+  return `
 DELETE FROM reactions WHERE rowid IN (
   SELECT rowid FROM (
     SELECT rowid,
@@ -47,6 +53,11 @@ DELETE FROM reactions WHERE rowid IN (
         PARTITION BY user_id, (CAST(strftime('%s', created_at) AS INTEGER) / ${BUZZKILL_WINDOW_SECONDS})
       ) AS bucket_count
     FROM reactions
+    ${channelFilter}
   )
   WHERE bucket_count > ${BUZZKILL_THRESHOLD} AND rn > ${BUZZKILL_THRESHOLD}
 );`;
+}
+
+/** Global cleanup SQL (all channels). */
+export const BUZZKILL_CLEANUP_SQL = buzzkillCleanupSQL();

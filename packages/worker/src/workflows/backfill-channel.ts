@@ -3,7 +3,7 @@ import { WorkflowEntrypoint } from "cloudflare:workers";
 import { count, sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/d1";
 import { reactions, reactionTotals, userEmojiCounts } from "../db/schema";
-import { BUZZKILL_CLEANUP_SQL } from "../lib/buzzkill";
+import { buzzkillCleanupSQL } from "../lib/buzzkill";
 import { slackApi } from "../lib/slack-api";
 
 const MAX_PAGES = 500;
@@ -125,7 +125,7 @@ export class BackfillChannelWorkflow extends WorkflowEntrypoint<
 
     await step.do("buzzkill-cleanup", async () => {
       const db = drizzle(this.env.DB);
-      await db.run(sql.raw(BUZZKILL_CLEANUP_SQL));
+      await db.run(sql.raw(buzzkillCleanupSQL(channelId)));
     });
 
     // ── Rebuild aggregate tables ──
