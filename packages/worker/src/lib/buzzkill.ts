@@ -1,4 +1,4 @@
-import { and, count, eq, gte } from "drizzle-orm";
+import { and, count, eq, gte, sql } from "drizzle-orm";
 import type { DrizzleD1Database } from "drizzle-orm/d1";
 import { reactions } from "../db/schema";
 
@@ -17,14 +17,17 @@ export async function isRateLimited(
   db: DrizzleD1Database,
   userId: string,
 ): Promise<boolean> {
-  const windowStart = new Date(
-    Date.now() - BUZZKILL_WINDOW_SECONDS * 1000,
-  ).toISOString();
   const [result] = await db
     .select({ count: count() })
     .from(reactions)
     .where(
-      and(eq(reactions.userId, userId), gte(reactions.createdAt, windowStart)),
+      and(
+        eq(reactions.userId, userId),
+        gte(
+          sql`strftime('%s', ${reactions.createdAt})`,
+          sql`strftime('%s', 'now', '-${sql.raw(String(BUZZKILL_WINDOW_SECONDS))} seconds')`,
+        ),
+      ),
     );
   return (result?.count ?? 0) >= BUZZKILL_THRESHOLD;
 }
