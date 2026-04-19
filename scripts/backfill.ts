@@ -13,7 +13,6 @@
  */
 
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
-import { BUZZKILL_CLEANUP_SQL } from "@catalyst/worker/lib/buzzkill";
 
 const MAX_RETRIES = 5;
 const SQL_BATCH_SIZE = 500;
@@ -326,11 +325,6 @@ if (allReactions.length > 0) {
     lines.push("");
   }
 }
-
-// Anti-buzzkill cleanup: remove excess reactions in burst windows
-lines.push("-- Anti-buzzkill cleanup");
-lines.push(BUZZKILL_CLEANUP_SQL);
-lines.push("");
 
 // Rebuild aggregate: reaction_totals
 lines.push("-- Rebuild reaction_totals");

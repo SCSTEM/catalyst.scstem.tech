@@ -17,6 +17,11 @@ export async function isRateLimited(
   db: DrizzleD1Database,
   userId: string,
 ): Promise<boolean> {
+  // strftime normalizes both `created_at` formats on disk:
+  //   live inserts → 'YYYY-MM-DD HH:MM:SS' (from `datetime('now')`)
+  //   backfill     → ISO 8601 'YYYY-MM-DDTHH:MM:SS.sssZ'
+  // Raw string comparison would break on the ' ' vs 'T' at char 10.
+  const cutoffSeconds = Math.floor(Date.now() / 1000) - BUZZKILL_WINDOW_SECONDS;
   const [result] = await db
     .select({ count: count() })
     .from(reactions)
@@ -24,43 +29,10 @@ export async function isRateLimited(
       and(
         eq(reactions.userId, userId),
         gte(
-          sql`strftime('%s', ${reactions.createdAt})`,
-          sql`strftime('%s', 'now', '-${sql.raw(String(BUZZKILL_WINDOW_SECONDS))} seconds')`,
+          sql<number>`CAST(strftime('%s', ${reactions.createdAt}) AS INTEGER)`,
+          cutoffSeconds,
         ),
       ),
     );
   return (result?.count ?? 0) >= BUZZKILL_THRESHOLD;
 }
-
-/**
- * Returns SQL that deletes buzzkill reactions from the reactions table.
- * For each user, in each time bucket of BUZZKILL_WINDOW_SECONDS, if the
- * bucket contains more than BUZZKILL_THRESHOLD reactions, only the first
- * BUZZKILL_THRESHOLD are kept.
- *
- * @param channelId — if provided, scopes cleanup to a single channel
- */
-export function buzzkillCleanupSQL(channelId?: string): string {
-  const channelFilter = channelId
-    ? `WHERE channel_id = '${channelId.replace(/'/g, "''")}'`
-    : "";
-  return `
-DELETE FROM reactions WHERE rowid IN (
-  SELECT rowid FROM (
-    SELECT rowid,
-      ROW_NUMBER() OVER (
-        PARTITION BY user_id, (CAST(strftime('%s', created_at) AS INTEGER) / ${BUZZKILL_WINDOW_SECONDS})
-        ORDER BY created_at, message_ts
-      ) AS rn,
-      COUNT(*) OVER (
-        PARTITION BY user_id, (CAST(strftime('%s', created_at) AS INTEGER) / ${BUZZKILL_WINDOW_SECONDS})
-      ) AS bucket_count
-    FROM reactions
-    ${channelFilter}
-  )
-  WHERE bucket_count > ${BUZZKILL_THRESHOLD} AND rn > ${BUZZKILL_THRESHOLD}
-);`;
-}
-
-/** Global cleanup SQL (all channels). */
-export const BUZZKILL_CLEANUP_SQL = buzzkillCleanupSQL();

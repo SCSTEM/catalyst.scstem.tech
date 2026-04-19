@@ -4,8 +4,7 @@
   "private": true,
   "exports": {
     "./app": "./src/app.ts",
-    "./db/schema": "./src/db/schema.ts",
-    "./lib/buzzkill": "./src/lib/buzzkill.ts"
+    "./db/schema": "./src/db/schema.ts"
   },
   "scripts": {
     "deploy": "wrangler deploy --env=''",
