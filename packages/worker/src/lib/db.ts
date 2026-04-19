@@ -6,6 +6,7 @@ import {
   reactionTotals,
   userEmojiCounts,
 } from "../db/schema";
+import { isRateLimited } from "./buzzkill";
 
 type ReactionEvent = {
   userId: string;
@@ -16,6 +17,11 @@ type ReactionEvent = {
 
 export async function addReaction(d1: D1Database, event: ReactionEvent) {
   const db = drizzle(d1);
+
+  // Anti-buzzkill: reject if user has exceeded the rate limit
+  if (await isRateLimited(db, event.userId)) {
+    return;
+  }
 
   // Insert the reaction row first — if it already exists (duplicate event from
   // Slack), .returning() yields an empty array so we skip aggregate updates.

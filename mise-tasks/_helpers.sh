@@ -1,5 +1,8 @@
 # Shared helpers for mise file-based tasks.
-# Source this file: source "$MISE_PROJECT_ROOT/mise-tasks/_helpers.sh"
+# Source this file: source "$(dirname "${BASH_SOURCE[0]}")/_helpers.sh"
+#   (adjust the relative path to _helpers.sh based on script depth)
+
+REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
 require_clean_git() {
   if [[ -n "$(git status --porcelain)" ]]; then

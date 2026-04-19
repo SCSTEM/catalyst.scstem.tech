@@ -87,7 +87,9 @@ export class BackfillChannelWorkflow extends WorkflowEntrypoint<
         // Write this page's reactions to D1 immediately
         if (pageReactions.length > 0) {
           const db = drizzle(this.env.DB);
-          const batchSize = 100;
+          // D1 allows at most 100 bound parameters per query.
+          // Each row binds 5 values, so max 20 rows per INSERT.
+          const batchSize = 20;
           for (let i = 0; i < pageReactions.length; i += batchSize) {
             const batch = pageReactions.slice(i, i + batchSize);
             await db.insert(reactions).values(batch).onConflictDoNothing();

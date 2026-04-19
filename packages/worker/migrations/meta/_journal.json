@@ -15,6 +15,13 @@
       "when": 1771366661656,
       "tag": "0001_past_thaddeus_ross",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1773580288416,
+      "tag": "0002_romantic_jigsaw",
+      "breakpoints": true
     }
   ]
 }
