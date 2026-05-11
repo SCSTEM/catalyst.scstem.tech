@@ -9,13 +9,14 @@ export const BUZZKILL_THRESHOLD = 10;
 export const BUZZKILL_WINDOW_SECONDS = 60;
 
 /**
- * Check if a user has exceeded the reaction rate limit.
+ * Check if a user has exceeded the reaction rate limit in a channel.
  * Returns true if the user has added >= BUZZKILL_THRESHOLD reactions
- * within the last BUZZKILL_WINDOW_SECONDS seconds.
+ * within the last BUZZKILL_WINDOW_SECONDS seconds in this channel.
  */
 export async function isRateLimited(
   db: DrizzleD1Database,
   userId: string,
+  channelId: string,
 ): Promise<boolean> {
   // strftime normalizes both `created_at` formats on disk:
   //   live inserts → 'YYYY-MM-DD HH:MM:SS' (from `datetime('now')`)
@@ -28,6 +29,7 @@ export async function isRateLimited(
     .where(
       and(
         eq(reactions.userId, userId),
+        eq(reactions.channelId, channelId),
         gte(
           sql<number>`CAST(strftime('%s', ${reactions.createdAt}) AS INTEGER)`,
           cutoffSeconds,
