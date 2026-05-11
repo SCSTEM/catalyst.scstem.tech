@@ -21,9 +21,12 @@ export const reactions = sqliteTable(
       columns: [table.userId, table.emoji, table.channelId, table.messageTs],
     }),
     index("idx_reactions_emoji").on(table.emoji),
-    index("idx_reactions_user").on(table.userId),
     index("idx_reactions_created_at").on(table.createdAt),
-    index("idx_reactions_user_created").on(table.userId, table.createdAt),
+    index("idx_reactions_user_channel_created").on(
+      table.userId,
+      table.channelId,
+      table.createdAt,
+    ),
   ],
 );
 
