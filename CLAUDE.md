@@ -64,6 +64,7 @@ The worker exports `AppType` from `app.ts`. The web package references the worke
 ### Worker request routing
 
 `src/index.ts` splits traffic by path:
+
 - `/api/slack/events` → `slack-cloudflare-workers` SDK (signature verification, challenge, event dispatch)
 - Everything else → Hono app (`src/app.ts`)
 
@@ -85,4 +86,3 @@ All routes are defined in `packages/worker/src/app.ts`. Each `.route()` call mou
 - **No unused imports.** Enforced by biome (`noUnusedImports`). Remove imports that are no longer used after refactoring.
 - **`@/` alias for cross-directory imports** in the web package. Only use relative imports for same-directory siblings. See `packages/web/CLAUDE.md` for details.
 - **Prefer Drizzle query builder over raw SQL.** Use Drizzle's typed API (`db.select()`, `db.insert().select()`, `count()`, etc.) instead of `` sql`...` `` template strings for full queries. Raw `sql` expressions are fine _within_ Drizzle operations (e.g. `` sql`MAX(0, ...)` ``).
-- Schema changes require deleting all migrations and regenerating a single clean migration with `mise run db:generate` (fresh project, no production migration history to preserve yet).

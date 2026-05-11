@@ -9,7 +9,6 @@
   "scripts": {
     "deploy": "wrangler deploy --env=''",
     "dev": "wrangler dev",
-    "cf-typegen": "wrangler types",
     "db:generate": "drizzle-kit generate",
     "db:migrate:local": "wrangler d1 migrations apply DB --local",
     "db:migrate:remote": "wrangler d1 migrations apply DB --remote"

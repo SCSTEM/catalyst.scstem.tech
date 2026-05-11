@@ -13,6 +13,8 @@ Cloudflare Worker providing the Hono API and Slack event handler, backed by D1 (
 
 All route files use the global `Env` type. D1 bindings come from `wrangler.jsonc`, secrets are typed in `env.d.ts` via the `Cloudflare.Env` namespace. Run `wrangler types` to regenerate `worker-configuration.d.ts`.
 
+In local dev, `c.env.*` values are bridged from the process env by `CLOUDFLARE_INCLUDE_PROCESS_ENV=true` (set in the root `mise.toml`). Add new local-dev secrets to `mise.toml` (committed test defaults) or `mise.local.toml` (per-dev overrides) — not `.dev.vars`. Production secrets are managed via `wrangler secret put` per environment. See the root `README.md` for the full table.
+
 ### Drizzle Queries
 
 Always create the Drizzle instance per-request from the D1 binding (`drizzle(c.env.DB)`). Never store `db` at module scope — the D1 binding changes per-request in Workers.

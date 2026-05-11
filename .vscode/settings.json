@@ -26,5 +26,9 @@
     "**/routeTree.gen.ts": true,
     "**/*.tsbuildinfo": true,
     "**/.tanstack": true
+  },
+  "[markdown]": {
+    "editor.defaultFormatter": "yzhang.markdown-all-in-one",
+    "editor.formatOnSave": true
   }
 }
