@@ -130,7 +130,15 @@ export function createSlackApp(env: Env) {
   // ── Events ──
 
   app.event("reaction_added", async ({ payload }) => {
-    if (!payload.item?.channel || !payload.item?.ts) {
+    // Slack reactions can target files and file_comments too — those events
+    // lack a message ts and don't fit our message-keyed schema. Skip
+    // explicitly so the intent is clear and so a malformed message event
+    // isn't lumped with them.
+    if (payload.item?.type !== "message") {
+      return;
+    }
+    if (!payload.item.channel || !payload.item.ts) {
+      console.warn("reaction_added: message item missing channel/ts", payload);
       return;
     }
     try {
@@ -173,7 +181,14 @@ export function createSlackApp(env: Env) {
   });
 
   app.event("reaction_removed", async ({ payload }) => {
-    if (!payload.item?.channel || !payload.item?.ts) {
+    if (payload.item?.type !== "message") {
+      return;
+    }
+    if (!payload.item.channel || !payload.item.ts) {
+      console.warn(
+        "reaction_removed: message item missing channel/ts",
+        payload,
+      );
       return;
     }
     try {
