@@ -95,3 +95,13 @@ export function useSlackCustomEmojis() {
     staleTime: 5 * 60_000,
   });
 }
+
+export function useMetadata() {
+  return useQuery({
+    queryKey: ["stats", "metadata"],
+    queryFn: async () => {
+      const res = await api.api.metadata.$get();
+      return fetchJson(res);
+    },
+  });
+}

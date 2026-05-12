@@ -8,6 +8,7 @@ import { verifySessionToken } from "./lib/auth";
 import { analyticsRoute } from "./routes/analytics";
 import { authRoute } from "./routes/auth";
 import { emojisRoute } from "./routes/emojis";
+import { metadataRoute } from "./routes/metadata";
 import { rankingsRoute } from "./routes/rankings";
 import { usersRoute } from "./routes/users";
 
@@ -66,7 +67,8 @@ const app = new Hono<{ Bindings: Env }>()
   .route("/api/rankings", rankingsRoute)
   .route("/api/emojis", emojisRoute)
   .route("/api/users", usersRoute)
-  .route("/api/analytics", analyticsRoute);
+  .route("/api/analytics", analyticsRoute)
+  .route("/api/metadata", metadataRoute);
 
 export type AppType = typeof app;
 
