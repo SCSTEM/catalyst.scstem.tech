@@ -35,7 +35,7 @@ function isAllowedOrigin(origin: string): boolean {
   return false;
 }
 
-const app = new Hono<{ Bindings: Env }>()
+export const api = new Hono<{ Bindings: Env }>()
   .use("/api/*", logger())
   .use("/api/*", secureHeaders())
   .use(
@@ -70,6 +70,4 @@ const app = new Hono<{ Bindings: Env }>()
   .route("/api/analytics", analyticsRoute)
   .route("/api/metadata", metadataRoute);
 
-export type AppType = typeof app;
-
-export default app;
+export type ApiType = typeof api;
