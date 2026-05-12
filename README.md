@@ -116,6 +116,17 @@ Optional cutoff: `BACKFILL_SINCE=2025-01-01 mise run backfill` (ISO date).
 
 For on-demand single-channel backfills, use the `/backfill` slash command inside Slack — it triggers a Cloudflare Workflow that pages through the channel's history with automatic retries.
 
+## Pull remote data into local D1
+
+To work against real data locally, pull a snapshot of a remote D1 into your local one:
+
+```bash
+mise run db:pull               # from staging (default)
+mise run db:pull prod          # from production (requires confirmation)
+```
+
+This wipes the local D1 state, imports the remote dump (schema + data), then re-applies migrations so any unreleased schema changes are reapplied on top. Requires `CLOUDFLARE_API_TOKEN`.
+
 ## Deploying
 
 See **[DEPLOY.md](./DEPLOY.md)** for:

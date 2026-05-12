@@ -1,0 +1,32 @@
+#!/usr/bin/env bash
+#MISE description="Pull remote D1 data into local D1 [staging|prod]"
+#MISE dir="packages/worker"
+set -euo pipefail
+source "$(dirname "${BASH_SOURCE[0]}")/../_helpers.sh"
+
+ENV="${1:-staging}"
+
+DUMP_FILE="$(mktemp -t catalyst-d1-dump.XXXXXX.sql)"
+trap 'rm -f "$DUMP_FILE"' EXIT
+
+case "$ENV" in
+  staging)
+    bunx wrangler d1 export DB --remote --env staging --output="$DUMP_FILE"
+    ;;
+  prod)
+    require_prod_confirmation
+    bunx wrangler d1 export DB --remote --output="$DUMP_FILE"
+    ;;
+  *)
+    echo "Usage: mise run db:pull [staging|prod]" >&2
+    exit 1
+    ;;
+esac
+
+# Wipe local D1 so the imported schema + data are authoritative.
+rm -rf .wrangler/state/v3/d1
+
+bunx wrangler d1 execute DB --local --file="$DUMP_FILE"
+
+# Re-apply migrations in case local schema is ahead of the source environment.
+bunx wrangler d1 migrations apply DB --local

@@ -23,6 +23,10 @@ mise run db:migrate              # Apply migrations to local D1 (default)
 mise run db:migrate staging      # Apply migrations to staging D1
 mise run db:migrate prod         # Apply migrations to production D1
 
+# Pull remote D1 data into local D1 (wipes local D1 first)
+mise run db:pull                 # Pull from staging (default)
+mise run db:pull prod            # Pull from production
+
 # Backfill historical Slack data (requires SLACK_BOT_TOKEN env var)
 mise run backfill                # Generate SQL + apply to local D1 (default)
 mise run backfill staging        # Generate SQL + apply to staging D1
@@ -38,7 +42,7 @@ mise run deploy:worker prod      # Deploy worker only to production
 
 ### Environment targeting
 
-- **Local is the default** for all D1 commands (`db:migrate`, `backfill`).
+- **Local is the default** for all D1 commands (`db:migrate`, `backfill`). `db:pull` is the exception — it has no `local` source and defaults to `staging`.
 - **Staging is the default** for all deploy commands (`deploy:worker`, `deploy:web`).
 - **Production** always requires explicit `prod` argument and an interactive confirmation.
 - **Remote targets** (staging/prod) require a clean git working directory.
