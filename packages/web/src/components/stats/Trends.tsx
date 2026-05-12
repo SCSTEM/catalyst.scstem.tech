@@ -112,11 +112,9 @@ function TrendChart({
   error,
   stacked,
 }: TrendChartProps) {
-  // Stacked bands don't overlap, so they can carry a fuller fill. Overlapping
-  // areas need a faint fill so lower bands remain visible underneath.
   const fillOpacity = stacked ? 0.6 : 0.15;
   return (
-    <Card className="shadow-none! border-0 md:py-6 py-4">
+    <Card className="shadow-none! border-0 pb-0 md:-ml-3 md:-mr-2">
       <CardHeader>
         <CardTitle>{title}</CardTitle>
         <CardDescription>{description}</CardDescription>
@@ -124,7 +122,7 @@ function TrendChart({
           <ChartIntervalSelector />
         </CardAction>
       </CardHeader>
-      <CardContent className="md:px-6 px-2">
+      <CardContent className="px-0">
         {loading ? (
           <p className="py-12 text-center text-muted-foreground">Loading...</p>
         ) : error ? (
@@ -281,7 +279,7 @@ function CategoryChart() {
   }, [categories]);
 
   return (
-    <Card className="shadow-none! border-0">
+    <Card className="shadow-none! border-0 pb-0">
       <CardHeader>
         <CardTitle>Categories</CardTitle>
         <CardDescription>Reaction emoji usage by category</CardDescription>
