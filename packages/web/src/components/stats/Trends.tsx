@@ -17,6 +17,7 @@ import {
   useEmojiTrends,
   useUserTrends,
 } from "@/hooks/queries";
+import { useStatsFilters } from "@/hooks/useStatsFilter";
 import { categorizeEmojis } from "@/lib/emojiCategories";
 import {
   Card,
@@ -163,7 +164,8 @@ function TrendChart({
 
 function EmojiTrendsChart() {
   const [period, setPeriod] = useState<Period>("week");
-  const { data, isPending, error } = useEmojiTrends(period);
+  const { frcSeason } = useStatsFilters();
+  const { data, isPending, error } = useEmojiTrends(period, frcSeason);
 
   const chartConfig = useMemo<ChartConfig>(() => {
     if (!data) {
@@ -203,7 +205,8 @@ function EmojiTrendsChart() {
 
 function UserTrendsChart() {
   const [period, setPeriod] = useState<Period>("week");
-  const { data, isPending, error } = useUserTrends(period);
+  const { frcSeason } = useStatsFilters();
+  const { data, isPending, error } = useUserTrends(period, frcSeason);
 
   const userIds = useMemo(() => {
     if (!data?.series.length) {
@@ -268,7 +271,8 @@ function CategoryChart() {
   const labelY1 = isDesktop ? -42 : -72;
   const labelY2 = isDesktop ? -12 : -48;
 
-  const { data, isPending, error } = useCategoryData();
+  const { frcSeason } = useStatsFilters();
+  const { data, isPending, error } = useCategoryData(frcSeason);
 
   const categories = useMemo(() => {
     if (!data) {

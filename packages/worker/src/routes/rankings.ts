@@ -1,43 +1,44 @@
 import { zValidator } from "@hono/zod-validator";
-import { desc, eq, gt, sum } from "drizzle-orm";
+import { count, desc, eq } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/d1";
 import { Hono } from "hono";
-import { reactionTotals, userEmojiCounts, users } from "../db/schema";
-import { limitQuery } from "./util";
+import { reactions, users } from "../db/schema";
+import { limitSeasonQuery, seasonCondition } from "./util";
 
 export const rankingsRoute = new Hono<{ Bindings: Env }>()
-  .get("/emojis", zValidator("query", limitQuery), async (c) => {
+  .get("/emojis", zValidator("query", limitSeasonQuery), async (c) => {
     const db = drizzle(c.env.DB);
-    const { limit } = c.req.valid("query");
+    const { limit, season } = c.req.valid("query");
 
     const results = await db
       .select({
-        emoji: reactionTotals.emoji,
-        count: reactionTotals.count,
+        emoji: reactions.emoji,
+        count: count(),
       })
-      .from(reactionTotals)
-      .where(gt(reactionTotals.count, 0))
-      .orderBy(desc(reactionTotals.count))
+      .from(reactions)
+      .where(seasonCondition(season))
+      .groupBy(reactions.emoji)
+      .orderBy(desc(count()))
       .limit(limit);
 
     return c.json(results);
   })
-  .get("/users", zValidator("query", limitQuery), async (c) => {
+  .get("/users", zValidator("query", limitSeasonQuery), async (c) => {
     const db = drizzle(c.env.DB);
-    const { limit } = c.req.valid("query");
+    const { limit, season } = c.req.valid("query");
 
     const results = await db
       .select({
-        userId: userEmojiCounts.userId,
-        totalCount: sum(userEmojiCounts.count).mapWith(Number),
+        userId: reactions.userId,
+        totalCount: count(),
         displayName: users.displayName,
         avatarUrl: users.avatarUrl,
       })
-      .from(userEmojiCounts)
-      .leftJoin(users, eq(userEmojiCounts.userId, users.userId))
-      .where(gt(userEmojiCounts.count, 0))
-      .groupBy(userEmojiCounts.userId)
-      .orderBy(desc(sum(userEmojiCounts.count)))
+      .from(reactions)
+      .leftJoin(users, eq(reactions.userId, users.userId))
+      .where(seasonCondition(season))
+      .groupBy(reactions.userId)
+      .orderBy(desc(count()))
       .limit(limit);
 
     return c.json(results);

@@ -2,6 +2,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { Avatar } from "@/components/Avatar";
 import { LeaderboardRow } from "@/components/stats/LeaderboardRow";
 import { useUserRankings } from "@/hooks/queries";
+import { useStatsFilters } from "@/hooks/useStatsFilter";
 
 export const Route = createFileRoute("/stats/users/")({
   head: () => ({
@@ -12,7 +13,8 @@ export const Route = createFileRoute("/stats/users/")({
 
 function UsersPage() {
   const navigate = useNavigate();
-  const { data, isPending, error } = useUserRankings();
+  const { frcSeason } = useStatsFilters();
+  const { data, isPending, error } = useUserRankings(frcSeason);
 
   if (isPending) {
     return <p className="text-center text-muted-foreground">Loading...</p>;

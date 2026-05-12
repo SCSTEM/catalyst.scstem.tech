@@ -6,15 +6,35 @@ import {
   useNavigate,
 } from "@tanstack/react-router";
 import { RefreshCw } from "lucide-react";
-import { useState } from "react";
+import { useLayoutEffect, useRef, useState } from "react";
+import { useMediaQuery } from "usehooks-ts";
 import { StatsLayout } from "@/components/layouts/StatsLayout";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useFrcSeasons } from "@/hooks/useFrcSeasons";
+import { StatsFiltersProvider, useStatsFilters } from "@/hooks/useStatsFilter";
+import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/stats")({
   component: RouteComponent,
 });
+
+function RouteComponent() {
+  return (
+    <StatsFiltersProvider>
+      <StatsRoute />
+    </StatsFiltersProvider>
+  );
+}
 
 const tabs = [
   { value: "emojis", to: "/stats/emojis", label: "Top Reactions" },
@@ -32,12 +52,74 @@ function getActiveTab(pathname: string): string {
   return "emojis";
 }
 
-function RouteComponent() {
+function StatsRoute() {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const activeTab = getActiveTab(location.pathname);
+
   const queryClient = useQueryClient();
   const [isRefreshing, setIsRefreshing] = useState(false);
-  const location = useLocation();
-  const navigate = useNavigate();
-  const activeTab = getActiveTab(location.pathname);
+
+  const isMobile = useMediaQuery("(max-width: 768px)");
+  const tabsScrollRef = useRef<HTMLDivElement>(null);
+  const [tabsEdges, setTabsEdges] = useState({ left: false, right: false });
+
+  const { frcSeason, setFrcSeason } = useStatsFilters();
+  const seasons = useFrcSeasons();
+
+  useLayoutEffect(() => {
+    const el = tabsScrollRef.current;
+    if (!el) {
+      return;
+    }
+
+    const update = () => {
+      setTabsEdges({
+        left: el.scrollLeft > 0,
+        right: el.scrollLeft + el.clientWidth < el.scrollWidth - 1,
+      });
+    };
+
+    update();
+    el.addEventListener("scroll", update, { passive: true });
+    const ro = new ResizeObserver(update);
+    ro.observe(el);
+    return () => {
+      el.removeEventListener("scroll", update);
+      ro.disconnect();
+    };
+  }, []);
+
+  // biome-ignore lint/correctness/useExhaustiveDependencies: We need activeTab as a dependency to force the layout effect to re-run
+  useLayoutEffect(() => {
+    const el = tabsScrollRef.current;
+    if (!el) {
+      return;
+    }
+    const active = el.querySelector<HTMLElement>('[data-state="active"]');
+    if (!active) {
+      return;
+    }
+    const elRect = el.getBoundingClientRect();
+    const activeRect = active.getBoundingClientRect();
+    const activeLeft = activeRect.left - elRect.left + el.scrollLeft;
+    const target = activeLeft + activeRect.width / 2 - el.clientWidth / 2;
+    el.scrollTo({ left: target, behavior: "smooth" });
+  }, [activeTab]);
+
+  const tabsMaskImage = (() => {
+    const fade = "2rem";
+    if (tabsEdges.left && tabsEdges.right) {
+      return `linear-gradient(to right, transparent, black ${fade}, black calc(100% - ${fade}), transparent)`;
+    }
+    if (tabsEdges.left) {
+      return `linear-gradient(to right, transparent, black ${fade})`;
+    }
+    if (tabsEdges.right) {
+      return `linear-gradient(to right, black calc(100% - ${fade}), transparent)`;
+    }
+    return undefined;
+  })();
 
   const handleRefresh = async () => {
     setIsRefreshing(true);
@@ -62,31 +144,62 @@ function RouteComponent() {
       >
         <div className="h-14" style={{ viewTransitionName: "tabs-bar" }}>
           <TabsList className="size-full">
-            {tabs.map((tab) => (
-              <TabsTrigger
-                key={tab.value}
-                value={tab.value}
-                className="h-full flex-1"
-              >
-                {tab.label}
-              </TabsTrigger>
-            ))}
+            <div
+              ref={tabsScrollRef}
+              className="flex h-full w-full overflow-x-auto [scrollbar-width:none] md:overflow-visible [&::-webkit-scrollbar]:hidden"
+              style={{
+                maskImage: tabsMaskImage,
+                WebkitMaskImage: tabsMaskImage,
+              }}
+            >
+              {tabs.map((tab) => (
+                <TabsTrigger
+                  key={tab.value}
+                  value={tab.value}
+                  className="h-full flex-1"
+                >
+                  {tab.label}
+                </TabsTrigger>
+              ))}
+            </div>
           </TabsList>
         </div>
-        <Card className="p-2 md:p-4">
+        <Card className={cn("p-2 md:p-4", isMobile && "mb-12")}>
           <Outlet />
         </Card>
       </Tabs>
 
-      <Button
-        size="icon"
-        className="fixed bottom-6 right-6 z-50 size-12"
-        style={{ viewTransitionName: "refresh-btn" }}
-        disabled={isRefreshing}
-        onClick={handleRefresh}
-      >
-        <RefreshCw className={isRefreshing ? "animate-spin" : ""} />
-      </Button>
+      <div className="fixed bottom-2 right-2 md:bottom-6 md:right-6 z-50 flex gap-2">
+        {seasons.length > 1 ? (
+          <Select
+            value={frcSeason.toString()}
+            onValueChange={(v) => setFrcSeason(Number(v))}
+          >
+            <SelectTrigger className="h-10">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectGroup>
+                {seasons.map((season) => (
+                  <SelectItem key={season} value={season.toString()}>
+                    {season}
+                  </SelectItem>
+                ))}
+              </SelectGroup>
+            </SelectContent>
+          </Select>
+        ) : null}
+
+        <Button
+          size="icon"
+          className="size-10 shrink-0"
+          style={{ viewTransitionName: "refresh-btn" }}
+          disabled={isRefreshing}
+          onClick={handleRefresh}
+        >
+          <RefreshCw className={isRefreshing ? "animate-spin" : ""} />
+        </Button>
+      </div>
     </StatsLayout>
   );
 }

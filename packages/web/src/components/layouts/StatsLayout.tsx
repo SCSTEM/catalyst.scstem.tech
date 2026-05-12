@@ -8,10 +8,10 @@ type LayoutProps = {
 export function StatsLayout({ children, title }: LayoutProps) {
   return (
     <BaseLayout>
-      <div className="mx-auto max-w-2xl p-4 md:py-8">
+      <div className="mx-auto max-w-2xl p-3 pt-4 md:py-8">
         {title ? (
           <h1
-            className="mb-4 md:mb-8 text-center text-2xl md:text-3xl font-bold text-main"
+            className="mb-4 md:mb-8 text-2xl md:text-3xl font-bold text-main text-center"
             style={{ viewTransitionName: "page-title" }}
           >
             {title}

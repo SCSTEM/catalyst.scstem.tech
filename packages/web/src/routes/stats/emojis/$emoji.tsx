@@ -4,6 +4,7 @@ import { DetailView } from "@/components/stats/DetailView";
 import { Emoji } from "@/components/stats/Emoji";
 import { LeaderboardRow } from "@/components/stats/LeaderboardRow";
 import { useEmojiUsers } from "@/hooks/queries";
+import { useStatsFilters } from "@/hooks/useStatsFilter";
 import { resolveEmojiUnicode } from "@/lib/emoji";
 
 function emojiTitle(name: string): string {
@@ -21,7 +22,8 @@ export const Route = createFileRoute("/stats/emojis/$emoji")({
 function EmojiDetailPage() {
   const { emoji } = Route.useParams();
   const navigate = useNavigate();
-  const { data, isPending, error } = useEmojiUsers(emoji);
+  const { frcSeason } = useStatsFilters();
+  const { data, isPending, error } = useEmojiUsers(emoji, frcSeason);
 
   return (
     <DetailView

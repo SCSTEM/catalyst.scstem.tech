@@ -1,29 +1,28 @@
 import { zValidator } from "@hono/zod-validator";
-import { and, desc, eq, gt } from "drizzle-orm";
+import { and, count, desc, eq } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/d1";
 import { Hono } from "hono";
-import { userEmojiCounts, users } from "../db/schema";
-import { limitQuery } from "./util";
+import { reactions, users } from "../db/schema";
+import { limitSeasonQuery, seasonCondition } from "./util";
 
 export const usersRoute = new Hono<{ Bindings: Env }>().get(
   "/:userId/emojis",
-  zValidator("query", limitQuery),
+  zValidator("query", limitSeasonQuery),
   async (c) => {
     const db = drizzle(c.env.DB);
     const userId = c.req.param("userId");
-    const { limit } = c.req.valid("query");
+    const { limit, season } = c.req.valid("query");
 
     const [emojis, [user]] = (await db.batch([
       db
         .select({
-          emoji: userEmojiCounts.emoji,
-          count: userEmojiCounts.count,
+          emoji: reactions.emoji,
+          count: count(),
         })
-        .from(userEmojiCounts)
-        .where(
-          and(eq(userEmojiCounts.userId, userId), gt(userEmojiCounts.count, 0)),
-        )
-        .orderBy(desc(userEmojiCounts.count))
+        .from(reactions)
+        .where(and(eq(reactions.userId, userId), seasonCondition(season)))
+        .groupBy(reactions.emoji)
+        .orderBy(desc(count()))
         .limit(limit),
       db
         .select({

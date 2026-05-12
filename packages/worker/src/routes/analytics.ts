@@ -1,10 +1,11 @@
 import { zValidator } from "@hono/zod-validator";
-import { desc, inArray, sql } from "drizzle-orm";
+import { and, desc, inArray, sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/d1";
 import { Hono } from "hono";
 import { cache } from "hono/cache";
 import { z } from "zod";
-import { reactions, userEmojiCounts, users } from "../db/schema";
+import { reactions, users } from "../db/schema";
+import { getCurrentSeason, seasonCondition } from "./util";
 
 const bucketExpr = {
   day: sql<string>`strftime('%Y-%m-%d', created_at)`,
@@ -23,9 +24,17 @@ function parsePeriod(raw: string | undefined): Period {
 
 const trendsQuery = z.object({
   period: z.string().optional(),
-  days: z.string().optional(),
   limit: z.string().optional(),
+  season: z.string().optional(),
 });
+
+function parseSeason(raw: string | undefined): number {
+  const parsed = Number(raw);
+  if (Number.isInteger(parsed) && parsed >= 1970 && parsed <= 2100) {
+    return parsed;
+  }
+  return getCurrentSeason();
+}
 
 export const analyticsRoute = new Hono<{ Bindings: Env }>()
   .use(
@@ -39,24 +48,23 @@ export const analyticsRoute = new Hono<{ Bindings: Env }>()
     const db = drizzle(c.env.DB);
     const {
       period: rawPeriod,
-      days: rawDays,
       limit: rawLimit,
+      season: rawSeason,
     } = c.req.valid("query");
     const period = parsePeriod(rawPeriod);
-    const days = Math.min(Math.max(Number(rawDays) || 90, 1), 365);
     const limit = Math.min(Math.max(Number(rawLimit) || 8, 1), 20);
-
-    const cutoff = sql`datetime('now', '-' || ${String(days)} || ' days')`;
+    const season = parseSeason(rawSeason);
+    const seasonWhere = seasonCondition(season);
     const bucket = bucketExpr[period];
 
-    // Find top N emojis within the requested date range
+    // Find top N emojis within the requested season
     const topEmojis = await db
       .select({
         emoji: reactions.emoji,
         count: sql<number>`COUNT(*)`,
       })
       .from(reactions)
-      .where(sql`${reactions.createdAt} >= ${cutoff}`)
+      .where(seasonWhere)
       .groupBy(reactions.emoji)
       .orderBy(desc(sql`COUNT(*)`))
       .limit(limit);
@@ -75,12 +83,7 @@ export const analyticsRoute = new Hono<{ Bindings: Env }>()
           count: sql<number>`COUNT(*)`,
         })
         .from(reactions)
-        .where(
-          sql`${reactions.createdAt} >= ${cutoff} AND ${reactions.emoji} IN (${sql.join(
-            emojiNames.map((e) => sql`${e}`),
-            sql`,`,
-          )})`,
-        )
+        .where(and(seasonWhere, inArray(reactions.emoji, emojiNames)))
         .groupBy(bucket, reactions.emoji)
         .orderBy(bucket),
       db
@@ -89,7 +92,7 @@ export const analyticsRoute = new Hono<{ Bindings: Env }>()
           count: sql<number>`COUNT(*)`,
         })
         .from(reactions)
-        .where(sql`${reactions.createdAt} >= ${cutoff}`)
+        .where(seasonWhere)
         .groupBy(bucket)
         .orderBy(bucket),
     ]);
@@ -117,25 +120,25 @@ export const analyticsRoute = new Hono<{ Bindings: Env }>()
     const db = drizzle(c.env.DB);
     const {
       period: rawPeriod,
-      days: rawDays,
       limit: rawLimit,
+      season: rawSeason,
     } = c.req.valid("query");
     const period = parsePeriod(rawPeriod);
-    const days = Math.min(Math.max(Number(rawDays) || 90, 1), 365);
     const limit = Math.min(Math.max(Number(rawLimit) || 8, 1), 20);
-
-    const cutoff = sql`datetime('now', '-' || ${String(days)} || ' days')`;
+    const season = parseSeason(rawSeason);
+    const seasonWhere = seasonCondition(season);
     const bucket = bucketExpr[period];
 
-    // Find top N users by total reaction count
+    // Find top N users by reaction count within the season
     const topUsers = await db
       .select({
-        userId: userEmojiCounts.userId,
-        total: sql<number>`SUM(${userEmojiCounts.count})`,
+        userId: reactions.userId,
+        total: sql<number>`COUNT(*)`,
       })
-      .from(userEmojiCounts)
-      .groupBy(userEmojiCounts.userId)
-      .orderBy(desc(sql`SUM(${userEmojiCounts.count})`))
+      .from(reactions)
+      .where(seasonWhere)
+      .groupBy(reactions.userId)
+      .orderBy(desc(sql`COUNT(*)`))
       .limit(limit);
 
     const userIds = topUsers.map((r) => r.userId);
@@ -163,12 +166,7 @@ export const analyticsRoute = new Hono<{ Bindings: Env }>()
           count: sql<number>`COUNT(*)`,
         })
         .from(reactions)
-        .where(
-          sql`${reactions.createdAt} >= ${cutoff} AND ${reactions.userId} IN (${sql.join(
-            userIds.map((id) => sql`${id}`),
-            sql`,`,
-          )})`,
-        )
+        .where(and(seasonWhere, inArray(reactions.userId, userIds)))
         .groupBy(bucket, reactions.userId)
         .orderBy(bucket),
     ]);
