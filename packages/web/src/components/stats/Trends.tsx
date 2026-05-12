@@ -73,10 +73,12 @@ function ChartIntervalSelector() {
 
 // --- Shared area chart shell ---
 
+type TrendSeriesPoint = { period: string } & Record<string, number>;
+
 interface TrendChartProps {
   title: string;
   description: string;
-  series: Record<string, unknown>[];
+  series: TrendSeriesPoint[];
   keys: string[];
   config: ChartConfig;
   loading: boolean;
@@ -110,6 +112,9 @@ function TrendChart({
   error,
   stacked,
 }: TrendChartProps) {
+  // Stacked bands don't overlap, so they can carry a fuller fill. Overlapping
+  // areas need a faint fill so lower bands remain visible underneath.
+  const fillOpacity = stacked ? 0.6 : 0.15;
   return (
     <Card className="shadow-none! border-0 md:py-6 py-4">
       <CardHeader>
@@ -138,7 +143,7 @@ function TrendChart({
                   dataKey={key}
                   type="monotone"
                   fill={CHART_COLORS[i % CHART_COLORS.length]}
-                  fillOpacity={0.15}
+                  fillOpacity={fillOpacity}
                   stroke={CHART_COLORS[i % CHART_COLORS.length]}
                   stackId={stacked ? "a" : undefined}
                 />
@@ -165,9 +170,7 @@ function EmojiTrendsChart() {
     if (!data) {
       return {};
     }
-    const config: ChartConfig = {
-      total: { label: "Total", color: "var(--chart-active-dot)" },
-    };
+    const config: ChartConfig = {};
     for (const [i, emoji] of data.emojis.entries()) {
       config[emoji] = {
         label: (
@@ -185,7 +188,7 @@ function EmojiTrendsChart() {
     <TrendChart
       title="Emoji Trends"
       description="Top emoji usage over time"
-      series={data?.series ?? []}
+      series={(data?.series ?? []) as TrendSeriesPoint[]}
       keys={data?.emojis ?? []}
       config={chartConfig}
       loading={isPending}
@@ -199,27 +202,14 @@ function UserTrendsChart() {
   const { chartInterval, frcSeason } = useStatsFilters();
   const { data, isPending, error } = useUserTrends(frcSeason, chartInterval);
 
-  const userIds = useMemo(() => {
-    if (!data?.series.length) {
-      return [];
-    }
-    const ids = new Set<string>();
-    for (const point of data.series) {
-      for (const key of Object.keys(point)) {
-        if (key !== "period") {
-          ids.add(key);
-        }
-      }
-    }
-    return [...ids];
-  }, [data]);
+  const userIds = data?.userIds ?? [];
 
   const chartConfig = useMemo<ChartConfig>(() => {
     if (!data) {
       return {};
     }
     const config: ChartConfig = {};
-    for (const [i, userId] of userIds.entries()) {
+    for (const [i, userId] of data.userIds.entries()) {
       const user = data.users[userId];
       config[userId] = {
         label: (
@@ -238,13 +228,13 @@ function UserTrendsChart() {
       };
     }
     return config;
-  }, [data, userIds]);
+  }, [data]);
 
   return (
     <TrendChart
       title="Top Reactors"
       description="Most active reactors over time"
-      series={data?.series ?? []}
+      series={(data?.series ?? []) as TrendSeriesPoint[]}
       keys={userIds}
       config={chartConfig}
       loading={isPending}
@@ -254,7 +244,11 @@ function UserTrendsChart() {
 }
 
 function CategoryChart() {
-  const isDesktop = useMediaQuery("(min-width: 768px)");
+  // Read the match synchronously on first render so the pie doesn't flash
+  // mobile-sized on desktop before re-rendering.
+  const isDesktop = useMediaQuery("(min-width: 768px)", {
+    initializeWithValue: true,
+  });
   const pieInner = isDesktop ? 80 : 55;
   const pieOuter = isDesktop ? 140 : 95;
   const labelY1 = isDesktop ? -42 : -72;

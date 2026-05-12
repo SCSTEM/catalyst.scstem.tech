@@ -74,8 +74,8 @@ export const analyticsRoute = new Hono<{ Bindings: Env }>()
       return c.json({ emojis: [], series: [] });
     }
 
-    // Batch: per-bucket counts for top emojis + total per bucket (independent queries)
-    const [rows, totalRows] = await db.batch([
+    // Batch: per-bucket counts for top emojis + every bucket in the season (independent queries)
+    const [rows, bucketRows] = await db.batch([
       db
         .select({
           period: bucket,
@@ -87,20 +87,22 @@ export const analyticsRoute = new Hono<{ Bindings: Env }>()
         .groupBy(bucket, reactions.emoji)
         .orderBy(bucket),
       db
-        .select({
-          period: bucket,
-          count: sql<number>`COUNT(*)`,
-        })
+        .select({ period: bucket })
         .from(reactions)
         .where(seasonWhere)
         .groupBy(bucket)
         .orderBy(bucket),
     ]);
 
-    // Merge into series
+    // Pre-fill every period with zeros for every top emoji so stacked
+    // areas have a continuous baseline and don't render gaps.
     const periodMap = new Map<string, Record<string, number>>();
-    for (const row of totalRows) {
-      periodMap.set(row.period, { total: row.count });
+    for (const row of bucketRows) {
+      const entry: Record<string, number> = {};
+      for (const name of emojiNames) {
+        entry[name] = 0;
+      }
+      periodMap.set(row.period, entry);
     }
     for (const row of rows) {
       const entry = periodMap.get(row.period);
@@ -144,6 +146,7 @@ export const analyticsRoute = new Hono<{ Bindings: Env }>()
     const userIds = topUsers.map((r) => r.userId);
     if (!userIds.length) {
       return c.json({
+        userIds: [] as string[],
         users: {} as Record<string, { name: string; avatar: string | null }>,
         series: [],
       });
@@ -179,11 +182,16 @@ export const analyticsRoute = new Hono<{ Bindings: Env }>()
       };
     }
 
+    // Pre-fill every period with zeros for every top user so the overlapping
+    // areas have a continuous baseline and don't render gaps.
     const periodMap = new Map<string, Record<string, number>>();
     for (const row of rows) {
       let entry = periodMap.get(row.period);
       if (!entry) {
         entry = {};
+        for (const id of userIds) {
+          entry[id] = 0;
+        }
         periodMap.set(row.period, entry);
       }
       entry[row.userId] = row.count;
@@ -194,5 +202,5 @@ export const analyticsRoute = new Hono<{ Bindings: Env }>()
       ...data,
     }));
 
-    return c.json({ users: userMap, series });
+    return c.json({ userIds, users: userMap, series });
   });
