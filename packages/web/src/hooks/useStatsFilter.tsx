@@ -1,33 +1,32 @@
 import { createContext, type ReactNode, useContext, useState } from "react";
 import { getCurrentFrcSeason } from "@/hooks/useFrcSeasons";
-
-type ChartBucket = "day" | "week" | "month" | "year";
+import type { ChartInterval } from "@/lib/utils";
 
 type StatsFilterContextState = {
   frcSeason: number;
   setFrcSeason: (frcSeason: number) => void;
-  chartBucket: ChartBucket;
-  setChartBucket: (chartBucket: ChartBucket) => void;
+  chartInterval: ChartInterval;
+  setChartInterval: (chartInterval: ChartInterval) => void;
 };
 
 const StatsFiltersContext = createContext<StatsFilterContextState | undefined>({
   frcSeason: getCurrentFrcSeason(),
-  chartBucket: "week",
   setFrcSeason: () => {},
-  setChartBucket: () => {},
+  chartInterval: "week",
+  setChartInterval: () => {},
 });
 
 export function StatsFiltersProvider({ children }: { children: ReactNode }) {
-  const [year, setYear] = useState(getCurrentFrcSeason());
-  const [chartBucket, setChartBucket] = useState<ChartBucket>("week");
+  const [frcSeason, setFrcSeason] = useState(getCurrentFrcSeason());
+  const [chartInterval, setChartInterval] = useState<ChartInterval>("week");
 
   return (
     <StatsFiltersContext.Provider
       value={{
-        frcSeason: year,
-        setFrcSeason: setYear,
-        chartBucket,
-        setChartBucket,
+        frcSeason,
+        setFrcSeason,
+        chartInterval,
+        setChartInterval,
       }}
     >
       {children}

@@ -1,3 +1,4 @@
+import { SelectLabel } from "@radix-ui/react-select";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   createFileRoute,
@@ -22,7 +23,7 @@ import {
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useFrcSeasons } from "@/hooks/useFrcSeasons";
 import { StatsFiltersProvider, useStatsFilters } from "@/hooks/useStatsFilter";
-import { cn } from "@/lib/utils";
+import { capitalizeWord, chartIntervals, cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/stats")({
   component: RouteComponent,
@@ -42,7 +43,7 @@ const tabs = [
   { value: "trends", to: "/stats/trends", label: "Trends" },
 ] as const;
 
-function getActiveTab(pathname: string): string {
+function getActiveTab(pathname: string): (typeof tabs)[number]["value"] {
   if (pathname.startsWith("/stats/users")) {
     return "users";
   }
@@ -64,7 +65,8 @@ function StatsRoute() {
   const tabsScrollRef = useRef<HTMLDivElement>(null);
   const [tabsEdges, setTabsEdges] = useState({ left: false, right: false });
 
-  const { frcSeason, setFrcSeason } = useStatsFilters();
+  const { frcSeason, setFrcSeason, chartInterval, setChartInterval } =
+    useStatsFilters();
   const seasons = useFrcSeasons();
 
   useLayoutEffect(() => {
@@ -169,17 +171,36 @@ function StatsRoute() {
         </Card>
       </Tabs>
 
-      <div className="fixed bottom-2 right-2 md:bottom-6 md:right-6 z-50 flex gap-2">
+      <div className="fixed bottom-2 right-2 md:bottom-6 md:right-6 z-50 flex gap-2 h-10">
+        {isMobile && (activeTab === "users" || activeTab === "trends") ? (
+          <Select value={chartInterval} onValueChange={setChartInterval}>
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectGroup>
+                <SelectLabel>Chart Interval</SelectLabel>
+                {chartIntervals.map((interval) => (
+                  <SelectItem key={interval} value={interval}>
+                    {capitalizeWord(interval)}
+                  </SelectItem>
+                ))}
+              </SelectGroup>
+            </SelectContent>
+          </Select>
+        ) : null}
+
         {seasons.length > 1 ? (
           <Select
             value={frcSeason.toString()}
             onValueChange={(v) => setFrcSeason(Number(v))}
           >
-            <SelectTrigger className="h-10">
+            <SelectTrigger>
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
               <SelectGroup>
+                <SelectLabel>FRC Season</SelectLabel>
                 {seasons.map((season) => (
                   <SelectItem key={season} value={season.toString()}>
                     {season}
@@ -192,7 +213,7 @@ function StatsRoute() {
 
         <Button
           size="icon"
-          className="size-10 shrink-0"
+          className="shrink-0"
           style={{ viewTransitionName: "refresh-btn" }}
           disabled={isRefreshing}
           onClick={handleRefresh}

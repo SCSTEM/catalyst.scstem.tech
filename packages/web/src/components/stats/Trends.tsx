@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import {
   Area,
   AreaChart,
@@ -11,7 +11,6 @@ import {
   YAxis,
 } from "recharts";
 import { useMediaQuery } from "usehooks-ts";
-import type { Period } from "@/hooks/queries";
 import {
   useCategoryData,
   useEmojiTrends,
@@ -19,6 +18,11 @@ import {
 } from "@/hooks/queries";
 import { useStatsFilters } from "@/hooks/useStatsFilter";
 import { categorizeEmojis } from "@/lib/emojiCategories";
+import {
+  type ChartInterval,
+  capitalizeWord,
+  chartIntervals,
+} from "@/lib/utils";
 import {
   Card,
   CardAction,
@@ -49,19 +53,17 @@ const CHART_COLORS = [
   "#ec4899",
 ];
 
-function PeriodSelector({
-  value,
-  onChange,
-}: {
-  value: Period;
-  onChange: (p: Period) => void;
-}) {
+function ChartIntervalSelector() {
+  const { chartInterval, setChartInterval } = useStatsFilters();
   return (
-    <Tabs value={value} onValueChange={(v) => onChange(v as Period)}>
+    <Tabs
+      value={chartInterval}
+      onValueChange={(v) => setChartInterval(v as ChartInterval)}
+    >
       <TabsList className="w-full">
-        {(["day", "week", "month"] as const).map((p) => (
+        {chartIntervals.map((p) => (
           <TabsTrigger key={p} value={p} className="w-full">
-            {p.charAt(0).toUpperCase() + p.slice(1)}
+            {capitalizeWord(p)}
           </TabsTrigger>
         ))}
       </TabsList>
@@ -80,8 +82,6 @@ interface TrendChartProps {
   loading: boolean;
   error: string | null;
   stacked?: boolean;
-  period: Period;
-  onPeriodChange: (p: Period) => void;
 }
 
 function SortedTooltipContent(
@@ -109,8 +109,6 @@ function TrendChart({
   loading,
   error,
   stacked,
-  period,
-  onPeriodChange,
 }: TrendChartProps) {
   return (
     <Card className="shadow-none! border-0 md:py-6 py-4">
@@ -118,7 +116,7 @@ function TrendChart({
         <CardTitle>{title}</CardTitle>
         <CardDescription>{description}</CardDescription>
         <CardAction className="hidden md:block">
-          <PeriodSelector value={period} onChange={onPeriodChange} />
+          <ChartIntervalSelector />
         </CardAction>
       </CardHeader>
       <CardContent className="md:px-6 px-2">
@@ -153,9 +151,6 @@ function TrendChart({
           </p>
         )}
       </CardContent>
-      <div className="px-6 md:hidden">
-        <PeriodSelector value={period} onChange={onPeriodChange} />
-      </div>
     </Card>
   );
 }
@@ -163,9 +158,8 @@ function TrendChart({
 // --- Concrete charts ---
 
 function EmojiTrendsChart() {
-  const [period, setPeriod] = useState<Period>("week");
-  const { frcSeason } = useStatsFilters();
-  const { data, isPending, error } = useEmojiTrends(period, frcSeason);
+  const { frcSeason, chartInterval } = useStatsFilters();
+  const { data, isPending, error } = useEmojiTrends(frcSeason, chartInterval);
 
   const chartConfig = useMemo<ChartConfig>(() => {
     if (!data) {
@@ -197,16 +191,13 @@ function EmojiTrendsChart() {
       loading={isPending}
       error={error?.message ?? null}
       stacked
-      period={period}
-      onPeriodChange={setPeriod}
     />
   );
 }
 
 function UserTrendsChart() {
-  const [period, setPeriod] = useState<Period>("week");
-  const { frcSeason } = useStatsFilters();
-  const { data, isPending, error } = useUserTrends(period, frcSeason);
+  const { chartInterval, frcSeason } = useStatsFilters();
+  const { data, isPending, error } = useUserTrends(frcSeason, chartInterval);
 
   const userIds = useMemo(() => {
     if (!data?.series.length) {
@@ -258,8 +249,6 @@ function UserTrendsChart() {
       config={chartConfig}
       loading={isPending}
       error={error?.message ?? null}
-      period={period}
-      onPeriodChange={setPeriod}
     />
   );
 }

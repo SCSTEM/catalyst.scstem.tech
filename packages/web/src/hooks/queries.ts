@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { api, fetchJson } from "@/lib/api";
 
-export type Period = "day" | "week" | "month";
+export type Interval = "day" | "week" | "month";
 
 export function useEmojiRankings(season: number) {
   const seasonParam = season.toString();
@@ -57,26 +57,26 @@ export function useUserEmojis(userId: string, season: number) {
   });
 }
 
-export function useEmojiTrends(period: Period, season: number) {
+export function useEmojiTrends(season: number, interval: Interval) {
   const seasonParam = season.toString();
   return useQuery({
-    queryKey: ["stats", "analytics", "emoji-trends", period, season],
+    queryKey: ["stats", "analytics", "emoji-trends", season, interval],
     queryFn: async () => {
       const res = await api.api.analytics["emoji-trends"].$get({
-        query: { period, season: seasonParam },
+        query: { period: interval, season: seasonParam },
       });
       return fetchJson(res);
     },
   });
 }
 
-export function useUserTrends(period: Period, season: number) {
+export function useUserTrends(season: number, interval: Interval) {
   const seasonParam = season.toString();
   return useQuery({
-    queryKey: ["stats", "analytics", "user-trends", period, season],
+    queryKey: ["stats", "analytics", "user-trends", season, interval],
     queryFn: async () => {
       const res = await api.api.analytics["user-trends"].$get({
-        query: { period, season: seasonParam },
+        query: { period: interval, season: seasonParam },
       });
       return fetchJson(res);
     },
