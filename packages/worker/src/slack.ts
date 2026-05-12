@@ -130,10 +130,6 @@ export function createSlackApp(env: Env) {
   // ── Events ──
 
   app.event("reaction_added", async ({ payload }) => {
-    // Slack reactions can target files and file_comments too — those events
-    // lack a message ts and don't fit our message-keyed schema. Skip
-    // explicitly so the intent is clear and so a malformed message event
-    // isn't lumped with them.
     if (payload.item?.type !== "message") {
       return;
     }
@@ -150,7 +146,7 @@ export function createSlackApp(env: Env) {
       });
       console.log("reaction_added", payload.reaction, payload.user);
     } catch (e) {
-      console.error("reaction_added failed", e);
+      console.error("reaction_added: error", e);
     }
   });
 
@@ -161,22 +157,27 @@ export function createSlackApp(env: Env) {
           return;
         }
         await addEmoji(env.DB, payload.name, payload.value);
-        console.log("emoji_added", payload.name);
+        console.log("emoji_changed: add", payload.name);
       } else if (payload.subtype === "remove" && payload.names) {
         for (const name of payload.names) {
           await removeEmoji(env.DB, name);
         }
-        console.log("emoji_removed", payload.names.join(", "));
+        console.log("emoji_changed: remove", payload.names.join(", "));
       } else if (
         payload.subtype === "rename" &&
         payload.old_name &&
         payload.new_name
       ) {
         await renameEmoji(env.DB, payload.old_name, payload.new_name);
-        console.log("emoji_renamed", payload.old_name, "→", payload.new_name);
+        console.log(
+          "emoji_changed: rename",
+          payload.old_name,
+          "→",
+          payload.new_name,
+        );
       }
     } catch (e) {
-      console.error("emoji_changed failed", e);
+      console.error("emoji_changed: error", e);
     }
   });
 
@@ -200,7 +201,7 @@ export function createSlackApp(env: Env) {
       });
       console.log("reaction_removed", payload.reaction, payload.user);
     } catch (e) {
-      console.error("reaction_removed failed", e);
+      console.error("reaction_removed: error", e);
     }
   });
 
@@ -219,7 +220,7 @@ export function createSlackApp(env: Env) {
       await removeMessageReactions(env.DB, channel, deletedTs);
       console.log("message_deleted", channel, deletedTs);
     } catch (e) {
-      console.error("message_deleted failed", e);
+      console.error("message_deleted: error", e);
     }
   });
 
