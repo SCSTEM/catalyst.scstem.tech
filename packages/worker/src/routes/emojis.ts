@@ -1,9 +1,9 @@
 import { zValidator } from "@hono/zod-validator";
-import { and, count, desc, eq } from "drizzle-orm";
+import { and, asc, count, desc, eq, sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/d1";
 import { Hono } from "hono";
-import { emojiImages, reactions, users } from "../db/schema";
-import { limitSeasonQuery, seasonCondition } from "./util";
+import { emojiImages, reactions, reactionTotals, users } from "../db/schema";
+import { limitSeasonQuery, optionalSeasonQuery, seasonCondition } from "./util";
 
 export const emojisRoute = new Hono<{ Bindings: Env }>()
   .get("/", async (c) => {
@@ -24,6 +24,88 @@ export const emojisRoute = new Hono<{ Bindings: Env }>()
     c.header("Cache-Control", "public, max-age=3600");
     return c.json(map);
   })
+  .get("/parrots", async (c) => {
+    const db = drizzle(c.env.DB);
+
+    const rows = await db
+      .select({
+        name: emojiImages.name,
+        imageUrl: emojiImages.imageUrl,
+        count: sql<number>`coalesce(${reactionTotals.count}, 0)`,
+      })
+      .from(emojiImages)
+      .leftJoin(reactionTotals, eq(reactionTotals.emoji, emojiImages.name))
+      .where(eq(emojiImages.isParrot, true))
+      .orderBy(desc(reactionTotals.count), emojiImages.name);
+
+    return c.json(rows);
+  })
+  .get(
+    "/:emoji/profile",
+    zValidator("query", optionalSeasonQuery),
+    async (c) => {
+      const db = drizzle(c.env.DB);
+      const emoji = c.req.param("emoji");
+      const { season } = c.req.valid("query");
+
+      const whereClause =
+        season !== undefined
+          ? and(eq(reactions.emoji, emoji), seasonCondition(season))
+          : eq(reactions.emoji, emoji);
+
+      const [totalRow] = await db
+        .select({ totalCount: count() })
+        .from(reactions)
+        .where(whereClause);
+
+      const [firstRow] = await db
+        .select({
+          userId: reactions.userId,
+          createdAt: reactions.createdAt,
+          displayName: users.displayName,
+          avatarUrl: users.avatarUrl,
+        })
+        .from(reactions)
+        .leftJoin(users, eq(reactions.userId, users.userId))
+        .where(whereClause)
+        .orderBy(asc(reactions.createdAt))
+        .limit(1);
+
+      const [topRow] = await db
+        .select({
+          userId: reactions.userId,
+          count: count(),
+          displayName: users.displayName,
+          avatarUrl: users.avatarUrl,
+        })
+        .from(reactions)
+        .leftJoin(users, eq(reactions.userId, users.userId))
+        .where(whereClause)
+        .groupBy(reactions.userId)
+        .orderBy(desc(count()))
+        .limit(1);
+
+      return c.json({
+        totalCount: totalRow?.totalCount ?? 0,
+        firstUsedAt: firstRow?.createdAt ?? null,
+        firstUser: firstRow
+          ? {
+              userId: firstRow.userId,
+              displayName: firstRow.displayName ?? "",
+              avatarUrl: firstRow.avatarUrl ?? "",
+            }
+          : null,
+        topUser: topRow
+          ? {
+              userId: topRow.userId,
+              displayName: topRow.displayName ?? "",
+              avatarUrl: topRow.avatarUrl ?? "",
+              count: topRow.count,
+            }
+          : null,
+      });
+    },
+  )
   .get("/:emoji/users", zValidator("query", limitSeasonQuery), async (c) => {
     const db = drizzle(c.env.DB);
     const emoji = c.req.param("emoji");

@@ -96,6 +96,30 @@ export function useCategoryData(season: number) {
   });
 }
 
+export function useParrotEmojis() {
+  return useQuery({
+    queryKey: ["stats", "emojis", "parrots"],
+    queryFn: async () => {
+      const res = await api.api.emojis.parrots.$get();
+      return fetchJson(res);
+    },
+    staleTime: 5 * 60_000,
+  });
+}
+
+export function useEmojiProfile(emoji: string, season?: number) {
+  return useQuery({
+    queryKey: ["stats", "emojis", emoji, "profile", season ?? "all"],
+    queryFn: async () => {
+      const res = await api.api.emojis[":emoji"].profile.$get({
+        param: { emoji },
+        query: season !== undefined ? { season: season.toString() } : {},
+      });
+      return fetchJson(res);
+    },
+  });
+}
+
 export function useSlackCustomEmojis() {
   return useQuery({
     queryKey: ["stats", "emojis", "map"],

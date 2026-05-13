@@ -20,9 +20,19 @@ const seasonField = z
   .optional()
   .default(() => getCurrentSeason());
 
+const optionalSeasonField = z
+  .string()
+  .transform((val) => Number(val))
+  .refine((val) => Number.isInteger(val) && val >= 1970 && val <= 2100, {
+    message: "Season must be a valid year",
+  })
+  .optional();
+
 export const limitQuery = z.object({ limit: limitField });
 
 export const seasonQuery = z.object({ season: seasonField });
+
+export const optionalSeasonQuery = z.object({ season: optionalSeasonField });
 
 export const limitSeasonQuery = z.object({
   limit: limitField,

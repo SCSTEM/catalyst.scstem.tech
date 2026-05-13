@@ -59,5 +59,6 @@ export const users = sqliteTable("users", {
 export const emojiImages = sqliteTable("emoji_images", {
   name: text("name").primaryKey(),
   imageUrl: text("image_url").notNull(),
+  isParrot: integer("is_parrot", { mode: "boolean" }).notNull().default(false),
   updatedAt: text("updated_at").notNull().default(sql`(datetime('now'))`),
 });

@@ -29,6 +29,13 @@
       "when": 1778505293176,
       "tag": "0003_pale_warbound",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "6",
+      "when": 1778681096056,
+      "tag": "0004_previous_rafael_vega",
+      "breakpoints": true
     }
   ]
 }
