@@ -97,11 +97,6 @@
   }
 
   #root {
-    @apply bg-background;
-    background-image:
-      linear-gradient(to right, #80808033 1px, transparent 1px),
-      linear-gradient(to bottom, #80808033 1px, transparent 1px);
-    background-size: 70px 70px;
     view-transition-name: root;
     isolation: isolate;
   }
