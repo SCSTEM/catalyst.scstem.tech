@@ -150,7 +150,7 @@ function StatsRoute() {
           className="h-14 flex md:gap-4 gap-2"
           style={{ viewTransitionName: "tabs-bar" }}
         >
-          <TabsList className="size-full">
+          <TabsList className="h-full flex-1 min-w-0">
             <div
               ref={tabsScrollRef}
               className="flex h-full w-full overflow-x-auto [scrollbar-width:none] md:overflow-visible [&::-webkit-scrollbar]:hidden"
@@ -173,7 +173,7 @@ function StatsRoute() {
           <Button
             asChild
             size="icon"
-            className="size-13 my-auto p-0"
+            className="size-13 shrink-0 my-auto p-0"
             style={{ viewTransitionName: "parrot-button" }}
           >
             <Link to="/stats/parrots">
