@@ -11,11 +11,11 @@ trap 'rm -f "$DUMP_FILE"' EXIT
 
 case "$ENV" in
   staging)
-    bunx wrangler d1 export DB --remote --env staging --output="$DUMP_FILE"
+    bunx wrangler d1 export DB --remote --env staging --output="$DUMP_FILE" -y
     ;;
   prod)
     require_prod_confirmation
-    bunx wrangler d1 export DB --remote --output="$DUMP_FILE"
+    bunx wrangler d1 export DB --remote --output="$DUMP_FILE" -y
     ;;
   *)
     echo "Usage: mise run db:pull [staging|prod]" >&2
@@ -26,7 +26,7 @@ esac
 # Wipe local D1 so the imported schema + data are authoritative.
 rm -rf .wrangler/state/v3/d1
 
-bunx wrangler d1 execute DB --local --file="$DUMP_FILE"
+bunx wrangler d1 execute DB --local --file="$DUMP_FILE" -y
 
 # Re-apply migrations in case local schema is ahead of the source environment.
 bunx wrangler d1 migrations apply DB --local
