@@ -164,8 +164,7 @@
   100% {
     background-color: transparent;
   }
-  35%,
-  65% {
+  50% {
     background-color: black;
   }
 }

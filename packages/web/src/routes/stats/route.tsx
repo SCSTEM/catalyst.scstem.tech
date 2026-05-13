@@ -182,10 +182,13 @@ function StatsRoute() {
           </Button>
         </div>
         <Card
-          className={cn("p-2 md:p-4", isMobile && "mb-12")}
+          className={cn("p-0", isMobile && "mb-12")}
           style={{ viewTransitionName: "stats-card" }}
         >
-          <div style={{ viewTransitionName: "stats-card-body" }}>
+          <div
+            className="p-2 md:p-4"
+            style={{ viewTransitionName: "stats-card-body" }}
+          >
             <Outlet />
           </div>
         </Card>
