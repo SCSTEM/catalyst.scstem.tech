@@ -21,8 +21,12 @@ export const reactions = sqliteTable(
       columns: [table.userId, table.emoji, table.channelId, table.messageTs],
     }),
     index("idx_reactions_emoji").on(table.emoji),
-    index("idx_reactions_user").on(table.userId),
     index("idx_reactions_created_at").on(table.createdAt),
+    index("idx_reactions_user_channel_created").on(
+      table.userId,
+      table.channelId,
+      table.createdAt,
+    ),
   ],
 );
 
@@ -55,5 +59,6 @@ export const users = sqliteTable("users", {
 export const emojiImages = sqliteTable("emoji_images", {
   name: text("name").primaryKey(),
   imageUrl: text("image_url").notNull(),
+  isParrot: integer("is_parrot", { mode: "boolean" }).notNull().default(false),
   updatedAt: text("updated_at").notNull().default(sql`(datetime('now'))`),
 });

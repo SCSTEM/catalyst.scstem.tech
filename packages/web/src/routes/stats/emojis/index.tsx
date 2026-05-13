@@ -2,6 +2,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { Emoji } from "@/components/stats/Emoji";
 import { LeaderboardRow } from "@/components/stats/LeaderboardRow";
 import { useEmojiRankings } from "@/hooks/queries";
+import { useStatsFilters } from "@/hooks/useStatsFilter";
 
 export const Route = createFileRoute("/stats/emojis/")({
   head: () => ({
@@ -12,7 +13,8 @@ export const Route = createFileRoute("/stats/emojis/")({
 
 function EmojisPage() {
   const navigate = useNavigate();
-  const { data, isPending, error } = useEmojiRankings();
+  const { frcSeason } = useStatsFilters();
+  const { data, isPending, error } = useEmojiRankings(frcSeason);
 
   if (isPending) {
     return <p className="text-center text-muted-foreground">Loading...</p>;

@@ -1,5 +1,7 @@
-import honoApp from "./app";
+import { api } from "./api";
 import { createSlackApp } from "./slack";
+
+export { BackfillChannelWorkflow } from "./workflows/backfill-channel";
 
 let slackApp: ReturnType<typeof createSlackApp>;
 
@@ -12,6 +14,6 @@ export default {
       return slackApp.run(request, ctx);
     }
 
-    return honoApp.fetch(request, env, ctx);
+    return api.fetch(request, env, ctx);
   },
 } satisfies ExportedHandler<Env>;

@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 #MISE description="Backfill Slack data + apply to D1 [local|staging|prod]"
 set -euo pipefail
-source "$MISE_PROJECT_ROOT/mise-tasks/_helpers.sh"
+source "$(dirname "${BASH_SOURCE[0]}")/_helpers.sh"
 
 ENV="${1:-local}"
 

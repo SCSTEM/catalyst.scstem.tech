@@ -24,6 +24,13 @@
     "PRODUCTION": true,
     "SESSION_TTL_HOURS": 672
   },
+  "workflows": [
+    {
+      "binding": "BACKFILL_WORKFLOW",
+      "name": "catalyst-backfill-workflow",
+      "class_name": "BackfillChannelWorkflow"
+    }
+  ],
   "d1_databases": [
     {
       "binding": "DB",
@@ -46,6 +53,13 @@
           "binding": "DB",
           "database_name": "catalyst-db-staging",
           "database_id": "b615c2e8-4a44-400b-b2c7-c34aa7292a21"
+        }
+      ],
+      "workflows": [
+        {
+          "binding": "BACKFILL_WORKFLOW",
+          "name": "catalyst-backfill-workflow-staging",
+          "class_name": "BackfillChannelWorkflow"
         }
       ]
     }

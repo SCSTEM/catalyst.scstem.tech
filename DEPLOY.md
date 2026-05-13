@@ -50,10 +50,20 @@ mise run db:migrate prod         # Production D1
 ### Backfill historical Slack data
 
 ```bash
-SLACK_BOT_TOKEN=xoxb-... mise run backfill              # Local (default)
-SLACK_BOT_TOKEN=xoxb-... mise run backfill staging       # Staging
-SLACK_BOT_TOKEN=xoxb-... mise run backfill prod          # Production
+mise run backfill              # Local (default)
+mise run backfill staging      # Staging
+mise run backfill prod         # Production
 ```
+
+Requires `SLACK_BOT_TOKEN` in `mise.local.toml`. Remote targets also need `CLOUDFLARE_API_TOKEN`.
+
+### Workflows (Slack-triggered backfill)
+
+The `/backfill` slash command in Slack triggers a durable [Cloudflare Workflow](https://developers.cloudflare.com/workflows/) (`BackfillChannelWorkflow`) that backfills a single channel server-side. It pages through message history, writes reactions to D1, rebuilds aggregates, and posts a completion message — all with automatic retries.
+
+The workflow deploys automatically as part of `wrangler deploy` (it's declared in `wrangler.jsonc`). No extra deployment steps are needed.
+
+Use **`/backfill`** for on-demand single-channel backfills from Slack. Use **`mise run backfill`** for bulk backfills across all channels from the CLI.
 
 ### Safety guardrails
 
@@ -65,13 +75,14 @@ SLACK_BOT_TOKEN=xoxb-... mise run backfill prod          # Production
 
 ### When to use what
 
-| Scenario | Command |
-|---|---|
-| Normal deploy (schema + worker changes) | `mise run deploy:site` |
-| Worker-only change (no migration) | `mise run deploy:worker` |
-| Schema change, code not ready to deploy | `mise run db:migrate staging` |
-| Promote staging to production | `mise run deploy:site prod` |
-| Force Pages redeploy | `mise run deploy:site --pages` |
+| Scenario                                | Command                                  |
+| --------------------------------------- | ---------------------------------------- |
+| Normal deploy (schema + worker changes) | `mise run deploy:site`                   |
+| Worker-only change (no migration)       | `mise run deploy:worker`                 |
+| Schema change, code not ready to deploy | `mise run db:migrate staging`            |
+| Promote staging to production           | `mise run deploy:site prod`              |
+| Force Pages redeploy                    | `mise run deploy:site --pages`           |
+| Backfill a single channel (from Slack)  | `/backfill` slash command in the channel |
 
 ---
 
@@ -83,8 +94,9 @@ Follow these steps when setting up the project on a new Cloudflare account.
 
 - A [Cloudflare account](https://dash.cloudflare.com/sign-up)
 - [Bun](https://bun.sh) installed
-- [Wrangler CLI](https://developers.cloudflare.com/workers/wrangler/install-and-update/) (`bun add -g wrangler`)
-- Wrangler authenticated: `wrangler login`
+- [mise](https://mise.jdx.dev/) installed
+- A populated `mise.local.toml` (copy from `mise.local.toml.example`) with `CLOUDFLARE_API_TOKEN` set — see the root `README.md` for details
+- [Wrangler CLI](https://developers.cloudflare.com/workers/wrangler/install-and-update/) is provided via `bunx wrangler`; no global install needed
 
 ### 1. Create D1 Databases
 
@@ -97,6 +109,7 @@ wrangler d1 create catalyst-db-staging
 ```
 
 Update `packages/worker/wrangler.jsonc` with the database IDs:
+
 - Top-level `d1_databases[0].database_id` → production ID
 - `env.staging.d1_databases[0].database_id` → staging ID
 
@@ -131,10 +144,10 @@ wrangler pages project create catalyst-scstem-tech
 
 Set build-time environment variables in the Cloudflare dashboard under **Workers & Pages → Settings → Environment variables**:
 
-| Variable | Production | Preview/Staging |
-|---|---|---|
-| `VITE_API_URL` | `https://catalyst.scstem.tech/api` | `https://staging.catalyst.scstem.tech/api` |
-| `VITE_TURNSTILE_SITE_KEY` | Your Turnstile site key | Your Turnstile site key |
+| Variable                  | Production                         | Preview/Staging                            |
+| ------------------------- | ---------------------------------- | ------------------------------------------ |
+| `VITE_API_URL`            | `https://catalyst.scstem.tech/api` | `https://staging.catalyst.scstem.tech/api` |
+| `VITE_TURNSTILE_SITE_KEY` | Your Turnstile site key            | Your Turnstile site key                    |
 
 ### 4. Set Up Slack App
 
@@ -156,10 +169,11 @@ mise run deploy:site prod --pages
 
 ## Infrastructure Summary
 
-| Component | Service | Domain |
-|---|---|---|
-| API + Slack handler | Cloudflare Worker | `catalyst.scstem.tech/api/*` (prod) / `staging.catalyst.scstem.tech/api/*` (staging) |
-| Frontend SPA | Cloudflare Pages (auto-deploy) | `catalyst.scstem.tech` (prod) / `staging.catalyst.scstem.tech` (staging) |
-| Database (production) | Cloudflare D1 | `catalyst-db` |
-| Database (staging) | Cloudflare D1 | `catalyst-db-staging` |
-| Captcha | Cloudflare Turnstile | — |
+| Component             | Service                        | Domain                                                                               |
+| --------------------- | ------------------------------ | ------------------------------------------------------------------------------------ |
+| API + Slack handler   | Cloudflare Worker              | `catalyst.scstem.tech/api/*` (prod) / `staging.catalyst.scstem.tech/api/*` (staging) |
+| Frontend SPA          | Cloudflare Pages (auto-deploy) | `catalyst.scstem.tech` (prod) / `staging.catalyst.scstem.tech` (staging)             |
+| Database (production) | Cloudflare D1                  | `catalyst-db`                                                                        |
+| Database (staging)    | Cloudflare D1                  | `catalyst-db-staging`                                                                |
+| Backfill workflow     | Cloudflare Workflows           | `backfill-channel-workflow`                                                          |
+| Captcha               | Cloudflare Turnstile           | —                                                                                    |

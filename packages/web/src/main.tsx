@@ -23,6 +23,14 @@ const router = createRouter({
       if (!pathChanged || !fromLocation) {
         return false;
       }
+
+      if (
+        toLocation.pathname.startsWith("/stats/parrots") ||
+        fromLocation.pathname.startsWith("/stats/parrots")
+      ) {
+        return ["parrot-fade"];
+      }
+
       const fromDepth = fromLocation.pathname.split("/").filter(Boolean).length;
       const toDepth = toLocation.pathname.split("/").filter(Boolean).length;
       if (toDepth > fromDepth) {

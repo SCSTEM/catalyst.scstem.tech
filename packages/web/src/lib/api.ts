@@ -1,4 +1,4 @@
-import type { AppType } from "@catalyst/worker/app";
+import type { ApiType } from "@catalyst/worker/api";
 import { hc } from "hono/client";
 
 const SESSION_TOKEN_KEY = "catalyst-token";
@@ -39,7 +39,7 @@ function authFetch(input: RequestInfo | URL, init?: RequestInit) {
   return fetch(input, { ...init, headers });
 }
 
-export const api = hc<AppType>(baseUrl, {
+export const api = hc<ApiType>(baseUrl, {
   fetch: authFetch,
 });
 

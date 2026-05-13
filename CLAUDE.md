@@ -23,23 +23,26 @@ mise run db:migrate              # Apply migrations to local D1 (default)
 mise run db:migrate staging      # Apply migrations to staging D1
 mise run db:migrate prod         # Apply migrations to production D1
 
+# Pull remote D1 data into local D1 (wipes local D1 first)
+mise run db:pull                 # Pull from staging (default)
+mise run db:pull prod            # Pull from production
+
 # Backfill historical Slack data (requires SLACK_BOT_TOKEN env var)
 mise run backfill                # Generate SQL + apply to local D1 (default)
 mise run backfill staging        # Generate SQL + apply to staging D1
 mise run backfill prod           # Generate SQL + apply to production D1
 
 # Deploy (defaults to staging; requires clean git state)
-# Pages auto-deploys via git — these handle worker + DB
-mise run deploy:site             # Verify → migrate → deploy worker (staging)
-mise run deploy:site prod        # Verify → migrate → deploy worker (production)
-mise run deploy:site --pages     # Also force-deploy Pages
+mise run deploy:site             # Verify → migrate → deploy worker + Pages (staging)
+mise run deploy:site prod        # Verify → migrate → deploy worker + Pages (production)
+mise run deploy:site --no-pages  # Skip Pages deploy
 mise run deploy:worker           # Deploy worker only to staging
 mise run deploy:worker prod      # Deploy worker only to production
 ```
 
 ### Environment targeting
 
-- **Local is the default** for all D1 commands (`db:migrate`, `backfill`).
+- **Local is the default** for all D1 commands (`db:migrate`, `backfill`). `db:pull` is the exception — it has no `local` source and defaults to `staging`.
 - **Staging is the default** for all deploy commands (`deploy:worker`, `deploy:web`).
 - **Production** always requires explicit `prod` argument and an interactive confirmation.
 - **Remote targets** (staging/prod) require a clean git working directory.
@@ -65,6 +68,7 @@ The worker exports `AppType` from `app.ts`. The web package references the worke
 ### Worker request routing
 
 `src/index.ts` splits traffic by path:
+
 - `/api/slack/events` → `slack-cloudflare-workers` SDK (signature verification, challenge, event dispatch)
 - Everything else → Hono app (`src/app.ts`)
 
@@ -85,4 +89,4 @@ All routes are defined in `packages/worker/src/app.ts`. Each `.route()` call mou
 - **`import type` for type-only imports.** Enforced by biome (`useImportType`). Use `import type { Foo }` when importing only types.
 - **No unused imports.** Enforced by biome (`noUnusedImports`). Remove imports that are no longer used after refactoring.
 - **`@/` alias for cross-directory imports** in the web package. Only use relative imports for same-directory siblings. See `packages/web/CLAUDE.md` for details.
-- Schema changes require deleting all migrations and regenerating a single clean migration with `mise run db:generate` (fresh project, no production migration history to preserve yet).
+- **Prefer Drizzle query builder over raw SQL.** Use Drizzle's typed API (`db.select()`, `db.insert().select()`, `count()`, etc.) instead of `` sql`...` `` template strings for full queries. Raw `sql` expressions are fine _within_ Drizzle operations (e.g. `` sql`MAX(0, ...)` ``).

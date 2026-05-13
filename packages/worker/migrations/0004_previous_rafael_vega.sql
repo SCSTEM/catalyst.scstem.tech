@@ -1,0 +1,1 @@
+ALTER TABLE `emoji_images` ADD `is_parrot` integer DEFAULT false NOT NULL;

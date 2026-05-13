@@ -5,6 +5,7 @@ import { DetailView } from "@/components/stats/DetailView";
 import { Emoji } from "@/components/stats/Emoji";
 import { LeaderboardRow } from "@/components/stats/LeaderboardRow";
 import { useUserEmojis } from "@/hooks/queries";
+import { useStatsFilters } from "@/hooks/useStatsFilter";
 
 export const Route = createFileRoute("/stats/users/$userId")({
   head: () => ({
@@ -16,7 +17,8 @@ export const Route = createFileRoute("/stats/users/$userId")({
 function UserDetailPage() {
   const { userId } = Route.useParams();
   const navigate = useNavigate();
-  const { data, isPending, error } = useUserEmojis(userId);
+  const { frcSeason } = useStatsFilters();
+  const { data, isPending, error } = useUserEmojis(userId, frcSeason);
 
   const displayName = data?.user?.displayName;
   useEffect(() => {

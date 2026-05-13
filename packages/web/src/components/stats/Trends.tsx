@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import {
   Area,
   AreaChart,
@@ -11,13 +11,18 @@ import {
   YAxis,
 } from "recharts";
 import { useMediaQuery } from "usehooks-ts";
-import type { Period } from "@/hooks/queries";
 import {
   useCategoryData,
   useEmojiTrends,
   useUserTrends,
 } from "@/hooks/queries";
+import { useStatsFilters } from "@/hooks/useStatsFilter";
 import { categorizeEmojis } from "@/lib/emojiCategories";
+import {
+  type ChartInterval,
+  capitalizeWord,
+  chartIntervals,
+} from "@/lib/utils";
 import {
   Card,
   CardAction,
@@ -48,19 +53,17 @@ const CHART_COLORS = [
   "#ec4899",
 ];
 
-function PeriodSelector({
-  value,
-  onChange,
-}: {
-  value: Period;
-  onChange: (p: Period) => void;
-}) {
+function ChartIntervalSelector() {
+  const { chartInterval, setChartInterval } = useStatsFilters();
   return (
-    <Tabs value={value} onValueChange={(v) => onChange(v as Period)}>
+    <Tabs
+      value={chartInterval}
+      onValueChange={(v) => setChartInterval(v as ChartInterval)}
+    >
       <TabsList className="w-full">
-        {(["day", "week", "month"] as const).map((p) => (
+        {chartIntervals.map((p) => (
           <TabsTrigger key={p} value={p} className="w-full">
-            {p.charAt(0).toUpperCase() + p.slice(1)}
+            {capitalizeWord(p)}
           </TabsTrigger>
         ))}
       </TabsList>
@@ -70,17 +73,17 @@ function PeriodSelector({
 
 // --- Shared area chart shell ---
 
+type TrendSeriesPoint = { period: string } & Record<string, number>;
+
 interface TrendChartProps {
   title: string;
   description: string;
-  series: Record<string, unknown>[];
+  series: TrendSeriesPoint[];
   keys: string[];
   config: ChartConfig;
   loading: boolean;
   error: string | null;
   stacked?: boolean;
-  period: Period;
-  onPeriodChange: (p: Period) => void;
 }
 
 function SortedTooltipContent(
@@ -108,19 +111,18 @@ function TrendChart({
   loading,
   error,
   stacked,
-  period,
-  onPeriodChange,
 }: TrendChartProps) {
+  const fillOpacity = stacked ? 0.6 : 0.15;
   return (
-    <Card className="shadow-none! border-0 md:py-6 py-4">
+    <Card className="shadow-none! border-0 pb-0 md:-ml-3 md:-mr-2">
       <CardHeader>
         <CardTitle>{title}</CardTitle>
         <CardDescription>{description}</CardDescription>
         <CardAction className="hidden md:block">
-          <PeriodSelector value={period} onChange={onPeriodChange} />
+          <ChartIntervalSelector />
         </CardAction>
       </CardHeader>
-      <CardContent className="md:px-6 px-2">
+      <CardContent className="px-0">
         {loading ? (
           <p className="py-12 text-center text-muted-foreground">Loading...</p>
         ) : error ? (
@@ -139,7 +141,7 @@ function TrendChart({
                   dataKey={key}
                   type="monotone"
                   fill={CHART_COLORS[i % CHART_COLORS.length]}
-                  fillOpacity={0.15}
+                  fillOpacity={fillOpacity}
                   stroke={CHART_COLORS[i % CHART_COLORS.length]}
                   stackId={stacked ? "a" : undefined}
                 />
@@ -152,9 +154,6 @@ function TrendChart({
           </p>
         )}
       </CardContent>
-      <div className="px-6 md:hidden">
-        <PeriodSelector value={period} onChange={onPeriodChange} />
-      </div>
     </Card>
   );
 }
@@ -162,16 +161,14 @@ function TrendChart({
 // --- Concrete charts ---
 
 function EmojiTrendsChart() {
-  const [period, setPeriod] = useState<Period>("week");
-  const { data, isPending, error } = useEmojiTrends(period);
+  const { frcSeason, chartInterval } = useStatsFilters();
+  const { data, isPending, error } = useEmojiTrends(frcSeason, chartInterval);
 
   const chartConfig = useMemo<ChartConfig>(() => {
     if (!data) {
       return {};
     }
-    const config: ChartConfig = {
-      total: { label: "Total", color: "var(--chart-active-dot)" },
-    };
+    const config: ChartConfig = {};
     for (const [i, emoji] of data.emojis.entries()) {
       config[emoji] = {
         label: (
@@ -189,43 +186,28 @@ function EmojiTrendsChart() {
     <TrendChart
       title="Emoji Trends"
       description="Top emoji usage over time"
-      series={data?.series ?? []}
+      series={(data?.series ?? []) as TrendSeriesPoint[]}
       keys={data?.emojis ?? []}
       config={chartConfig}
       loading={isPending}
       error={error?.message ?? null}
       stacked
-      period={period}
-      onPeriodChange={setPeriod}
     />
   );
 }
 
 function UserTrendsChart() {
-  const [period, setPeriod] = useState<Period>("week");
-  const { data, isPending, error } = useUserTrends(period);
+  const { chartInterval, frcSeason } = useStatsFilters();
+  const { data, isPending, error } = useUserTrends(frcSeason, chartInterval);
 
-  const userIds = useMemo(() => {
-    if (!data?.series.length) {
-      return [];
-    }
-    const ids = new Set<string>();
-    for (const point of data.series) {
-      for (const key of Object.keys(point)) {
-        if (key !== "period") {
-          ids.add(key);
-        }
-      }
-    }
-    return [...ids];
-  }, [data]);
+  const userIds = data?.userIds ?? [];
 
   const chartConfig = useMemo<ChartConfig>(() => {
     if (!data) {
       return {};
     }
     const config: ChartConfig = {};
-    for (const [i, userId] of userIds.entries()) {
+    for (const [i, userId] of data.userIds.entries()) {
       const user = data.users[userId];
       config[userId] = {
         label: (
@@ -244,31 +226,34 @@ function UserTrendsChart() {
       };
     }
     return config;
-  }, [data, userIds]);
+  }, [data]);
 
   return (
     <TrendChart
       title="Top Reactors"
       description="Most active reactors over time"
-      series={data?.series ?? []}
+      series={(data?.series ?? []) as TrendSeriesPoint[]}
       keys={userIds}
       config={chartConfig}
       loading={isPending}
       error={error?.message ?? null}
-      period={period}
-      onPeriodChange={setPeriod}
     />
   );
 }
 
 function CategoryChart() {
-  const isDesktop = useMediaQuery("(min-width: 768px)");
+  // Read the match synchronously on first render so the pie doesn't flash
+  // mobile-sized on desktop before re-rendering.
+  const isDesktop = useMediaQuery("(min-width: 768px)", {
+    initializeWithValue: true,
+  });
   const pieInner = isDesktop ? 80 : 55;
   const pieOuter = isDesktop ? 140 : 95;
   const labelY1 = isDesktop ? -42 : -72;
   const labelY2 = isDesktop ? -12 : -48;
 
-  const { data, isPending, error } = useCategoryData();
+  const { frcSeason } = useStatsFilters();
+  const { data, isPending, error } = useCategoryData(frcSeason);
 
   const categories = useMemo(() => {
     if (!data) {
@@ -294,7 +279,7 @@ function CategoryChart() {
   }, [categories]);
 
   return (
-    <Card className="shadow-none! border-0">
+    <Card className="shadow-none! border-0 pb-0">
       <CardHeader>
         <CardTitle>Categories</CardTitle>
         <CardDescription>Reaction emoji usage by category</CardDescription>

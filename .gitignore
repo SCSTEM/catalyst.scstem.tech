@@ -34,7 +34,7 @@ logs
 .idea
 
 *.local.*
-.mise.toml
+!mise.local.toml.example
 backfill.sql
 .backfill-checkpoint
 *.gen.ts
