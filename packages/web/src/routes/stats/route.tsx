@@ -2,6 +2,7 @@ import { SelectLabel } from "@radix-ui/react-select";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   createFileRoute,
+  Link,
   Outlet,
   useLocation,
   useNavigate,
@@ -10,6 +11,7 @@ import { RefreshCw } from "lucide-react";
 import { useLayoutEffect, useRef, useState } from "react";
 import { useMediaQuery } from "usehooks-ts";
 import { StatsLayout } from "@/components/layouts/StatsLayout";
+import { Emoji } from "@/components/stats/Emoji";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import {
@@ -144,7 +146,10 @@ function StatsRoute() {
         }}
         className="flex flex-col gap-4 md:gap-6"
       >
-        <div className="h-14" style={{ viewTransitionName: "tabs-bar" }}>
+        <div
+          className="h-14 flex md:gap-4 gap-2"
+          style={{ viewTransitionName: "tabs-bar" }}
+        >
           <TabsList className="size-full">
             <div
               ref={tabsScrollRef}
@@ -165,6 +170,16 @@ function StatsRoute() {
               ))}
             </div>
           </TabsList>
+          <Button
+            asChild
+            size="icon"
+            className="size-13 my-auto p-0"
+            style={{ viewTransitionName: "parrot-button" }}
+          >
+            <Link to="/stats/parrots">
+              <Emoji name={"60fps_parrot"} size={55} hideTooltip />
+            </Link>
+          </Button>
         </div>
         <Card className={cn("p-2 md:p-4", isMobile && "mb-12")}>
           <Outlet />

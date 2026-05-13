@@ -1,6 +1,7 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 @import "./fonts.css";
+@import "./viewTransitions.css";
 
 :root {
   --font-sans: "Sora", sans-serif;
@@ -12,6 +13,7 @@
   --muted-foreground: oklch(55% 0 0);
   --main-foreground: oklch(0% 0 0);
   --main: oklch(79.36% 0.1624 92.49);
+  --parrot: oklch(82% 0.26 340);
   --border: oklch(0% 0 0);
   --ring: oklch(100% 0 0);
   --secondary-background: oklch(28% 0 0);
@@ -51,6 +53,7 @@
   --color-chart-8: var(--chart-8);
   --color-chart-9: var(--chart-9);
   --color-chart-10: var(--chart-10);
+  --color-parrot: var(--parrot);
 
   --spacing-boxShadowX: 4px;
   --spacing-boxShadowY: 4px;
@@ -81,6 +84,7 @@
       linear-gradient(to right, #80808033 1px, transparent 1px),
       linear-gradient(to bottom, #80808033 1px, transparent 1px);
     background-size: 70px 70px;
+    transition: background-color 400ms ease;
   }
 
   h1,
@@ -93,111 +97,12 @@
   }
 
   #root {
+    @apply bg-background;
+    background-image:
+      linear-gradient(to right, #80808033 1px, transparent 1px),
+      linear-gradient(to bottom, #80808033 1px, transparent 1px);
+    background-size: 70px 70px;
     view-transition-name: root;
-  }
-}
-
-/* ── View Transitions ─────────────────────────────────────── */
-
-@keyframes fade-in {
-  from {
-    opacity: 0;
-  }
-}
-
-@keyframes fade-out {
-  to {
-    opacity: 0;
-  }
-}
-
-@keyframes slide-from-right {
-  from {
-    transform: translateX(30%);
-  }
-}
-
-@keyframes slide-to-left {
-  to {
-    transform: translateX(-30%);
-  }
-}
-
-@keyframes slide-from-left {
-  from {
-    transform: translateX(-30%);
-  }
-}
-
-@keyframes slide-to-right {
-  to {
-    transform: translateX(30%);
-  }
-}
-
-/* Default cross-fade for all transitions (tab-switch) */
-::view-transition-old(root),
-::view-transition-new(root) {
-  mix-blend-mode: plus-lighter;
-}
-
-::view-transition-old(root) {
-  animation: 200ms ease both fade-out;
-}
-
-::view-transition-new(root) {
-  animation: 200ms ease both fade-in;
-}
-
-/* Drill-down: old slides left + fades, new slides in from right */
-:root:active-view-transition-type(drill-down) {
-  &::view-transition-old(root) {
-    animation:
-      180ms ease both fade-out,
-      300ms ease both slide-to-left;
-  }
-
-  &::view-transition-new(root) {
-    animation:
-      300ms ease both fade-in,
-      300ms ease both slide-from-right;
-  }
-}
-
-/* Drill-up: old slides right + fades, new slides in from left */
-:root:active-view-transition-type(drill-up) {
-  &::view-transition-old(root) {
-    animation:
-      180ms ease both fade-out,
-      300ms ease both slide-to-right;
-  }
-
-  &::view-transition-new(root) {
-    animation:
-      300ms ease both fade-in,
-      300ms ease both slide-from-left;
-  }
-}
-
-/* Pin static elements so they stay put during transitions */
-::view-transition-group(tabs-bar),
-::view-transition-group(page-title),
-::view-transition-group(refresh-btn) {
-  animation: none;
-}
-
-/* Reduced motion: disable all transition animations */
-@media (prefers-reduced-motion: reduce) {
-  ::view-transition-old(root),
-  ::view-transition-new(root) {
-    animation: none;
-  }
-
-  :root:active-view-transition-type(drill-down),
-  :root:active-view-transition-type(drill-up) {
-    &::view-transition-old(root),
-    &::view-transition-new(root) {
-      animation: none;
-    }
+    isolation: isolate;
   }
 }

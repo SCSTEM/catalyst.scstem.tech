@@ -1,0 +1,162 @@
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes fade-out {
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes slide-from-right {
+  from {
+    transform: translateX(30%);
+  }
+}
+
+@keyframes slide-to-left {
+  to {
+    transform: translateX(-30%);
+  }
+}
+
+@keyframes slide-from-left {
+  from {
+    transform: translateX(-30%);
+  }
+}
+
+@keyframes slide-to-right {
+  to {
+    transform: translateX(30%);
+  }
+}
+
+/* Default cross-fade for all transitions (tab-switch) */
+::view-transition-old(root),
+::view-transition-new(root) {
+  mix-blend-mode: plus-lighter;
+}
+
+::view-transition-old(root) {
+  animation: 200ms ease both fade-out;
+}
+
+::view-transition-new(root) {
+  animation: 200ms ease both fade-in;
+}
+
+/* Drill-down: old slides left + fades, new slides in from right */
+:root:active-view-transition-type(drill-down) {
+  &::view-transition-old(root) {
+    animation:
+      180ms ease both fade-out,
+      300ms ease both slide-to-left;
+  }
+
+  &::view-transition-new(root) {
+    animation:
+      300ms ease both fade-in,
+      300ms ease both slide-from-right;
+  }
+}
+
+/* Drill-up: old slides right + fades, new slides in from left */
+:root:active-view-transition-type(drill-up) {
+  &::view-transition-old(root) {
+    animation:
+      180ms ease both fade-out,
+      300ms ease both slide-to-right;
+  }
+
+  &::view-transition-new(root) {
+    animation:
+      300ms ease both fade-in,
+      300ms ease both slide-from-left;
+  }
+}
+
+/* Pin the parrot button across every navigation so it never animates */
+::view-transition-group(parrot-button) {
+  animation: none;
+}
+
+/* Pin tabs/title/refresh only when switching between sibling stats tabs.
+   Drill transitions to /parrots can morph the title + tabs-bar contents. */
+:root:active-view-transition-type(tab-switch) {
+  &::view-transition-group(tabs-bar),
+  &::view-transition-group(page-title),
+  &::view-transition-group(refresh-btn) {
+    animation: none;
+  }
+}
+
+/* Parrot fade: full fade through black between stats and parrots */
+:root:active-view-transition-type(parrot-fade) {
+  &::view-transition {
+    background-color: black;
+  }
+  &::view-transition-old(root),
+  &::view-transition-new(root),
+  &::view-transition-old(parrot-button),
+  &::view-transition-new(parrot-button),
+  &::view-transition-old(tabs-bar),
+  &::view-transition-new(tabs-bar),
+  &::view-transition-old(page-title),
+  &::view-transition-new(page-title),
+  &::view-transition-old(refresh-btn),
+  &::view-transition-new(refresh-btn) {
+    mix-blend-mode: normal;
+  }
+  &::view-transition-group(parrot-button),
+  &::view-transition-group(tabs-bar),
+  &::view-transition-group(page-title),
+  &::view-transition-group(refresh-btn) {
+    animation: unset;
+  }
+  &::view-transition-old(root),
+  &::view-transition-old(parrot-button),
+  &::view-transition-old(tabs-bar),
+  &::view-transition-old(page-title),
+  &::view-transition-old(refresh-btn) {
+    animation: 500ms ease both parrot-fade-out;
+  }
+  &::view-transition-new(root),
+  &::view-transition-new(parrot-button),
+  &::view-transition-new(tabs-bar),
+  &::view-transition-new(page-title),
+  &::view-transition-new(refresh-btn) {
+    animation: 500ms ease 500ms both parrot-fade-in;
+  }
+}
+
+@keyframes parrot-fade-out {
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes parrot-fade-in {
+  from {
+    opacity: 0;
+  }
+}
+
+/* Reduced motion: disable all transition animations */
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-old(root),
+  ::view-transition-new(root) {
+    animation: none;
+  }
+
+  :root:active-view-transition-type(drill-down),
+  :root:active-view-transition-type(drill-up),
+  :root:active-view-transition-type(parrot-fade) {
+    &::view-transition-old(root),
+    &::view-transition-new(root) {
+      animation: none;
+    }
+  }
+}
