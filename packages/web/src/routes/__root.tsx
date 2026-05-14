@@ -2,6 +2,7 @@ import { createRootRoute, HeadContent, Outlet } from "@tanstack/react-router";
 import { lazy, useEffect, useState } from "react";
 import { AccessGate } from "@/components/AccessGate";
 import { onSessionExpired, SESSION_AUTH_KEY } from "@/lib/api";
+import { hasInitialPassParam } from "@/lib/initialPass";
 
 const DevTools = import.meta.env.PROD
   ? () => null
@@ -23,7 +24,7 @@ export const Route = createRootRoute({
 
 function RootLayout() {
   const [isAuthenticated, setIsAuthenticated] = useState(() => {
-    if (new URLSearchParams(window.location.search).has("pass")) {
+    if (hasInitialPassParam()) {
       return false;
     }
     return localStorage.getItem(SESSION_AUTH_KEY) === "1";

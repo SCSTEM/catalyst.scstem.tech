@@ -9,6 +9,7 @@ import {
   InputOTPSlot,
 } from "@/components/ui/input-otp";
 import { api, SESSION_AUTH_KEY, setSessionToken } from "@/lib/api";
+import { consumeInitialPassParam } from "@/lib/initialPass";
 import { cn } from "@/lib/utils";
 import { StatsLayout } from "./layouts/StatsLayout";
 
@@ -25,23 +26,12 @@ const TURNSTILE_BLOCKED_MESSAGE =
 // If Turnstile's script is fully blocked, no callback ever fires. Fall back to a manual timeout.
 const TURNSTILE_LOAD_TIMEOUT_MS = 10_000;
 
-function getPassParam(): string {
-  const param = new URLSearchParams(window.location.search).get("pass");
-  if (param && /^\d{6}$/.test(param)) {
-    const url = new URL(window.location.href);
-    url.searchParams.delete("pass");
-    window.history.replaceState({}, "", url.toString());
-    return param;
-  }
-  return "";
-}
-
 type AccessGateProps = {
   onAuthenticated: () => void;
 };
 
 export function AccessGate({ onAuthenticated }: AccessGateProps) {
-  const [password, setPassword] = useState(getPassParam);
+  const [password, setPassword] = useState(consumeInitialPassParam);
   const turnstileTokenRef = useRef<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [turnstileFailed, setTurnstileFailed] = useState(false);
