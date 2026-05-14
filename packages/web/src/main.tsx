@@ -3,9 +3,14 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { createRouter, RouterProvider } from "@tanstack/react-router";
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
+import { captureInitialPassParam } from "./lib/initialPass";
 import { routeTree } from "./routeTree.gen";
 
 import "./styles/index.css";
+
+// Must run before the router mounts so that redirect-based routes (e.g. `/` → `/stats/emojis`)
+// don't strip `?pass=...` from the URL before AccessGate can read it.
+captureInitialPassParam();
 
 const queryClient = new QueryClient({
   defaultOptions: {
