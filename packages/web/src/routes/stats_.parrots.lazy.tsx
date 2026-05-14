@@ -14,7 +14,7 @@ function RouteComponent() {
   return (
     <>
       <VaporwaveCanvas />
-      <div className="flex flex-col gap-6 mx-auto md:max-w-2xl p-4 pt-4 md:py-8">
+      <div className="flex flex-col gap-6 mx-auto md:max-w-2xl py-4 px-2 md:py-8">
         <GlowingText text="Parrots" className="text-parrot text-4xl mx-auto" />
         {parrots
           ?.filter((p) => p.count > 0)
