@@ -13,9 +13,13 @@ type EmojiProps = {
 };
 
 export function Emoji({ name, hideTooltip = false, size = 24 }: EmojiProps) {
-  const { data: emojiMap } = useSlackCustomEmojis();
+  const { data: emojiMap, isLoading } = useSlackCustomEmojis();
   const customUrl = emojiMap?.[name];
   const unicode = !customUrl ? resolveEmojiUnicode(name) : undefined;
+
+  if (isLoading) {
+    return null;
+  }
 
   const element = customUrl ? (
     <img
