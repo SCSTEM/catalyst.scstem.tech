@@ -14,11 +14,14 @@
   --main-foreground: oklch(0% 0 0);
   --main: oklch(79.36% 0.1624 92.49);
   --parrot: oklch(82% 0.26 340);
+  --parrot-card-bg: oklch(14% 0.05 290 / 0.5);
   --border: oklch(0% 0 0);
   --ring: oklch(100% 0 0);
   --secondary-background: oklch(28% 0 0);
   --overlay: oklch(0% 0 0 / 0.8);
   --shadow: 4px 4px 0px 0px var(--border);
+  --grid-line: rgba(128, 128, 128, 0.2);
+  --axis-line: rgba(128, 128, 128, 0.5);
   --chart-1: #e0b700;
   --chart-2: #7a83ff;
   --chart-3: #ff6669;
@@ -29,7 +32,7 @@
   --chart-8: #ec4899;
   --chart-9: #14b8a6;
   --chart-10: #6366f1;
-  --chart-active-dot: #fff;
+  --destructive: #ff6669;
 }
 
 @theme inline {
@@ -54,6 +57,8 @@
   --color-chart-9: var(--chart-9);
   --color-chart-10: var(--chart-10);
   --color-parrot: var(--parrot);
+  --color-parrot-card-bg: var(--parrot-card-bg);
+  --color-destructive: var(--destructive);
 
   --spacing-boxShadowX: 4px;
   --spacing-boxShadowY: 4px;
@@ -66,10 +71,40 @@
 }
 
 @layer base {
+  /* Solid bg-color on html serves as the iOS 26 Liquid Glass sample fallback
+     and as the rubber-band/overscroll color. */
   html {
+    @apply bg-background;
     font-size: 100%;
     scrollbar-gutter: stable;
     view-transition-name: none;
+    transition: background-color 400ms ease;
+  }
+
+  /* Parrots route renders an animated canvas; match the html bg to its
+     dark navy so Safari's chrome tint and any safe-area zones blend in.
+     Reverts automatically when the route unmounts. */
+  html:has(canvas) {
+    background-color: #0a061a;
+  }
+
+  /* Fixed-position pseudo paints the grid pattern. It always covers the
+     visual viewport (including the iOS safe area with viewport-fit=cover),
+     regardless of html's intrinsic height or whether the page is scrollable.
+     It sits at z-index: -1 so it's behind everything but above the html bg —
+     the parrot page's canvas (z-index: -2 inside #root's stacking context)
+     still paints above it because #root's stacking context lives at z-index
+     auto in the document. */
+  html::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    background-image:
+      linear-gradient(to right, var(--grid-line) 1px, transparent 1px),
+      linear-gradient(to bottom, var(--grid-line) 1px, transparent 1px);
+    background-size: 70px 70px;
+    pointer-events: none;
   }
 
   @media (min-width: 768px) {
@@ -79,12 +114,7 @@
   }
 
   body {
-    @apply text-foreground font-base bg-background;
-    background-image:
-      linear-gradient(to right, #80808033 1px, transparent 1px),
-      linear-gradient(to bottom, #80808033 1px, transparent 1px);
-    background-size: 70px 70px;
-    transition: background-color 400ms ease;
+    @apply text-foreground font-base;
   }
 
   h1,
@@ -97,11 +127,6 @@
   }
 
   #root {
-    @apply bg-background;
-    background-image:
-      linear-gradient(to right, #80808033 1px, transparent 1px),
-      linear-gradient(to bottom, #80808033 1px, transparent 1px);
-    background-size: 70px 70px;
     view-transition-name: root;
     isolation: isolate;
   }

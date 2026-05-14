@@ -13,7 +13,7 @@ export function ParrotProfileCard({ emoji }: { emoji: string }) {
   const totalCount = data ? data.totalCount.toLocaleString() : DASH;
 
   return (
-    <Card className="relative gap-5 p-3 md:p-4 bg-[oklch(14%_0.05_290/0.5)] backdrop-blur-sm border-parrot shadow-none!">
+    <Card className="relative gap-5 p-3 md:p-4 bg-parrot-card-bg backdrop-blur-sm border-parrot shadow-none!">
       <div className="flex gap-4">
         <div className="flex flex-col items-center gap-3 w-40 md:w-70 my-auto">
           <Emoji name={emoji} size={160} hideTooltip />

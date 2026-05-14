@@ -16,6 +16,8 @@ const queryClient = new QueryClient({
   },
 });
 
+const statsTabOrder = ["/stats/emojis", "/stats/users", "/stats/trends"];
+
 const router = createRouter({
   routeTree,
   defaultViewTransition: {
@@ -31,6 +33,16 @@ const router = createRouter({
         return ["parrot-fade"];
       }
 
+      const fromTabIdx = statsTabOrder.findIndex((t) =>
+        fromLocation.pathname.startsWith(t),
+      );
+      const toTabIdx = statsTabOrder.findIndex((t) =>
+        toLocation.pathname.startsWith(t),
+      );
+      if (fromTabIdx !== -1 && toTabIdx !== -1 && fromTabIdx !== toTabIdx) {
+        return toTabIdx > fromTabIdx ? ["drill-down"] : ["drill-up"];
+      }
+
       const fromDepth = fromLocation.pathname.split("/").filter(Boolean).length;
       const toDepth = toLocation.pathname.split("/").filter(Boolean).length;
       if (toDepth > fromDepth) {
@@ -39,7 +51,7 @@ const router = createRouter({
       if (toDepth < fromDepth) {
         return ["drill-up"];
       }
-      return ["tab-switch"];
+      return false;
     },
   },
 });

@@ -1,4 +1,5 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
+import { flushSync } from "react-dom";
 import {
   Area,
   AreaChart,
@@ -48,9 +49,9 @@ const CHART_COLORS = [
   "var(--chart-3)",
   "var(--chart-4)",
   "var(--chart-5)",
-  "#f97316",
-  "#a855f7",
-  "#ec4899",
+  "var(--chart-6)",
+  "var(--chart-7)",
+  "var(--chart-8)",
 ];
 
 function ChartIntervalSelector() {
@@ -126,7 +127,7 @@ function TrendChart({
         {loading ? (
           <p className="py-12 text-center text-muted-foreground">Loading...</p>
         ) : error ? (
-          <p className="py-12 text-center text-red-400">{error}</p>
+          <p className="py-12 text-center text-destructive">{error}</p>
         ) : series.length > 0 ? (
           <ChartContainer config={config} className="h-80 md:h-87.5 w-full">
             <AreaChart data={series}>
@@ -249,8 +250,8 @@ function CategoryChart() {
   });
   const pieInner = isDesktop ? 80 : 55;
   const pieOuter = isDesktop ? 140 : 95;
-  const labelY1 = isDesktop ? -42 : -72;
-  const labelY2 = isDesktop ? -12 : -48;
+  const labelY1 = isDesktop ? -42 : -55;
+  const labelY2 = isDesktop ? -12 : -35;
 
   const { frcSeason } = useStatsFilters();
   const { data, isPending, error } = useCategoryData(frcSeason);
@@ -288,7 +289,7 @@ function CategoryChart() {
         {isPending ? (
           <p className="py-12 text-center text-muted-foreground">Loading...</p>
         ) : error ? (
-          <p className="py-12 text-center text-red-400">{error.message}</p>
+          <p className="py-12 text-center text-destructive">{error.message}</p>
         ) : categories.length > 0 ? (
           <ChartContainer
             config={chartConfig}
@@ -349,9 +350,35 @@ function CategoryChart() {
   );
 }
 
+const CHART_TABS = ["emoji-trends", "user-trends", "categories"] as const;
+type ChartTab = (typeof CHART_TABS)[number];
+
 export function Trends() {
+  const [tab, setTab] = useState<ChartTab>("emoji-trends");
+
+  const handleChange = (nextValue: string) => {
+    const next = nextValue as ChartTab;
+    if (next === tab) {
+      return;
+    }
+    if (!document.startViewTransition) {
+      setTab(next);
+      return;
+    }
+
+    const fromIdx = CHART_TABS.indexOf(tab);
+    const toIdx = CHART_TABS.indexOf(next);
+
+    document.startViewTransition({
+      update: () => {
+        flushSync(() => setTab(next));
+      },
+      types: [toIdx > fromIdx ? "chart-forward" : "chart-back"],
+    });
+  };
+
   return (
-    <Tabs defaultValue="emoji-trends">
+    <Tabs value={tab} onValueChange={handleChange}>
       <TabsList className="w-full">
         <TabsTrigger value="emoji-trends" className="flex-1">
           Emojis
@@ -363,15 +390,17 @@ export function Trends() {
           Categories
         </TabsTrigger>
       </TabsList>
-      <TabsContent value="emoji-trends">
-        <EmojiTrendsChart />
-      </TabsContent>
-      <TabsContent value="user-trends">
-        <UserTrendsChart />
-      </TabsContent>
-      <TabsContent value="categories">
-        <CategoryChart />
-      </TabsContent>
+      <div style={{ viewTransitionName: "chart-body" }}>
+        <TabsContent value="emoji-trends" className="animate-none!">
+          <EmojiTrendsChart />
+        </TabsContent>
+        <TabsContent value="user-trends" className="animate-none!">
+          <UserTrendsChart />
+        </TabsContent>
+        <TabsContent value="categories" className="animate-none!">
+          <CategoryChart />
+        </TabsContent>
+      </div>
     </Tabs>
   );
 }

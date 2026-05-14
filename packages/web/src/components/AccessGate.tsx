@@ -1,7 +1,7 @@
 import { Turnstile } from "@marsidev/react-turnstile";
 import { REGEXP_ONLY_DIGITS } from "input-otp";
 import { Loader2 } from "lucide-react";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Card } from "@/components/ui/card";
 import {
   InputOTP,
@@ -18,6 +18,12 @@ import { StatsLayout } from "./layouts/StatsLayout";
 // Forces interactive:      3x00000000000000000000FF
 const TURNSTILE_SITE_KEY =
   import.meta.env.VITE_TURNSTILE_SITE_KEY || "1x00000000000000000000AA";
+
+const TURNSTILE_BLOCKED_MESSAGE =
+  "Couldn't load the verification challenge. Disable ad/script blockers for this site and reload.";
+
+// If Turnstile's script is fully blocked, no callback ever fires. Fall back to a manual timeout.
+const TURNSTILE_LOAD_TIMEOUT_MS = 10_000;
 
 function getPassParam(): string {
   const param = new URLSearchParams(window.location.search).get("pass");
@@ -38,10 +44,28 @@ export function AccessGate({ onAuthenticated }: AccessGateProps) {
   const [password, setPassword] = useState(getPassParam);
   const turnstileTokenRef = useRef<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [turnstileFailed, setTurnstileFailed] = useState(false);
+  const [needsInteraction, setNeedsInteraction] = useState(false);
+  const scriptLoadedRef = useRef(false);
   const loadingRef = useRef(false);
   const [turnstileKey, setTurnstileKey] = useState(0);
 
-  const codeComplete = password.length === 6 && !error;
+  // biome-ignore lint/correctness/useExhaustiveDependencies: turnstileKey is the remount trigger, not read inside the effect
+  useEffect(() => {
+    scriptLoadedRef.current = false;
+    setTurnstileFailed(false);
+    setNeedsInteraction(false);
+    const id = setTimeout(() => {
+      if (!scriptLoadedRef.current) {
+        setTurnstileFailed(true);
+      }
+    }, TURNSTILE_LOAD_TIMEOUT_MS);
+    return () => clearTimeout(id);
+  }, [turnstileKey]);
+
+  const displayError =
+    error ?? (turnstileFailed ? TURNSTILE_BLOCKED_MESSAGE : null);
+  const codeComplete = password.length === 6 && !displayError;
 
   async function submit(pass: string, token: string) {
     loadingRef.current = true;
@@ -90,9 +114,16 @@ export function AccessGate({ onAuthenticated }: AccessGateProps) {
 
   function handleTurnstileVerify(token: string) {
     turnstileTokenRef.current = token;
+    setTurnstileFailed(false);
+    setNeedsInteraction(false);
     if (password.length === 6 && !loadingRef.current) {
       submit(password, token);
     }
+  }
+
+  function handleTurnstileFailed() {
+    turnstileTokenRef.current = null;
+    setTurnstileFailed(true);
   }
 
   return (
@@ -133,19 +164,28 @@ export function AccessGate({ onAuthenticated }: AccessGateProps) {
             </InputOTP>
           </div>
 
-          {error ? (
-            <p className="text-center text-sm text-[#ff6669]">{error}</p>
+          {displayError ? (
+            <p className="text-center text-sm text-destructive">
+              {displayError}
+            </p>
           ) : null}
 
           <Turnstile
             key={turnstileKey}
             siteKey={TURNSTILE_SITE_KEY}
             onSuccess={handleTurnstileVerify}
+            onError={handleTurnstileFailed}
+            onTimeout={handleTurnstileFailed}
+            onUnsupported={handleTurnstileFailed}
+            onLoadScript={() => {
+              scriptLoadedRef.current = true;
+            }}
+            onBeforeInteractive={() => setNeedsInteraction(true)}
             onExpire={() => {
               turnstileTokenRef.current = null;
             }}
             options={{ theme: "dark" }}
-            hidden
+            hidden={!needsInteraction}
           />
         </div>
       </Card>

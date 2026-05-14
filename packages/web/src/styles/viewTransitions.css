@@ -48,55 +48,105 @@
   animation: 200ms ease both fade-in;
 }
 
-/* Drill-down: old slides left + fades, new slides in from right */
+/* Drill-down: slide only the card body; keep the card frame and chrome static.
+   chart-body shares the slide so the Trends page moves as one piece. */
 :root:active-view-transition-type(drill-down) {
-  &::view-transition-old(root) {
+  &::view-transition-group(stats-card-body),
+  &::view-transition-group(chart-body) {
+    overflow: clip;
+  }
+
+  &::view-transition-old(stats-card-body),
+  &::view-transition-old(chart-body) {
     animation:
       180ms ease both fade-out,
       300ms ease both slide-to-left;
   }
 
-  &::view-transition-new(root) {
+  &::view-transition-new(stats-card-body),
+  &::view-transition-new(chart-body) {
     animation:
       300ms ease both fade-in,
       300ms ease both slide-from-right;
   }
 }
 
-/* Drill-up: old slides right + fades, new slides in from left */
+/* Drill-up: same as drill-down but reversed direction */
 :root:active-view-transition-type(drill-up) {
-  &::view-transition-old(root) {
+  &::view-transition-group(stats-card-body),
+  &::view-transition-group(chart-body) {
+    overflow: clip;
+  }
+
+  &::view-transition-old(stats-card-body),
+  &::view-transition-old(chart-body) {
     animation:
       180ms ease both fade-out,
       300ms ease both slide-to-right;
   }
 
-  &::view-transition-new(root) {
+  &::view-transition-new(stats-card-body),
+  &::view-transition-new(chart-body) {
     animation:
       300ms ease both fade-in,
       300ms ease both slide-from-left;
   }
 }
 
-/* Pin the parrot button across every navigation so it never animates */
-::view-transition-group(parrot-button) {
-  animation: none;
-}
+/* Chart-tab transitions: slide just the chart body, leave the surrounding
+   page (including the chart tab strip) untouched. */
+:root:active-view-transition-type(chart-forward) {
+  &::view-transition-group(chart-body) {
+    overflow: clip;
+  }
 
-/* Pin tabs/title/refresh only when switching between sibling stats tabs.
-   Drill transitions to /parrots can morph the title + tabs-bar contents. */
-:root:active-view-transition-type(tab-switch) {
-  &::view-transition-group(tabs-bar),
-  &::view-transition-group(page-title),
-  &::view-transition-group(refresh-btn) {
-    animation: none;
+  &::view-transition-old(chart-body) {
+    animation:
+      180ms ease both fade-out,
+      300ms ease both slide-to-left;
+  }
+
+  &::view-transition-new(chart-body) {
+    animation:
+      300ms ease both fade-in,
+      300ms ease both slide-from-right;
   }
 }
 
-/* Parrot fade: full fade through black between stats and parrots */
+:root:active-view-transition-type(chart-back) {
+  &::view-transition-group(chart-body) {
+    overflow: clip;
+  }
+
+  &::view-transition-old(chart-body) {
+    animation:
+      180ms ease both fade-out,
+      300ms ease both slide-to-right;
+  }
+
+  &::view-transition-new(chart-body) {
+    animation:
+      300ms ease both fade-in,
+      300ms ease both slide-from-left;
+  }
+}
+
+/* Pin the page chrome across every navigation; parrot-fade overrides
+   these below to fade them out alongside the rest of the page. */
+::view-transition-group(parrot-button),
+::view-transition-group(tabs-bar),
+::view-transition-group(page-title),
+::view-transition-group(refresh-btn) {
+  animation: none;
+}
+
+/* Parrot fade: full fade through black between stats and parrots.
+   The overlay's black bg is animated (rather than static) so it transitions
+   back to transparent before the view-transition pseudo is removed —
+   otherwise the body's grid background would "snap" in at the end. */
 :root:active-view-transition-type(parrot-fade) {
   &::view-transition {
-    background-color: black;
+    animation: 1000ms linear both parrot-fade-bg;
   }
   &::view-transition-old(root),
   &::view-transition-new(root),
@@ -107,27 +157,42 @@
   &::view-transition-old(page-title),
   &::view-transition-new(page-title),
   &::view-transition-old(refresh-btn),
-  &::view-transition-new(refresh-btn) {
+  &::view-transition-new(refresh-btn),
+  &::view-transition-old(stats-card),
+  &::view-transition-new(stats-card),
+  &::view-transition-old(stats-card-body),
+  &::view-transition-new(stats-card-body),
+  &::view-transition-old(chart-body),
+  &::view-transition-new(chart-body) {
     mix-blend-mode: normal;
   }
   &::view-transition-group(parrot-button),
   &::view-transition-group(tabs-bar),
   &::view-transition-group(page-title),
-  &::view-transition-group(refresh-btn) {
+  &::view-transition-group(refresh-btn),
+  &::view-transition-group(stats-card),
+  &::view-transition-group(stats-card-body),
+  &::view-transition-group(chart-body) {
     animation: unset;
   }
   &::view-transition-old(root),
   &::view-transition-old(parrot-button),
   &::view-transition-old(tabs-bar),
   &::view-transition-old(page-title),
-  &::view-transition-old(refresh-btn) {
+  &::view-transition-old(refresh-btn),
+  &::view-transition-old(stats-card),
+  &::view-transition-old(stats-card-body),
+  &::view-transition-old(chart-body) {
     animation: 500ms ease both parrot-fade-out;
   }
   &::view-transition-new(root),
   &::view-transition-new(parrot-button),
   &::view-transition-new(tabs-bar),
   &::view-transition-new(page-title),
-  &::view-transition-new(refresh-btn) {
+  &::view-transition-new(refresh-btn),
+  &::view-transition-new(stats-card),
+  &::view-transition-new(stats-card-body),
+  &::view-transition-new(chart-body) {
     animation: 500ms ease 500ms both parrot-fade-in;
   }
 }
@@ -144,6 +209,16 @@
   }
 }
 
+@keyframes parrot-fade-bg {
+  0%,
+  100% {
+    background-color: transparent;
+  }
+  50% {
+    background-color: black;
+  }
+}
+
 /* Reduced motion: disable all transition animations */
 @media (prefers-reduced-motion: reduce) {
   ::view-transition-old(root),
@@ -153,9 +228,18 @@
 
   :root:active-view-transition-type(drill-down),
   :root:active-view-transition-type(drill-up),
-  :root:active-view-transition-type(parrot-fade) {
+  :root:active-view-transition-type(parrot-fade),
+  :root:active-view-transition-type(chart-forward),
+  :root:active-view-transition-type(chart-back) {
+    &::view-transition,
     &::view-transition-old(root),
-    &::view-transition-new(root) {
+    &::view-transition-new(root),
+    &::view-transition-old(stats-card),
+    &::view-transition-new(stats-card),
+    &::view-transition-old(stats-card-body),
+    &::view-transition-new(stats-card-body),
+    &::view-transition-old(chart-body),
+    &::view-transition-new(chart-body) {
       animation: none;
     }
   }

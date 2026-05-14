@@ -53,8 +53,8 @@ function ChartContainer({
         data-slot="chart"
         data-chart={chartId}
         className={cn(
-          "[&_.recharts-cartesian-axis-tick_text]:fill-foreground [&_.recharts-cartesian-grid_line[stroke='#ccc']]:stroke-[#80808080] [&_.recharts-curve.recharts-tooltip-cursor]:stroke-[#80808080] [&_.recharts-polar-grid_[stroke='#ccc']]:stroke-white [&_.recharts-reference-line_[stroke='#ccc']]:stroke-white flex aspect-video justify-center text-xs [&_.recharts-dot[stroke='#fff']]:stroke-transparent [&_.recharts-sector]:outline-hidden [&_.recharts-sector[stroke='#fff']]:stroke-border [&_.recharts-surface]:outline-hidden",
-          "[&_.recharts-layer_path]:[fill-opacity:1] [&_.recharts-layer_path]:[stroke-width:2] [&_.recharts-layer_path]:[stroke:var(--color-border)]",
+          "[&_.recharts-cartesian-axis-tick_text]:fill-foreground [&_.recharts-cartesian-grid_line[stroke='#ccc']]:stroke-(--axis-line) [&_.recharts-curve.recharts-tooltip-cursor]:stroke-(--axis-line) [&_.recharts-polar-grid_[stroke='#ccc']]:stroke-white [&_.recharts-reference-line_[stroke='#ccc']]:stroke-white flex aspect-video justify-center text-xs [&_.recharts-dot[stroke='#fff']]:stroke-transparent [&_.recharts-sector]:outline-hidden [&_.recharts-sector[stroke='#fff']]:stroke-border [&_.recharts-surface]:outline-hidden",
+          "[&_.recharts-layer_path]:[fill-opacity:1] [&_.recharts-layer_path]:stroke-2 [&_.recharts-layer_path]:[stroke:var(--color-border)]",
           className,
         )}
         {...props}
@@ -199,7 +199,7 @@ function ChartTooltipContent({
   return (
     <div
       className={cn(
-        "border-border bg-background grid min-w-[8rem] items-start gap-1.5 rounded-lg border px-2.5 py-1.5 text-xs shadow-xl",
+        "border-border bg-background grid min-w-32 items-start gap-1.5 rounded-lg border px-2.5 py-1.5 text-xs shadow-xl",
         className,
       )}
     >
@@ -227,17 +227,13 @@ function ChartTooltipContent({
                   ) : (
                     !hideIndicator && (
                       <div
-                        className={cn(
-                          "shrink-0 rounded-[2px] bg-(--color-bg)",
-                          {
-                            "size-2.5 border border-border":
-                              indicator === "dot",
-                            "w-1": indicator === "line",
-                            "w-0 border-[1.5px] border-dashed bg-transparent":
-                              indicator === "dashed",
-                            "my-0.5": nestLabel && indicator === "dashed",
-                          },
-                        )}
+                        className={cn("shrink-0 rounded-xs bg-(--color-bg)", {
+                          "size-2.5 border border-border": indicator === "dot",
+                          "w-1": indicator === "line",
+                          "w-0 border-[1.5px] border-dashed bg-transparent":
+                            indicator === "dashed",
+                          "my-0.5": nestLabel && indicator === "dashed",
+                        })}
                         style={
                           {
                             "--color-bg": indicatorColor,

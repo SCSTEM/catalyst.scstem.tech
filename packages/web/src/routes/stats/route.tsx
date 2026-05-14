@@ -65,7 +65,7 @@ function StatsRoute() {
 
   const isMobile = useMediaQuery("(max-width: 768px)");
   const tabsScrollRef = useRef<HTMLDivElement>(null);
-  const [tabsEdges, setTabsEdges] = useState({ left: false, right: false });
+  const [tabsFade, setTabsFade] = useState({ left: 0, right: 0 });
 
   const { frcSeason, setFrcSeason, chartInterval, setChartInterval } =
     useStatsFilters();
@@ -77,16 +77,25 @@ function StatsRoute() {
       return;
     }
 
+    let maxFade =
+      2 * parseFloat(getComputedStyle(document.documentElement).fontSize);
+
     const update = () => {
-      setTabsEdges({
-        left: el.scrollLeft > 0,
-        right: el.scrollLeft + el.clientWidth < el.scrollWidth - 1,
-      });
+      const left = Math.min(maxFade, Math.max(0, el.scrollLeft));
+      const right = Math.min(
+        maxFade,
+        Math.max(0, el.scrollWidth - el.clientWidth - el.scrollLeft),
+      );
+      setTabsFade({ left, right });
     };
 
     update();
     el.addEventListener("scroll", update, { passive: true });
-    const ro = new ResizeObserver(update);
+    const ro = new ResizeObserver(() => {
+      maxFade =
+        2 * parseFloat(getComputedStyle(document.documentElement).fontSize);
+      update();
+    });
     ro.observe(el);
     return () => {
       el.removeEventListener("scroll", update);
@@ -111,19 +120,10 @@ function StatsRoute() {
     el.scrollTo({ left: target, behavior: "smooth" });
   }, [activeTab]);
 
-  const tabsMaskImage = (() => {
-    const fade = "2rem";
-    if (tabsEdges.left && tabsEdges.right) {
-      return `linear-gradient(to right, transparent, black ${fade}, black calc(100% - ${fade}), transparent)`;
-    }
-    if (tabsEdges.left) {
-      return `linear-gradient(to right, transparent, black ${fade})`;
-    }
-    if (tabsEdges.right) {
-      return `linear-gradient(to right, black calc(100% - ${fade}), transparent)`;
-    }
-    return undefined;
-  })();
+  const tabsMaskImage =
+    tabsFade.left > 0 || tabsFade.right > 0
+      ? `linear-gradient(to right, transparent 0, black ${tabsFade.left}px, black calc(100% - ${tabsFade.right}px), transparent 100%)`
+      : undefined;
 
   const handleRefresh = async () => {
     setIsRefreshing(true);
@@ -181,8 +181,16 @@ function StatsRoute() {
             </Link>
           </Button>
         </div>
-        <Card className={cn("p-2 md:p-4", isMobile && "mb-12")}>
-          <Outlet />
+        <Card
+          className={cn("p-0", isMobile && "mb-12")}
+          style={{ viewTransitionName: "stats-card" }}
+        >
+          <div
+            className="p-2 md:p-4"
+            style={{ viewTransitionName: "stats-card-body" }}
+          >
+            <Outlet />
+          </div>
         </Card>
       </Tabs>
 
