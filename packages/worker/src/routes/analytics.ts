@@ -5,6 +5,8 @@ import { Hono } from "hono";
 import { cache } from "hono/cache";
 import { z } from "zod";
 import { reactions, users } from "../db/schema";
+import type { AppEnv } from "../lib/types";
+import { isAnonymous } from "../lib/types";
 import { getCurrentSeason, seasonCondition } from "./util";
 
 const bucketExpr = {
@@ -36,14 +38,14 @@ function parseSeason(raw: string | undefined): number {
   return getCurrentSeason();
 }
 
-export const analyticsRoute = new Hono<{ Bindings: Env }>()
-  .use(
-    "/*",
-    cache({
-      cacheName: "catalyst-analytics",
+export const analyticsRoute = new Hono<AppEnv>()
+  .use("/*", async (c, next) => {
+    const cacheName = `catalyst-analytics-${c.var.sessionMode ?? "full"}`;
+    return cache({
+      cacheName,
       cacheControl: "public, max-age=300",
-    }),
-  )
+    })(c, next);
+  })
   .get("/emoji-trends", zValidator("query", trendsQuery), async (c) => {
     const db = drizzle(c.env.DB);
     const {
@@ -147,7 +149,10 @@ export const analyticsRoute = new Hono<{ Bindings: Env }>()
     if (!userIds.length) {
       return c.json({
         userIds: [] as string[],
-        users: {} as Record<string, { name: string; avatar: string | null }>,
+        users: {} as Record<
+          string,
+          { name: string | null; avatar: string | null }
+        >,
         series: [],
       });
     }
@@ -174,11 +179,15 @@ export const analyticsRoute = new Hono<{ Bindings: Env }>()
         .orderBy(bucket),
     ]);
 
-    const userMap: Record<string, { name: string; avatar: string | null }> = {};
+    const anon = isAnonymous(c);
+    const userMap: Record<
+      string,
+      { name: string | null; avatar: string | null }
+    > = {};
     for (const u of userRows) {
       userMap[u.userId] = {
-        name: u.displayName || u.userId,
-        avatar: u.avatarUrl,
+        name: anon ? null : u.displayName || u.userId,
+        avatar: anon ? null : u.avatarUrl,
       };
     }
 

@@ -3,6 +3,11 @@ import { hc } from "hono/client";
 
 const SESSION_TOKEN_KEY = "catalyst-token";
 export const SESSION_AUTH_KEY = "catalyst-auth";
+export const SESSION_ANON_KEY = "catalyst-anon";
+
+export function isAnonymousMode(): boolean {
+  return localStorage.getItem(SESSION_ANON_KEY) === "1";
+}
 
 const baseUrl = import.meta.env.VITE_API_URL
   ? import.meta.env.VITE_API_URL
@@ -19,6 +24,7 @@ export function setSessionToken(token: string): void {
 export function clearSession(): void {
   localStorage.removeItem(SESSION_TOKEN_KEY);
   localStorage.removeItem(SESSION_AUTH_KEY);
+  localStorage.removeItem(SESSION_ANON_KEY);
 }
 
 let sessionExpiredCallback: (() => void) | null = null;

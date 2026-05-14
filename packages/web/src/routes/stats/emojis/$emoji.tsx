@@ -3,6 +3,7 @@ import { Avatar } from "@/components/Avatar";
 import { DetailView } from "@/components/stats/DetailView";
 import { Emoji } from "@/components/stats/Emoji";
 import { LeaderboardRow } from "@/components/stats/LeaderboardRow";
+import { UserName } from "@/components/UserName";
 import { useEmojiUsers } from "@/hooks/queries";
 import { useStatsFilters } from "@/hooks/useStatsFilter";
 import { resolveEmojiUnicode } from "@/lib/emoji";
@@ -39,8 +40,16 @@ function EmojiDetailPage() {
           <LeaderboardRow
             key={entry.userId}
             rank={i + 1}
-            left={<Avatar url={entry.avatarUrl} name={entry.displayName} />}
-            label={entry.displayName || entry.userId}
+            left={
+              <Avatar
+                url={entry.avatarUrl}
+                name={entry.displayName}
+                userId={entry.userId}
+              />
+            }
+            label={
+              <UserName userId={entry.userId} displayName={entry.displayName} />
+            }
             count={entry.count}
             onClick={() =>
               navigate({

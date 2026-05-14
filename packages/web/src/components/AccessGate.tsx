@@ -2,13 +2,19 @@ import { Turnstile } from "@marsidev/react-turnstile";
 import { REGEXP_ONLY_DIGITS } from "input-otp";
 import { Loader2 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
+import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import {
   InputOTP,
   InputOTPGroup,
   InputOTPSlot,
 } from "@/components/ui/input-otp";
-import { api, SESSION_AUTH_KEY, setSessionToken } from "@/lib/api";
+import {
+  api,
+  SESSION_ANON_KEY,
+  SESSION_AUTH_KEY,
+  setSessionToken,
+} from "@/lib/api";
 import { cn } from "@/lib/utils";
 import { StatsLayout } from "./layouts/StatsLayout";
 
@@ -43,6 +49,7 @@ type AccessGateProps = {
 export function AccessGate({ onAuthenticated }: AccessGateProps) {
   const [password, setPassword] = useState(getPassParam);
   const turnstileTokenRef = useRef<string | null>(null);
+  const [turnstileReady, setTurnstileReady] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [turnstileFailed, setTurnstileFailed] = useState(false);
   const [needsInteraction, setNeedsInteraction] = useState(false);
@@ -88,12 +95,14 @@ export function AccessGate({ onAuthenticated }: AccessGateProps) {
         setError(data.error ?? "Verification failed");
         setPassword("");
         turnstileTokenRef.current = null;
+        setTurnstileReady(false);
         setTurnstileKey((k) => k + 1);
       }
     } catch {
       setError("Network error. Please try again.");
       setPassword("");
       turnstileTokenRef.current = null;
+      setTurnstileReady(false);
       setTurnstileKey((k) => k + 1);
     } finally {
       loadingRef.current = false;
@@ -114,6 +123,7 @@ export function AccessGate({ onAuthenticated }: AccessGateProps) {
 
   function handleTurnstileVerify(token: string) {
     turnstileTokenRef.current = token;
+    setTurnstileReady(true);
     setTurnstileFailed(false);
     setNeedsInteraction(false);
     if (password.length === 6 && !loadingRef.current) {
@@ -123,7 +133,46 @@ export function AccessGate({ onAuthenticated }: AccessGateProps) {
 
   function handleTurnstileFailed() {
     turnstileTokenRef.current = null;
+    setTurnstileReady(false);
     setTurnstileFailed(true);
+  }
+
+  async function continueAnonymously() {
+    const token = turnstileTokenRef.current;
+    if (!token || loadingRef.current) {
+      return;
+    }
+    loadingRef.current = true;
+    setError(null);
+
+    try {
+      const res = await api.api.auth.anonymous.$post({
+        json: { turnstileToken: token },
+      });
+
+      if (res.ok) {
+        const data = (await res.json()) as { token?: string };
+        if (data.token) {
+          setSessionToken(data.token);
+        }
+        localStorage.setItem(SESSION_AUTH_KEY, "1");
+        localStorage.setItem(SESSION_ANON_KEY, "1");
+        onAuthenticated();
+      } else {
+        const data = (await res.json()) as { error?: string };
+        setError(data.error ?? "Could not start anonymous session");
+        turnstileTokenRef.current = null;
+        setTurnstileReady(false);
+        setTurnstileKey((k) => k + 1);
+      }
+    } catch {
+      setError("Network error. Please try again.");
+      turnstileTokenRef.current = null;
+      setTurnstileReady(false);
+      setTurnstileKey((k) => k + 1);
+    } finally {
+      loadingRef.current = false;
+    }
   }
 
   return (
@@ -168,6 +217,26 @@ export function AccessGate({ onAuthenticated }: AccessGateProps) {
             <p className="text-center text-sm text-[#ff6669]">{displayError}</p>
           ) : null}
 
+          <div className="flex w-full flex-col items-stretch gap-2">
+            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+              <span className="h-px flex-1 bg-border" />
+              <span>or</span>
+              <span className="h-px flex-1 bg-border" />
+            </div>
+            <Button
+              type="button"
+              variant="neutral"
+              size="sm"
+              onClick={continueAnonymously}
+              disabled={!turnstileReady || codeComplete}
+            >
+              Continue anonymously
+            </Button>
+            <p className="text-center text-xs text-muted-foreground">
+              Browse stats with usernames hidden.
+            </p>
+          </div>
+
           <Turnstile
             key={turnstileKey}
             siteKey={TURNSTILE_SITE_KEY}
@@ -181,6 +250,7 @@ export function AccessGate({ onAuthenticated }: AccessGateProps) {
             onBeforeInteractive={() => setNeedsInteraction(true)}
             onExpire={() => {
               turnstileTokenRef.current = null;
+              setTurnstileReady(false);
             }}
             options={{ theme: "dark" }}
             hidden={!needsInteraction}

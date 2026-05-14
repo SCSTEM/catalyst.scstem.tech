@@ -1,4 +1,6 @@
+import type { ReactNode } from "react";
 import { Emoji } from "@/components/stats/Emoji";
+import { UserName } from "@/components/UserName";
 import { Card } from "@/components/ui/card";
 import { useEmojiProfile } from "@/hooks/queries";
 
@@ -8,8 +10,8 @@ export function ParrotProfileCard({ emoji }: { emoji: string }) {
   const { data } = useEmojiProfile(emoji);
 
   const firstUsedAt = formatMonthYear(data?.firstUsedAt) ?? DASH;
-  const firstUser = userLabel(data?.firstUser) ?? DASH;
-  const topUser = userLabel(data?.topUser) ?? DASH;
+  const firstUser = userNode(data?.firstUser) ?? DASH;
+  const topUser = userNode(data?.topUser) ?? DASH;
   const totalCount = data ? data.totalCount.toLocaleString() : DASH;
 
   return (
@@ -32,7 +34,7 @@ export function ParrotProfileCard({ emoji }: { emoji: string }) {
   );
 }
 
-function Stat({ label, value }: { label: string; value: string }) {
+function Stat({ label, value }: { label: string; value: ReactNode }) {
   return (
     <div className="flex flex-col gap-0.5">
       <dt className="text-xs uppercase tracking-wider text-parrot">{label}</dt>
@@ -41,13 +43,13 @@ function Stat({ label, value }: { label: string; value: string }) {
   );
 }
 
-function userLabel(
+function userNode(
   user: { displayName: string; userId: string } | null | undefined,
-): string | null {
+): ReactNode {
   if (!user) {
     return null;
   }
-  return user.displayName || user.userId;
+  return <UserName userId={user.userId} displayName={user.displayName} />;
 }
 
 function formatMonthYear(raw: string | null | undefined): string | null {

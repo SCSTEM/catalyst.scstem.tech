@@ -4,8 +4,10 @@ import { Avatar } from "@/components/Avatar";
 import { DetailView } from "@/components/stats/DetailView";
 import { Emoji } from "@/components/stats/Emoji";
 import { LeaderboardRow } from "@/components/stats/LeaderboardRow";
+import { UserName } from "@/components/UserName";
 import { useUserEmojis } from "@/hooks/queries";
 import { useStatsFilters } from "@/hooks/useStatsFilter";
+import { isAnonymousMode } from "@/lib/api";
 
 export const Route = createFileRoute("/stats/users/$userId")({
   head: () => ({
@@ -22,7 +24,13 @@ function UserDetailPage() {
 
   const displayName = data?.user?.displayName;
   useEffect(() => {
-    document.title = displayName ? `${displayName} | Catalyst` : "Catalyst";
+    if (displayName) {
+      document.title = `${displayName} | Catalyst`;
+    } else if (isAnonymousMode()) {
+      document.title = "Anonymous Reactor | Catalyst";
+    } else {
+      document.title = "Catalyst";
+    }
   }, [displayName]);
 
   const user = data?.user;
@@ -30,8 +38,15 @@ function UserDetailPage() {
 
   return (
     <DetailView
-      icon={<Avatar url={user?.avatarUrl} name={user?.displayName} size={40} />}
-      title={user?.displayName || userId}
+      icon={
+        <Avatar
+          url={user?.avatarUrl}
+          name={user?.displayName}
+          userId={userId}
+          size={40}
+        />
+      }
+      title={<UserName userId={userId} displayName={user?.displayName} />}
       loading={isPending}
       error={error?.message}
       emptyMessage="No reactions found"
