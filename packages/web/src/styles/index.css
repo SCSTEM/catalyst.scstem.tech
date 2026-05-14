@@ -79,7 +79,6 @@
     scrollbar-gutter: stable;
     view-transition-name: none;
     transition: background-color 400ms ease;
-    overscroll-behavior: none;
   }
 
   /* Parrots route renders an animated canvas; match the html bg to its
