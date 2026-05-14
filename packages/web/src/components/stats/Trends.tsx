@@ -1,4 +1,5 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
+import { flushSync } from "react-dom";
 import {
   Area,
   AreaChart,
@@ -349,9 +350,35 @@ function CategoryChart() {
   );
 }
 
+const CHART_TABS = ["emoji-trends", "user-trends", "categories"] as const;
+type ChartTab = (typeof CHART_TABS)[number];
+
 export function Trends() {
+  const [tab, setTab] = useState<ChartTab>("emoji-trends");
+
+  const handleChange = (nextValue: string) => {
+    const next = nextValue as ChartTab;
+    if (next === tab) {
+      return;
+    }
+    if (!document.startViewTransition) {
+      setTab(next);
+      return;
+    }
+
+    const fromIdx = CHART_TABS.indexOf(tab);
+    const toIdx = CHART_TABS.indexOf(next);
+
+    document.startViewTransition({
+      update: () => {
+        flushSync(() => setTab(next));
+      },
+      types: [toIdx > fromIdx ? "chart-forward" : "chart-back"],
+    });
+  };
+
   return (
-    <Tabs defaultValue="emoji-trends">
+    <Tabs value={tab} onValueChange={handleChange}>
       <TabsList className="w-full">
         <TabsTrigger value="emoji-trends" className="flex-1">
           Emojis
@@ -363,15 +390,17 @@ export function Trends() {
           Categories
         </TabsTrigger>
       </TabsList>
-      <TabsContent value="emoji-trends">
-        <EmojiTrendsChart />
-      </TabsContent>
-      <TabsContent value="user-trends">
-        <UserTrendsChart />
-      </TabsContent>
-      <TabsContent value="categories">
-        <CategoryChart />
-      </TabsContent>
+      <div style={{ viewTransitionName: "chart-body" }}>
+        <TabsContent value="emoji-trends" className="animate-none!">
+          <EmojiTrendsChart />
+        </TabsContent>
+        <TabsContent value="user-trends" className="animate-none!">
+          <UserTrendsChart />
+        </TabsContent>
+        <TabsContent value="categories" className="animate-none!">
+          <CategoryChart />
+        </TabsContent>
+      </div>
     </Tabs>
   );
 }

@@ -67,9 +67,15 @@
 
 @layer base {
   html {
+    @apply bg-background;
     font-size: 100%;
     scrollbar-gutter: stable;
     view-transition-name: none;
+    background-image:
+      linear-gradient(to right, #80808033 1px, transparent 1px),
+      linear-gradient(to bottom, #80808033 1px, transparent 1px);
+    background-size: 70px 70px;
+    transition: background-color 400ms ease;
   }
 
   @media (min-width: 768px) {
@@ -79,12 +85,7 @@
   }
 
   body {
-    @apply text-foreground font-base bg-background;
-    background-image:
-      linear-gradient(to right, #80808033 1px, transparent 1px),
-      linear-gradient(to bottom, #80808033 1px, transparent 1px);
-    background-size: 70px 70px;
-    transition: background-color 400ms ease;
+    @apply text-foreground font-base;
   }
 
   h1,
