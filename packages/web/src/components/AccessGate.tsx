@@ -165,7 +165,9 @@ export function AccessGate({ onAuthenticated }: AccessGateProps) {
           </div>
 
           {displayError ? (
-            <p className="text-center text-sm text-[#ff6669]">{displayError}</p>
+            <p className="text-center text-sm text-destructive">
+              {displayError}
+            </p>
           ) : null}
 
           <Turnstile

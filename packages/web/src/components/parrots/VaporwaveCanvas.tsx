@@ -144,9 +144,13 @@ export function VaporwaveCanvas() {
       camera={{ position: [0, 0.06, 1.1], fov: 75, near: 0.01, far: 20 }}
       style={{
         position: "fixed",
-        inset: 0,
+        top: 0,
+        left: 0,
+        width: "100vw",
+        height: "100vh",
         zIndex: -2,
         pointerEvents: "none",
+        overflow: "visible",
       }}
       gl={{ antialias: true }}
       dpr={[1, 2]}
