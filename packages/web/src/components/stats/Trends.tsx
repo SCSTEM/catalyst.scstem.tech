@@ -12,6 +12,8 @@ import {
   YAxis,
 } from "recharts";
 import { useMediaQuery } from "usehooks-ts";
+import { AnonymousAvatar } from "@/components/AnonymousAvatar";
+import { UserName } from "@/components/UserName";
 import {
   useCategoryData,
   useEmojiTrends,
@@ -216,11 +218,13 @@ function UserTrendsChart() {
             {user?.avatar ? (
               <img
                 src={user.avatar}
-                alt={user.name}
+                alt={user.name ?? "User"}
                 className="h-3.5 w-3.5 rounded-full"
               />
-            ) : null}
-            {user?.name || userId}
+            ) : (
+              <AnonymousAvatar userId={userId} size={14} />
+            )}
+            <UserName userId={userId} displayName={user?.name} />
           </span>
         ),
         color: CHART_COLORS[i % CHART_COLORS.length],

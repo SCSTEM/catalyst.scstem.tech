@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 
 type DetailViewProps = {
   icon: ReactNode;
-  title: string;
+  title: ReactNode;
   loading: boolean;
   error?: string;
   emptyMessage: string;

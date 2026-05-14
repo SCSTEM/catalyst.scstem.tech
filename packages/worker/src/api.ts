@@ -4,7 +4,8 @@ import { bearerAuth } from "hono/bearer-auth";
 import { cors } from "hono/cors";
 import { logger } from "hono/logger";
 import { secureHeaders } from "hono/secure-headers";
-import { verifySessionToken } from "./lib/auth";
+import { verifyAnySessionToken } from "./lib/auth";
+import type { AppEnv } from "./lib/types";
 import { analyticsRoute } from "./routes/analytics";
 import { authRoute } from "./routes/auth";
 import { emojisRoute } from "./routes/emojis";
@@ -35,7 +36,7 @@ function isAllowedOrigin(origin: string): boolean {
   return false;
 }
 
-export const api = new Hono<{ Bindings: Env }>()
+export const api = new Hono<AppEnv>()
   .use("/api/*", logger())
   .use("/api/*", secureHeaders())
   .use(
@@ -60,7 +61,16 @@ export const api = new Hono<{ Bindings: Env }>()
     bearerAuth({
       verifyToken: async (token, c) => {
         const ttl = Number(c.env.SESSION_TTL_HOURS) || 0;
-        return verifySessionToken(c.env.SITE_PASSWORD, token, ttl);
+        const mode = await verifyAnySessionToken(
+          c.env.SITE_PASSWORD,
+          token,
+          ttl,
+        );
+        if (!mode) {
+          return false;
+        }
+        c.set("sessionMode", mode);
+        return true;
       },
     }),
   )

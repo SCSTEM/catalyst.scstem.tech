@@ -3,7 +3,7 @@ import type { ReactNode } from "react";
 type LeaderboardRowProps = {
   rank: number;
   left: ReactNode;
-  label: string;
+  label: ReactNode;
   count: number;
   onClick?: () => void;
 };

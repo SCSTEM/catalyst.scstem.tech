@@ -3,9 +3,11 @@ import { and, asc, count, desc, eq, sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/d1";
 import { Hono } from "hono";
 import { emojiImages, reactions, reactionTotals, users } from "../db/schema";
+import type { AppEnv } from "../lib/types";
+import { isAnonymous } from "../lib/types";
 import { limitSeasonQuery, optionalSeasonQuery, seasonCondition } from "./util";
 
-export const emojisRoute = new Hono<{ Bindings: Env }>()
+export const emojisRoute = new Hono<AppEnv>()
   .get("/", async (c) => {
     const db = drizzle(c.env.DB);
 
@@ -85,21 +87,23 @@ export const emojisRoute = new Hono<{ Bindings: Env }>()
         .orderBy(desc(count()))
         .limit(1);
 
+      const anon = isAnonymous(c);
+
       return c.json({
         totalCount: totalRow?.totalCount ?? 0,
         firstUsedAt: firstRow?.createdAt ?? null,
         firstUser: firstRow
           ? {
               userId: firstRow.userId,
-              displayName: firstRow.displayName ?? "",
-              avatarUrl: firstRow.avatarUrl ?? "",
+              displayName: anon ? "" : (firstRow.displayName ?? ""),
+              avatarUrl: anon ? "" : (firstRow.avatarUrl ?? ""),
             }
           : null,
         topUser: topRow
           ? {
               userId: topRow.userId,
-              displayName: topRow.displayName ?? "",
-              avatarUrl: topRow.avatarUrl ?? "",
+              displayName: anon ? "" : (topRow.displayName ?? ""),
+              avatarUrl: anon ? "" : (topRow.avatarUrl ?? ""),
               count: topRow.count,
             }
           : null,
@@ -124,6 +128,16 @@ export const emojisRoute = new Hono<{ Bindings: Env }>()
       .groupBy(reactions.userId)
       .orderBy(desc(count()))
       .limit(limit);
+
+    if (isAnonymous(c)) {
+      return c.json(
+        results.map((r) => ({
+          ...r,
+          displayName: null,
+          avatarUrl: null,
+        })),
+      );
+    }
 
     return c.json(results);
   });

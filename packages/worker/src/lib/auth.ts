@@ -1,4 +1,7 @@
 const TOKEN_PREFIX = "catalyst-session-v1";
+const ANON_TOKEN_PREFIX = "catalyst-anon-v1";
+
+export type SessionMode = "full" | "anonymous";
 
 function currentWindow(ttlHours: number): number {
   return Math.floor(Date.now() / (ttlHours * 60 * 60 * 1000));
@@ -57,14 +60,69 @@ export async function verifySessionToken(
   token: string,
   ttlHours = 0,
 ): Promise<boolean> {
+  return verifyTokenWithPrefix(password, token, ttlHours, TOKEN_PREFIX);
+}
+
+/**
+ * Create an anonymous session token. Uses a distinct prefix from the
+ * password-backed session token so the two can be distinguished at verify
+ * time, and so anonymous tokens can be revoked independently if needed.
+ */
+export async function createAnonymousSessionToken(
+  password: string,
+  ttlHours = 0,
+): Promise<string> {
   if (ttlHours <= 0) {
-    const expected = await hmac(password, TOKEN_PREFIX);
+    return hmac(password, ANON_TOKEN_PREFIX);
+  }
+  const window = currentWindow(ttlHours);
+  return hmac(password, `${ANON_TOKEN_PREFIX}:${window}`);
+}
+
+export async function verifyAnonymousSessionToken(
+  password: string,
+  token: string,
+  ttlHours = 0,
+): Promise<boolean> {
+  return verifyTokenWithPrefix(password, token, ttlHours, ANON_TOKEN_PREFIX);
+}
+
+async function verifyTokenWithPrefix(
+  password: string,
+  token: string,
+  ttlHours: number,
+  prefix: string,
+): Promise<boolean> {
+  if (ttlHours <= 0) {
+    const expected = await hmac(password, prefix);
     return timeSafeEqual(token, expected);
   }
   const window = currentWindow(ttlHours);
   const [current, previous] = await Promise.all([
-    hmac(password, `${TOKEN_PREFIX}:${window}`),
-    hmac(password, `${TOKEN_PREFIX}:${window - 1}`),
+    hmac(password, `${prefix}:${window}`),
+    hmac(password, `${prefix}:${window - 1}`),
   ]);
   return timeSafeEqual(token, current) || timeSafeEqual(token, previous);
+}
+
+/**
+ * Verify either a full or anonymous session token. Always runs both checks
+ * so the response time doesn't leak which kind of token was attempted.
+ */
+export async function verifyAnySessionToken(
+  password: string,
+  token: string,
+  ttlHours = 0,
+): Promise<SessionMode | null> {
+  const [full, anon] = await Promise.all([
+    verifySessionToken(password, token, ttlHours),
+    verifyAnonymousSessionToken(password, token, ttlHours),
+  ]);
+  if (full) {
+    return "full";
+  }
+  if (anon) {
+    return "anonymous";
+  }
+  return null;
 }

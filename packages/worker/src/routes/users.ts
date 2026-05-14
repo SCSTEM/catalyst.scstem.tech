@@ -3,9 +3,11 @@ import { and, count, desc, eq } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/d1";
 import { Hono } from "hono";
 import { reactions, users } from "../db/schema";
+import type { AppEnv } from "../lib/types";
+import { isAnonymous } from "../lib/types";
 import { limitSeasonQuery, seasonCondition } from "./util";
 
-export const usersRoute = new Hono<{ Bindings: Env }>().get(
+export const usersRoute = new Hono<AppEnv>().get(
   "/:userId/emojis",
   zValidator("query", limitSeasonQuery),
   async (c) => {
@@ -34,8 +36,21 @@ export const usersRoute = new Hono<{ Bindings: Env }>().get(
         .where(eq(users.userId, userId)),
     ])) as [
       { emoji: string; count: number }[],
-      { userId: string; displayName: string; avatarUrl: string }[],
+      {
+        userId: string;
+        displayName: string | null;
+        avatarUrl: string | null;
+      }[],
     ];
+
+    if (isAnonymous(c)) {
+      return c.json({
+        user: user
+          ? { userId: user.userId, displayName: null, avatarUrl: null }
+          : null,
+        emojis,
+      });
+    }
 
     return c.json({ user: user ?? null, emojis });
   },
