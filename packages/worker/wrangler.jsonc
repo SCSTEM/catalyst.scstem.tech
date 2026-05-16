@@ -3,6 +3,7 @@
   "name": "catalyst-api",
   "main": "./src/index.ts",
   "compatibility_date": "2026-02-12",
+  "compatibility_flags": ["nodejs_compat"],
   "preview_urls": false,
   "workers_dev": false,
   "upload_source_maps": true,
@@ -22,7 +23,8 @@
   },
   "vars": {
     "PRODUCTION": true,
-    "SESSION_TTL_HOURS": 672
+    "SESSION_TTL_HOURS": 672,
+    "SENTRY_ENVIRONMENT": "production"
   },
   "workflows": [
     {
@@ -46,7 +48,8 @@
       },
       "vars": {
         "PRODUCTION": false,
-        "SESSION_TTL_HOURS": 8
+        "SESSION_TTL_HOURS": 8,
+        "SENTRY_ENVIRONMENT": "staging"
       },
       "d1_databases": [
         {

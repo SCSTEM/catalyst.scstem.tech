@@ -15,3 +15,14 @@
 # Generate at https://dash.cloudflare.com/profile/api-tokens with
 # "Edit Cloudflare Workers" + "D1 Edit" permissions.
 # CLOUDFLARE_API_TOKEN = "..."
+
+# ─── Sentry sourcemap upload (optional, for `mise run deploy:*`) ──────────────
+# Only needed if you run local force-deploys (`mise run deploy:worker`,
+# `mise run deploy:site --pages`). Cloudflare Pages auto-deploys read the same
+# vars from the Pages dashboard, and `wrangler secret put SENTRY_DSN` handles
+# the worker runtime DSN — so the deploy tasks Just Work without these for the
+# happy path. If all three are missing, the sourcemap upload step is skipped.
+# Token: https://sentry.io/orgredirect/organizations/:orgslug/settings/auth-tokens/
+# SENTRY_AUTH_TOKEN = "..."
+# SENTRY_ORG = "your-org-slug"
+# SENTRY_PROJECT = "catalyst-worker"  # the worker project; web is uploaded by the Pages auto-build

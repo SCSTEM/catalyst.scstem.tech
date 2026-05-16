@@ -26,6 +26,7 @@ done
 ENV="${ENV:-staging}"
 
 require_clean_git "$ENV"
+require_branch_for_env "$ENV"
 if [[ "$ENV" == "prod" ]]; then
   require_prod_confirmation
 fi
@@ -50,13 +51,19 @@ cd "$REPO_ROOT"
 
 echo "==> [$ENV] Deploying worker..."
 cd packages/worker
-# shellcheck disable=SC2086
-bunx wrangler deploy $WRANGLER_ENV
+deploy_worker_with_sentry "$WRANGLER_ENV"
 cd "$REPO_ROOT"
 
 if [[ "$DEPLOY_PAGES" == "true" ]]; then
   echo "==> [$ENV] Building web..."
-  bun --filter '@catalyst/web' build
+  if [[ "$ENV" == "prod" ]]; then
+    PAGES_BRANCH_NAME="main"
+  else
+    PAGES_BRANCH_NAME="staging"
+  fi
+  CF_PAGES_COMMIT_SHA=$(git rev-parse HEAD) \
+  CF_PAGES_BRANCH="$PAGES_BRANCH_NAME" \
+    bun --filter '@catalyst/web' build
 
   echo "==> [$ENV] Deploying pages..."
   # shellcheck disable=SC2086

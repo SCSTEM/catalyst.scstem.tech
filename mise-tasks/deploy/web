@@ -7,12 +7,23 @@ source "$(dirname "${BASH_SOURCE[0]}")/../_helpers.sh"
 ENV="${1:-staging}"
 
 require_clean_git "$ENV"
+require_branch_for_env "$ENV"
 if [[ "$ENV" == "prod" ]]; then
   require_prod_confirmation
 fi
 
-# Build
-bun --filter '@catalyst/web' build
+if [[ "$ENV" == "prod" ]]; then
+  PAGES_BRANCH_NAME="main"
+else
+  PAGES_BRANCH_NAME="staging"
+fi
+
+# Build. CF_PAGES_* are auto-set on Cloudflare Pages auto-builds; we set them
+# here so local force-builds also get a release identifier and environment tag
+# baked in for Sentry.
+CF_PAGES_COMMIT_SHA=$(git rev-parse HEAD) \
+CF_PAGES_BRANCH="$PAGES_BRANCH_NAME" \
+  bun --filter '@catalyst/web' build
 
 case "$ENV" in
   staging)
