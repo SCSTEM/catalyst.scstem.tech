@@ -102,11 +102,14 @@ if (SENTRY_DSN) {
     environment:
       import.meta.env.CF_PAGES_BRANCH === "main" ? "production" : "staging",
     release: import.meta.env.CF_PAGES_COMMIT_SHA || undefined,
-    sendDefaultPii: false,
-    tracesSampleRate: 0.1,
+    sendDefaultPii: true,
+    tracesSampleRate: 0.25,
     replaysSessionSampleRate: 0,
     replaysOnErrorSampleRate: 0,
-    integrations: [Sentry.tanstackRouterBrowserTracingIntegration(router)],
+    integrations: [
+      Sentry.tanstackRouterBrowserTracingIntegration(router),
+      Sentry.extraErrorDataIntegration(),
+    ],
     beforeSend(event) {
       if (event.request?.headers) {
         delete event.request.headers.Authorization;
