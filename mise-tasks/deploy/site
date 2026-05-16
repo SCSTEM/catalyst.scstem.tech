@@ -36,7 +36,7 @@ if [[ "$ENV" == "staging" ]]; then
   WRANGLER_ENV="--env=staging"
   PAGES_BRANCH="--branch=staging"
 else
-  WRANGLER_ENV="--env=''"
+  WRANGLER_ENV='--env=""'
   PAGES_BRANCH=""
 fi
 
