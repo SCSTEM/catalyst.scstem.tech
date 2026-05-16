@@ -23,7 +23,7 @@
 # the worker runtime DSN — so the deploy tasks Just Work without these for the
 # happy path. If either is missing, the sourcemap upload step is skipped.
 # Token: https://sentry.io/orgredirect/organizations/:orgslug/settings/auth-tokens/
-# The project slug is hardcoded per side (catalyst-web / catalyst-worker) — no
+# The project slug is hardcoded per side (catalyst-web / catalyst-api) — no
 # SENTRY_PROJECT var, since one deploy uploads to both projects.
 # SENTRY_AUTH_TOKEN = "..."
 # SENTRY_ORG = "your-org-slug"

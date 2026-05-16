@@ -79,7 +79,7 @@ Use **`/backfill`** for on-demand single-channel backfills from Slack. Use **`mi
 ### Sentry telemetry
 
 Errors from the React app and the Cloudflare Worker are reported to two
-separate Sentry projects (`catalyst-web`, `catalyst-worker`). Release IDs use
+separate Sentry projects (`catalyst-web`, `catalyst-api`). Release IDs use
 the git commit SHA so a single deploy is correlated across both projects.
 Environment is `production` or `staging` based on the deploy target.
 
@@ -91,7 +91,7 @@ wrangler secret put SENTRY_DSN --env staging
 ```
 
 The two Sentry **project slugs are hardcoded** — `catalyst-web` in
-`vite.config.ts`, `catalyst-worker` in the deploy script's `sentry-cli` calls.
+`vite.config.ts`, `catalyst-api` in the deploy script's `sentry-cli` calls.
 This is deliberate: `deploy:site` uploads to both projects in a single run, so
 a shared `SENTRY_PROJECT` env var couldn't disambiguate them. Only the org and
 auth token are configured via environment.
@@ -104,11 +104,11 @@ Missing creds → the upload step is silently skipped, deploy still succeeds.
 **Web (Cloudflare Pages) env vars** — set in the Pages dashboard under
 **Workers & Pages → catalyst-scstem-tech → Settings → Environment variables**:
 
-| Variable             | Scope              | Notes                                                                |
-| -------------------- | ------------------ | -------------------------------------------------------------------- |
-| `VITE_SENTRY_DSN`    | Production+Preview | Public DSN; baked into the client bundle at build time               |
-| `SENTRY_AUTH_TOKEN`  | Production+Preview | Secret. Read only at build by `@sentry/vite-plugin`; not in the bundle |
-| `SENTRY_ORG`         | Production+Preview | Plain text                                                           |
+| Variable            | Scope              | Notes                                                                  |
+| ------------------- | ------------------ | ---------------------------------------------------------------------- |
+| `VITE_SENTRY_DSN`   | Production+Preview | Public DSN; baked into the client bundle at build time                 |
+| `SENTRY_AUTH_TOKEN` | Production+Preview | Secret. Read only at build by `@sentry/vite-plugin`; not in the bundle |
+| `SENTRY_ORG`        | Production+Preview | Plain text                                                             |
 
 Cloudflare Pages auto-injects `CF_PAGES_COMMIT_SHA` and `CF_PAGES_BRANCH` at
 build time; the Vite plugin uses the SHA as the release ID and `main` branch

@@ -63,11 +63,11 @@ deploy_worker_with_sentry() {
   # in one run, so a shared SENTRY_PROJECT env var can't disambiguate them.
   if [[ -n "${SENTRY_AUTH_TOKEN:-}" && -n "${SENTRY_ORG:-}" ]]; then
     echo "==> Uploading sourcemaps to Sentry ($release)..."
-    bunx sentry-cli releases new "$release" --project catalyst-worker
+    bunx sentry-cli releases new "$release" --project catalyst-api
     bunx sentry-cli sourcemaps inject ./dist
     bunx sentry-cli sourcemaps upload --release "$release" \
-      --project catalyst-worker ./dist
-    bunx sentry-cli releases finalize "$release" --project catalyst-worker
+      --project catalyst-api ./dist
+    bunx sentry-cli releases finalize "$release" --project catalyst-api
   fi
   rm -rf dist
 }
