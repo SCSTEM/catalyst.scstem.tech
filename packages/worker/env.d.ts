@@ -7,5 +7,8 @@ declare namespace Cloudflare {
     SITE_PASSWORD: string;
     TURNSTILE_SECRET_KEY: string;
     SESSION_TTL_HOURS: string;
+    SENTRY_DSN: string;
+    SENTRY_ENVIRONMENT: "production" | "staging";
+    SENTRY_RELEASE: string;
   }
 }

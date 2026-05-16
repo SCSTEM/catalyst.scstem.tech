@@ -50,8 +50,13 @@ export const api = new Hono<{ Bindings: Env }>()
   .use("/api/*", async (c, next) => {
     await next();
     if (!c.res.headers.has("Cache-Control")) {
-      c.res.headers.set("Cache-Control", "public, max-age=60");
+      c.res.headers.set("Cache-Control", "private, max-age=60");
     }
+    const existingVary = c.res.headers.get("Vary");
+    c.res.headers.set(
+      "Vary",
+      existingVary ? `${existingVary}, Authorization` : "Authorization",
+    );
   })
   .get("/api/health", (c) => c.json({ ok: true }))
   .route("/api/auth", authRoute)
