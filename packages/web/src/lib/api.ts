@@ -4,9 +4,25 @@ import { hc } from "hono/client";
 const SESSION_TOKEN_KEY = "catalyst-token";
 export const SESSION_AUTH_KEY = "catalyst-auth";
 
+const FETCH_TIMEOUT_MS = 15_000;
+
 const baseUrl = import.meta.env.VITE_API_URL
   ? import.meta.env.VITE_API_URL
   : "/";
+
+export class SessionExpiredError extends Error {
+  constructor() {
+    super("Session expired");
+    this.name = "SessionExpiredError";
+  }
+}
+
+export class ApiError extends Error {
+  constructor(public readonly status: number) {
+    super(`API error: ${status}`);
+    this.name = "ApiError";
+  }
+}
 
 export function getSessionToken(): string | null {
   return localStorage.getItem(SESSION_TOKEN_KEY);
@@ -36,7 +52,13 @@ function authFetch(input: RequestInfo | URL, init?: RequestInit) {
   if (token) {
     headers.set("Authorization", `Bearer ${token}`);
   }
-  return fetch(input, { ...init, headers });
+
+  const timeoutSignal = AbortSignal.timeout(FETCH_TIMEOUT_MS);
+  const signal = init?.signal
+    ? AbortSignal.any([init.signal, timeoutSignal])
+    : timeoutSignal;
+
+  return fetch(input, { ...init, headers, signal });
 }
 
 export const api = hc<ApiType>(baseUrl, {
@@ -50,11 +72,9 @@ export async function fetchJson<T>(
     if (response.status === 401) {
       clearSession();
       sessionExpiredCallback?.();
-      // Return a never-resolving promise so TanStack Query doesn't render an
-      // error flash while the auth state change navigates to the login screen.
-      return new Promise<never>(() => {});
+      throw new SessionExpiredError();
     }
-    throw new Error(`API error: ${response.status}`);
+    throw new ApiError(response.status);
   }
   return response.json();
 }

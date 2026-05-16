@@ -71,7 +71,48 @@ Use **`/backfill`** for on-demand single-channel backfills from Slack. Use **`mi
 - **Local is the default** for `db:migrate` and `backfill`.
 - **Production requires explicit `prod`** argument and an interactive `y/N` confirmation.
 - **All remote operations require a clean git working directory.** Commit or stash first.
+- **Branch must match the target environment:**
+  - `prod` deploys may only run from the `main` branch.
+  - `staging` deploys may run from any branch _except_ `main`.
 - **Verify runs automatically** — you don't need to run it separately before deploying.
+
+### Sentry telemetry
+
+Errors from the React app and the Cloudflare Worker are reported to two
+separate Sentry projects (`catalyst-web`, `catalyst-api`). Release IDs use
+the git commit SHA so a single deploy is correlated across both projects.
+Environment is `production` or `staging` based on the deploy target.
+
+**Worker runtime DSN** — set once per environment via `wrangler secret`:
+
+```bash
+wrangler secret put SENTRY_DSN              # production
+wrangler secret put SENTRY_DSN --env staging
+```
+
+The two Sentry **project slugs are hardcoded** — `catalyst-web` in
+`vite.config.ts`, `catalyst-api` in the deploy script's `sentry-cli` calls.
+This is deliberate: `deploy:site` uploads to both projects in a single run, so
+a shared `SENTRY_PROJECT` env var couldn't disambiguate them. Only the org and
+auth token are configured via environment.
+
+**Worker sourcemap upload** — `mise run deploy:worker` / `deploy:site` will
+upload sourcemaps to Sentry **only if** both `SENTRY_AUTH_TOKEN` and
+`SENTRY_ORG` are present in your environment (most easily via `mise.local.toml`).
+Missing creds → the upload step is silently skipped, deploy still succeeds.
+
+**Web (Cloudflare Pages) env vars** — set in the Pages dashboard under
+**Workers & Pages → catalyst-scstem-tech → Settings → Environment variables**:
+
+| Variable            | Scope              | Notes                                                                  |
+| ------------------- | ------------------ | ---------------------------------------------------------------------- |
+| `VITE_SENTRY_DSN`   | Production+Preview | Public DSN; baked into the client bundle at build time                 |
+| `SENTRY_AUTH_TOKEN` | Production+Preview | Secret. Read only at build by `@sentry/vite-plugin`; not in the bundle |
+| `SENTRY_ORG`        | Production+Preview | Plain text                                                             |
+
+Cloudflare Pages auto-injects `CF_PAGES_COMMIT_SHA` and `CF_PAGES_BRANCH` at
+build time; the Vite plugin uses the SHA as the release ID and `main` branch
+maps to `environment=production` (everything else maps to `staging`).
 
 ### When to use what
 
@@ -128,12 +169,14 @@ wrangler secret put SITE_PASSWORD
 wrangler secret put TURNSTILE_SECRET_KEY
 wrangler secret put SLACK_SIGNING_SECRET
 wrangler secret put SLACK_BOT_TOKEN
+wrangler secret put SENTRY_DSN
 
 # Staging
 wrangler secret put SITE_PASSWORD --env staging
 wrangler secret put TURNSTILE_SECRET_KEY --env staging
 wrangler secret put SLACK_SIGNING_SECRET --env staging
 wrangler secret put SLACK_BOT_TOKEN --env staging
+wrangler secret put SENTRY_DSN --env staging
 ```
 
 ### 3. Create a Cloudflare Pages Project

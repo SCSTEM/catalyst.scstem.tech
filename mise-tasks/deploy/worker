@@ -8,14 +8,15 @@ source "$(dirname "${BASH_SOURCE[0]}")/../_helpers.sh"
 ENV="${1:-staging}"
 
 require_clean_git "$ENV"
+require_branch_for_env "$ENV"
 
 case "$ENV" in
   staging)
-    bunx wrangler deploy --env staging
+    deploy_worker_with_sentry "--env staging"
     ;;
   prod)
     require_prod_confirmation
-    bunx wrangler deploy
+    deploy_worker_with_sentry ""
     ;;
   *)
     echo "Usage: mise run deploy:worker [staging|prod]" >&2
