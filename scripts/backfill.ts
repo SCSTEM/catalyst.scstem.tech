@@ -358,17 +358,20 @@ if (userProfiles.length > 0) {
   }
 }
 
-// Custom emoji (INSERT OR REPLACE)
+// Custom emoji (upsert)
 if (emojiRows.length > 0) {
   lines.push("-- Custom emoji");
   for (const batch of chunks(emojiRows, SQL_BATCH_SIZE)) {
-    lines.push(
-      "INSERT OR REPLACE INTO emoji_images (name, image_url, updated_at) VALUES",
-    );
+    lines.push("INSERT INTO emoji_images (name, image_url, updated_at) VALUES");
     const values = batch.map(
       (e) => `  ('${esc(e.name)}', '${esc(e.imageUrl)}', datetime('now'))`,
     );
-    lines.push(`${values.join(",\n")};`);
+    lines.push(values.join(",\n"));
+    // Upsert without touching is_parrot, which is set out-of-band and would be
+    // reset to its default by INSERT OR REPLACE (a DELETE + INSERT).
+    lines.push(
+      "ON CONFLICT(name) DO UPDATE SET image_url = excluded.image_url, updated_at = excluded.updated_at;",
+    );
     lines.push("");
   }
 }
