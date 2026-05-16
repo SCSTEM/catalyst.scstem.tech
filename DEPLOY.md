@@ -90,11 +90,16 @@ wrangler secret put SENTRY_DSN              # production
 wrangler secret put SENTRY_DSN --env staging
 ```
 
+The two Sentry **project slugs are hardcoded** — `catalyst-web` in
+`vite.config.ts`, `catalyst-worker` in the deploy script's `sentry-cli` calls.
+This is deliberate: `deploy:site` uploads to both projects in a single run, so
+a shared `SENTRY_PROJECT` env var couldn't disambiguate them. Only the org and
+auth token are configured via environment.
+
 **Worker sourcemap upload** — `mise run deploy:worker` / `deploy:site` will
-upload sourcemaps to Sentry **only if** all three of `SENTRY_AUTH_TOKEN`,
-`SENTRY_ORG`, and `SENTRY_PROJECT` are present in your environment (most easily
-via `mise.local.toml`). Missing creds → the upload step is silently skipped,
-deploy still succeeds.
+upload sourcemaps to Sentry **only if** both `SENTRY_AUTH_TOKEN` and
+`SENTRY_ORG` are present in your environment (most easily via `mise.local.toml`).
+Missing creds → the upload step is silently skipped, deploy still succeeds.
 
 **Web (Cloudflare Pages) env vars** — set in the Pages dashboard under
 **Workers & Pages → catalyst-scstem-tech → Settings → Environment variables**:
@@ -104,7 +109,6 @@ deploy still succeeds.
 | `VITE_SENTRY_DSN`    | Production+Preview | Public DSN; baked into the client bundle at build time               |
 | `SENTRY_AUTH_TOKEN`  | Production+Preview | Secret. Read only at build by `@sentry/vite-plugin`; not in the bundle |
 | `SENTRY_ORG`         | Production+Preview | Plain text                                                           |
-| `SENTRY_PROJECT`     | Production+Preview | `catalyst-web`                                                       |
 
 Cloudflare Pages auto-injects `CF_PAGES_COMMIT_SHA` and `CF_PAGES_BRANCH` at
 build time; the Vite plugin uses the SHA as the release ID and `main` branch

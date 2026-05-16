@@ -59,12 +59,15 @@ deploy_worker_with_sentry() {
     --var SENTRY_RELEASE:"$release" \
     --outdir dist
 
-  if [[ -n "${SENTRY_AUTH_TOKEN:-}" && -n "${SENTRY_ORG:-}" && -n "${SENTRY_PROJECT:-}" ]]; then
+  # --project is passed explicitly: deploy:site uploads to both Sentry projects
+  # in one run, so a shared SENTRY_PROJECT env var can't disambiguate them.
+  if [[ -n "${SENTRY_AUTH_TOKEN:-}" && -n "${SENTRY_ORG:-}" ]]; then
     echo "==> Uploading sourcemaps to Sentry ($release)..."
-    bunx sentry-cli releases new "$release"
+    bunx sentry-cli releases new "$release" --project catalyst-worker
     bunx sentry-cli sourcemaps inject ./dist
-    bunx sentry-cli sourcemaps upload --release "$release" ./dist
-    bunx sentry-cli releases finalize "$release"
+    bunx sentry-cli sourcemaps upload --release "$release" \
+      --project catalyst-worker ./dist
+    bunx sentry-cli releases finalize "$release" --project catalyst-worker
   fi
   rm -rf dist
 }

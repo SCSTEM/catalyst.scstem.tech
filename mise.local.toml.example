@@ -21,8 +21,9 @@
 # `mise run deploy:site --pages`). Cloudflare Pages auto-deploys read the same
 # vars from the Pages dashboard, and `wrangler secret put SENTRY_DSN` handles
 # the worker runtime DSN — so the deploy tasks Just Work without these for the
-# happy path. If all three are missing, the sourcemap upload step is skipped.
+# happy path. If either is missing, the sourcemap upload step is skipped.
 # Token: https://sentry.io/orgredirect/organizations/:orgslug/settings/auth-tokens/
+# The project slug is hardcoded per side (catalyst-web / catalyst-worker) — no
+# SENTRY_PROJECT var, since one deploy uploads to both projects.
 # SENTRY_AUTH_TOKEN = "..."
 # SENTRY_ORG = "your-org-slug"
-# SENTRY_PROJECT = "catalyst-worker"  # the worker project; web is uploaded by the Pages auto-build

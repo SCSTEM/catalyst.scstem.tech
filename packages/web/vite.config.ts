@@ -17,10 +17,12 @@ export default defineConfig({
     tailwindcss(),
     sentryVitePlugin({
       org: process.env.SENTRY_ORG,
-      project: process.env.SENTRY_PROJECT,
+      // Hardcoded: deploy:site uploads to both Sentry projects in one run, so a
+      // shared SENTRY_PROJECT env var can't disambiguate web from worker.
+      project: "catalyst-web",
       authToken: process.env.SENTRY_AUTH_TOKEN,
       telemetry: false,
-      disable: !process.env.SENTRY_AUTH_TOKEN,
+      disable: !(process.env.SENTRY_AUTH_TOKEN && process.env.SENTRY_ORG),
       release: { name: process.env.CF_PAGES_COMMIT_SHA },
       sourcemaps: { filesToDeleteAfterUpload: ["./dist/**/*.map"] },
     }),
