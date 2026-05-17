@@ -10,6 +10,7 @@ import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { ApiError, SessionExpiredError } from "./lib/api";
 import { captureInitialPassParam } from "./lib/initialPass";
+import { initSentry, sentryEnabled } from "./lib/sentry";
 import { routeTree } from "./routeTree.gen";
 
 import "./styles/index.css";
@@ -17,8 +18,6 @@ import "./styles/index.css";
 // Must run before the router mounts so that redirect-based routes (e.g. `/` → `/stats/emojis`)
 // don't strip `?pass=...` from the URL before AccessGate can read it.
 captureInitialPassParam();
-
-const SENTRY_DSN = import.meta.env.VITE_SENTRY_DSN;
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -41,7 +40,7 @@ const queryClient = new QueryClient({
       if (error instanceof SessionExpiredError) {
         return;
       }
-      if (SENTRY_DSN) {
+      if (sentryEnabled) {
         Sentry.captureException(error, {
           tags: { queryKey: JSON.stringify(query.queryKey) },
         });
@@ -96,34 +95,7 @@ declare module "@tanstack/react-router" {
   }
 }
 
-if (SENTRY_DSN) {
-  Sentry.init({
-    dsn: SENTRY_DSN,
-    environment:
-      import.meta.env.CF_PAGES_BRANCH === "main" ? "production" : "staging",
-    release: import.meta.env.CF_PAGES_COMMIT_SHA || undefined,
-    sendDefaultPii: true,
-    tracesSampleRate: 0.25,
-    replaysSessionSampleRate: 0,
-    replaysOnErrorSampleRate: 0,
-    integrations: [
-      Sentry.tanstackRouterBrowserTracingIntegration(router),
-      Sentry.extraErrorDataIntegration(),
-    ],
-    beforeSend(event) {
-      if (event.request?.headers) {
-        delete event.request.headers.Authorization;
-      }
-      if (event.request?.url) {
-        event.request.url = event.request.url.replace(
-          /[?&](pass|token|password)=[^&]*/gi,
-          "",
-        );
-      }
-      return event;
-    },
-  });
-}
+initSentry(router);
 
 function ErrorFallback() {
   return (
