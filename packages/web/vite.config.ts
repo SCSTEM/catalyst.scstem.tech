@@ -5,6 +5,9 @@ import { tanstackRouter } from "@tanstack/router-plugin/vite";
 import react from "@vitejs/plugin-react";
 import { defineConfig } from "vite";
 
+const sentryEnvironment =
+  process.env.CF_PAGES_BRANCH === "main" ? "production" : "staging";
+
 export default defineConfig({
   plugins: [
     tanstackRouter({
@@ -23,7 +26,10 @@ export default defineConfig({
       authToken: process.env.SENTRY_AUTH_TOKEN,
       telemetry: false,
       disable: !(process.env.SENTRY_AUTH_TOKEN && process.env.SENTRY_ORG),
-      release: { name: process.env.CF_PAGES_COMMIT_SHA },
+      release: {
+        name: process.env.CF_PAGES_COMMIT_SHA,
+        deploy: { env: sentryEnvironment },
+      },
       sourcemaps: { filesToDeleteAfterUpload: ["./dist/**/*.map"] },
     }),
   ],
