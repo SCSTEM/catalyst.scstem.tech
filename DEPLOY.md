@@ -81,7 +81,9 @@ Use **`/backfill`** for on-demand single-channel backfills from Slack. Use **`mi
 Errors from the React app and the Cloudflare Worker are reported to two
 separate Sentry projects (`catalyst-web`, `catalyst-api`). Release IDs use
 the git commit SHA so a single deploy is correlated across both projects.
-Environment is `production` or `staging` based on the deploy target.
+Environment is `production` or `staging` based on the deploy target. Each
+deploy also registers a Sentry _deploy_ marker, which is what ties the
+release to its environment in the Sentry UI.
 
 **Worker runtime DSN** — set once per environment via `wrangler secret`:
 

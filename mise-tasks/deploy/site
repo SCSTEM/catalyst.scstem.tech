@@ -35,9 +35,11 @@ fi
 if [[ "$ENV" == "staging" ]]; then
   WRANGLER_ENV="--env=staging"
   PAGES_BRANCH="--branch=staging"
+  SENTRY_ENV="staging"
 else
   WRANGLER_ENV='--env=""'
   PAGES_BRANCH=""
+  SENTRY_ENV="production"
 fi
 
 echo "==> [$ENV] Running quality checks..."
@@ -46,12 +48,12 @@ mise run verify
 echo "==> [$ENV] Applying D1 migrations..."
 cd packages/worker
 # shellcheck disable=SC2086
-bunx wrangler d1 migrations apply DB --remote $WRANGLER_ENV
+bunx wrangler d1 migrations apply DB --remote="$WRANGLER_ENV"
 cd "$REPO_ROOT"
 
 echo "==> [$ENV] Deploying worker..."
 cd packages/worker
-deploy_worker_with_sentry "$WRANGLER_ENV"
+deploy_worker_with_sentry "$WRANGLER_ENV" "$SENTRY_ENV"
 cd "$REPO_ROOT"
 
 if [[ "$DEPLOY_PAGES" == "true" ]]; then

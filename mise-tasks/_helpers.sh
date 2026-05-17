@@ -46,11 +46,13 @@ require_branch_for_env() {
   esac
 }
 
-# Deploy the worker and (when Sentry creds are present) upload sourcemaps.
-# Must be invoked from packages/worker. Accepts the wrangler env flag string,
-# e.g. "--env staging" or "" for production.
+# Deploy the worker and (when Sentry creds are present) upload sourcemaps and
+# register a Sentry deploy. Must be invoked from packages/worker.
+# Args: $1 = wrangler env flag string ("--env staging" or ""),
+#       $2 = Sentry environment name ("staging" or "production").
 deploy_worker_with_sentry() {
   local wrangler_env="$1"
+  local sentry_env="$2"
   local release
   release=$(git rev-parse HEAD)
 
@@ -68,6 +70,9 @@ deploy_worker_with_sentry() {
     bunx sentry-cli sourcemaps upload --release "$release" \
       --project catalyst-api ./dist
     bunx sentry-cli releases finalize "$release" --project catalyst-api
+    # Register a deploy so the release is tied to its environment.
+    bunx sentry-cli releases deploys "$release" new \
+      --env "$sentry_env" --project catalyst-api
   fi
   rm -rf dist
 }
