@@ -99,16 +99,21 @@ a shared `SENTRY_PROJECT` env var couldn't disambiguate them. Only the org and
 auth token are configured via environment.
 
 **Worker sourcemap upload** — `mise run deploy:worker` / `deploy:site` will
-upload sourcemaps to Sentry **only if** both `SENTRY_AUTH_TOKEN` and
+upload worker sourcemaps to Sentry **only if** both `SENTRY_AUTH_TOKEN` and
 `SENTRY_ORG` are present in your environment (most easily via `mise.local.toml`).
-Missing creds → the upload step is silently skipped, deploy still succeeds.
+Missing creds → the worker upload step is silently skipped, the deploy still
+succeeds.
 
 **Web (Cloudflare Pages) env vars** — set in the Pages dashboard under
-**Workers & Pages → catalyst-scstem-tech → Settings → Environment variables**:
+**Workers & Pages → catalyst-scstem-tech → Settings → Environment variables**.
+All three are **required**: the web build (`vite build`) hard-fails if any is
+missing, on both Cloudflare Pages auto-deploys and local force-deploys. This is
+deliberate — a bundle that ships the Sentry SDK but never calls `Sentry.init()`
+is a silent failure, so the build refuses to produce one.
 
 | Variable            | Scope              | Notes                                                                  |
 | ------------------- | ------------------ | ---------------------------------------------------------------------- |
-| `VITE_SENTRY_DSN`   | Production+Preview | Public DSN; baked into the client bundle at build time                 |
+| `VITE_SENTRY_DSN`   | Production+Preview | Public DSN; baked into the client bundle, enables `Sentry.init()`      |
 | `SENTRY_AUTH_TOKEN` | Production+Preview | Secret. Read only at build by `@sentry/vite-plugin`; not in the bundle |
 | `SENTRY_ORG`        | Production+Preview | Plain text                                                             |
 

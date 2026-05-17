@@ -10,7 +10,10 @@ export default Sentry.withSentry(
   (env: Env) => ({
     dsn: env.SENTRY_DSN,
     enabled: !!env.SENTRY_DSN,
-    environment: env.SENTRY_ENVIRONMENT,
+    // SENTRY_RELEASE is injected only by the deploy pipeline (`wrangler deploy
+    // --var`); its absence means this is a local `wrangler dev` run, which must
+    // report as `development` rather than the wrangler.jsonc production default.
+    environment: env.SENTRY_RELEASE ? env.SENTRY_ENVIRONMENT : "development",
     release: env.SENTRY_RELEASE,
     tracesSampleRate: 0.25,
     beforeSend(event) {

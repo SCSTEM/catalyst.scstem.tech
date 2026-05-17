@@ -16,13 +16,25 @@
 # "Edit Cloudflare Workers" + "D1 Edit" permissions.
 # CLOUDFLARE_API_TOKEN = "..."
 
-# ─── Sentry sourcemap upload (optional, for `mise run deploy:*`) ──────────────
-# Only needed if you run local force-deploys (`mise run deploy:worker`,
-# `mise run deploy:site --pages`). Cloudflare Pages auto-deploys read the same
-# vars from the Pages dashboard, and `wrangler secret put SENTRY_DSN` handles
-# the worker runtime DSN — so the deploy tasks Just Work without these for the
-# happy path. If either is missing, the sourcemap upload step is skipped.
-# Token: https://sentry.io/orgredirect/organizations/:orgslug/settings/auth-tokens/
+# ─── Sentry ───────────────────────────────────────────────────────────────────
+# Two separate Sentry projects, two DSNs, kept apart purely by variable name:
+#   VITE_SENTRY_DSN → web SPA (catalyst-web). Vite only bundles VITE_* vars, so
+#                     this is the only DSN that can reach the browser.
+#   SENTRY_DSN      → worker  (catalyst-api). Bridged into the worker's env by
+#                     CLOUDFLARE_INCLUDE_PROCESS_ENV (set in mise.toml).
+#
+# Local dev (optional): set either/both to run Sentry against `mise run dev`.
+# Events are tagged environment=development. Omit them → Sentry stays inert.
+# VITE_SENTRY_DSN = "https://...@...ingest...sentry.io/<web-project-id>"
+# SENTRY_DSN = "https://...@...ingest...sentry.io/<api-project-id>"
+#
+# Local force-deploys (`mise run deploy:site` / `deploy:web`): the web build
+# HARD-FAILS unless VITE_SENTRY_DSN (above) AND both vars below are set — a
+# bundle that ships the Sentry SDK but never inits it is worse than an obvious
+# failure. Cloudflare Pages auto-deploys read the same three from the Pages
+# dashboard. (The deployed worker's DSN is a `wrangler secret`, NOT this
+# SENTRY_DSN, which only feeds local `wrangler dev` — see DEPLOY.md.)
+# Auth token: https://sentry.io/orgredirect/organizations/:orgslug/settings/auth-tokens/
 # The project slug is hardcoded per side (catalyst-web / catalyst-api) — no
 # SENTRY_PROJECT var, since one deploy uploads to both projects.
 # SENTRY_AUTH_TOKEN = "..."
