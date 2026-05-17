@@ -37,7 +37,7 @@ if [[ "$ENV" == "staging" ]]; then
   PAGES_BRANCH="--branch=staging"
   SENTRY_ENV="staging"
 else
-  WRANGLER_ENV='--env=""'
+  WRANGLER_ENV=""
   PAGES_BRANCH=""
   SENTRY_ENV="production"
 fi
