@@ -48,7 +48,7 @@ mise run verify
 echo "==> [$ENV] Applying D1 migrations..."
 cd packages/worker
 # shellcheck disable=SC2086
-bunx wrangler d1 migrations apply DB --remote "$WRANGLER_ENV"
+bunx wrangler d1 migrations apply DB --remote $WRANGLER_ENV
 cd "$REPO_ROOT"
 
 echo "==> [$ENV] Deploying worker..."
