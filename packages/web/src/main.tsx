@@ -53,6 +53,7 @@ const statsTabOrder = ["/stats/emojis", "/stats/users", "/stats/trends"];
 
 const router = createRouter({
   routeTree,
+  defaultPreload: "intent",
   defaultViewTransition: {
     types: ({ fromLocation, toLocation, pathChanged }) => {
       if (!pathChanged || !fromLocation) {

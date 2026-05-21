@@ -27,13 +27,19 @@ export default Sentry.withSentry(
   {
     async fetch(request, env, ctx): Promise<Response> {
       const url = new URL(request.url);
+      // Wrap the D1 binding so each query emits a Sentry span — otherwise the
+      // worker's http.server spans have no DB children and query time is invisible.
+      const tracedEnv: Env = {
+        ...env,
+        DB: Sentry.instrumentD1WithSentry(env.DB),
+      };
 
       if (url.pathname === "/api/slack/events") {
-        slackApp ??= createSlackApp(env);
+        slackApp ??= createSlackApp(tracedEnv);
         return slackApp.run(request, ctx);
       }
 
-      return api.fetch(request, env, ctx);
+      return api.fetch(request, tracedEnv, ctx);
     },
   } satisfies ExportedHandler<Env>,
 );

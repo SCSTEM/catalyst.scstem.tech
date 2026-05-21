@@ -53,37 +53,34 @@ export const emojisRoute = new Hono<{ Bindings: Env }>()
           ? and(eq(reactions.emoji, emoji), seasonCondition(season))
           : eq(reactions.emoji, emoji);
 
-      const [totalRow] = await db
-        .select({ totalCount: count() })
-        .from(reactions)
-        .where(whereClause);
-
-      const [firstRow] = await db
-        .select({
-          userId: reactions.userId,
-          createdAt: reactions.createdAt,
-          displayName: users.displayName,
-          avatarUrl: users.avatarUrl,
-        })
-        .from(reactions)
-        .leftJoin(users, eq(reactions.userId, users.userId))
-        .where(whereClause)
-        .orderBy(asc(reactions.createdAt))
-        .limit(1);
-
-      const [topRow] = await db
-        .select({
-          userId: reactions.userId,
-          count: count(),
-          displayName: users.displayName,
-          avatarUrl: users.avatarUrl,
-        })
-        .from(reactions)
-        .leftJoin(users, eq(reactions.userId, users.userId))
-        .where(whereClause)
-        .groupBy(reactions.userId)
-        .orderBy(desc(count()))
-        .limit(1);
+      const [[totalRow], [firstRow], [topRow]] = await Promise.all([
+        db.select({ totalCount: count() }).from(reactions).where(whereClause),
+        db
+          .select({
+            userId: reactions.userId,
+            createdAt: reactions.createdAt,
+            displayName: users.displayName,
+            avatarUrl: users.avatarUrl,
+          })
+          .from(reactions)
+          .leftJoin(users, eq(reactions.userId, users.userId))
+          .where(whereClause)
+          .orderBy(asc(reactions.createdAt))
+          .limit(1),
+        db
+          .select({
+            userId: reactions.userId,
+            count: count(),
+            displayName: users.displayName,
+            avatarUrl: users.avatarUrl,
+          })
+          .from(reactions)
+          .leftJoin(users, eq(reactions.userId, users.userId))
+          .where(whereClause)
+          .groupBy(reactions.userId)
+          .orderBy(desc(count()))
+          .limit(1),
+      ]);
 
       return c.json({
         totalCount: totalRow?.totalCount ?? 0,
