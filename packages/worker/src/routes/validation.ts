@@ -1,14 +1,18 @@
 import { z } from "zod";
 import { getCurrentSeason } from "../util";
 
-const limitField = z
-  .string()
-  .transform((val) => Number(val))
-  .refine((val) => val >= 1 && val <= 200, {
-    message: "Limit must be between 1 and 200",
-  })
-  .optional()
-  .default(50);
+function makeLimitField(min = 1, max = 200, fallback = 50) {
+  return z
+    .string()
+    .transform((val) => Number(val))
+    .refine((val) => val >= min && val <= max, {
+      message: `Limit must be between ${min} and ${max}`,
+    })
+    .optional()
+    .default(fallback);
+}
+
+const limitField = makeLimitField();
 
 const seasonField = z
   .string()
@@ -18,6 +22,8 @@ const seasonField = z
   })
   .optional()
   .default(() => getCurrentSeason());
+
+const periodField = z.enum(["day", "week", "month"]).optional().default("week");
 
 export const MAX_BATCH_IDS = 100;
 
@@ -49,5 +55,11 @@ export const idsQuery = z.object({ ids: idsField });
 export const idsLimitSeasonQuery = z.object({
   ids: idsField,
   limit: limitField,
+  season: seasonField,
+});
+
+export const trendsQuery = z.object({
+  period: periodField,
+  limit: makeLimitField(1, 20, 8),
   season: seasonField,
 });

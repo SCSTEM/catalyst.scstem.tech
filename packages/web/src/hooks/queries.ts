@@ -88,7 +88,7 @@ export function useUserTrends(season: number, interval: Interval) {
 export function useCategoryData(season: number) {
   const seasonParam = season.toString();
   return useQuery({
-    queryKey: ["stats", "analytics", "categories", season],
+    queryKey: ["stats", "rankings", "categories", season],
     queryFn: async () => {
       const res = await apiClient.api.rankings.emojis.$get({
         query: { limit: "200", season: seasonParam },

@@ -21,14 +21,14 @@ Always create the Drizzle instance per-request from the D1 binding (`drizzle(c.e
 
 ### Query Validation
 
-Use `@hono/zod-validator` for query/body validation. See `src/routes/util.ts` for shared schemas (e.g. `limitQuery`). Follow the existing route files for usage patterns.
+Use `@hono/zod-validator` for query/body validation. See `src/routes/validation.ts` for shared schemas (e.g. `limitSeasonQuery`). Follow the existing route files for usage patterns.
 
 ### Batch Endpoints
 
 Resources are fetched by collection endpoints that accept N ids — never a separate singular `/:id` route. A request for one item is just a batch of one.
 
 - Path: `GET /api/<resource>/<collection>?ids=a,b,c`
-- Validate with `idsQuery` (or `idsLimitSeasonQuery`) from `src/routes/util.ts` — comma-separated, trimmed, de-duplicated, capped at `MAX_BATCH_IDS`.
+- Validate with `idsQuery` (or `idsLimitSeasonQuery`) from `src/routes/validation.ts` — comma-separated, trimmed, de-duplicated, capped at `MAX_BATCH_IDS`.
 - Always respond with `Record<id, Result>`, keyed for O(1) client lookup. Pre-seed every requested id so missing data is an empty/null value, not an absent key.
 - Use `GET`. Switch a specific endpoint to `POST` only if its ids can contain `,`, or it needs a high cap with long ids.
 - For per-group "top N" (e.g. top reactors per emoji), rank rows with a `row_number() over (partition by ...)` window function in a CTE, then filter `rn <= limit` — see `GET /api/emojis/users`.
@@ -37,7 +37,7 @@ Existing batch endpoints: `/api/emojis/profiles`, `/api/emojis/users`, `/api/use
 
 ### Pre-aggregated Tables
 
-`reaction_totals` and `user_emoji_counts` are maintained inline during writes (see `src/lib/db.ts`). Writes use `.returning()` to detect duplicates before updating aggregates. Do NOT query `reactions` for counts — use the aggregate tables.
+`reaction_totals` and `user_emoji_counts` are kept in sync by SQLite `AFTER INSERT`/`AFTER DELETE` triggers on `reactions`, defined in migration `0003_pale_warbound.sql`. Application code only inserts/deletes `reactions` rows (see `src/lib/db.ts` — `addReaction` uses `onConflictDoNothing()`); the triggers cascade every count update. Do NOT query `reactions` for counts — use the aggregate tables.
 
 ### Request Routing (`src/index.ts`)
 

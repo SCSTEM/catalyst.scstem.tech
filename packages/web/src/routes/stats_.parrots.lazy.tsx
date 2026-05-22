@@ -21,7 +21,7 @@ function RouteComponent() {
       <div className="flex flex-col gap-6 mx-auto md:max-w-2xl py-4 px-2 md:py-8">
         <GlowingText text="Parrots" className="text-parrot text-4xl mx-auto" />
         {visibleParrots.map((p) => (
-          <ParrotProfileCard key={p.name} emoji={p.name} />
+          <ParrotProfileCard key={p.emoji} emoji={p.emoji} />
         ))}
       </div>
     </>

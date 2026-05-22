@@ -58,7 +58,7 @@ export const emojisRoute = new Hono<{ Bindings: Env }>()
 
     const rows = await db
       .select({
-        name: emojiImages.name,
+        emoji: emojiImages.name,
         imageUrl: emojiImages.imageUrl,
         count: sql<number>`coalesce(${reactionTotals.count}, 0)`,
       })
