@@ -23,6 +23,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useSlackCustomEmojis } from "@/hooks/queries";
 import { useFrcSeasons } from "@/hooks/useFrcSeasons";
 import { StatsFiltersProvider, useStatsFilters } from "@/hooks/useStatsFilter";
 import { capitalizeWord, chartIntervals, cn } from "@/lib/utils";
@@ -70,6 +71,9 @@ function StatsRoute() {
   const { frcSeason, setFrcSeason, chartInterval, setChartInterval } =
     useStatsFilters();
   const seasons = useFrcSeasons();
+  // Warm the shared emoji image map so it loads in parallel with page data
+  // rather than only after <Emoji> children mount.
+  useSlackCustomEmojis();
 
   useLayoutEffect(() => {
     const el = tabsScrollRef.current;

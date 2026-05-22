@@ -5,7 +5,7 @@ import { Hono } from "hono";
 import { cache } from "hono/cache";
 import { z } from "zod";
 import { reactions, users } from "../db/schema";
-import { getCurrentSeason, seasonCondition } from "./util";
+import { getCurrentSeason, seasonCondition } from "../util";
 
 const bucketExpr = {
   day: sql<string>`strftime('%Y-%m-%d', created_at)`,

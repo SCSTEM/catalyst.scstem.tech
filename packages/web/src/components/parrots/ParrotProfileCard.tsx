@@ -5,12 +5,12 @@ import { useEmojiProfile } from "@/hooks/queries";
 const DASH = "—";
 
 export function ParrotProfileCard({ emoji }: { emoji: string }) {
-  const { data } = useEmojiProfile(emoji);
+  const { data: profile } = useEmojiProfile(emoji);
 
-  const firstUsedAt = formatMonthYear(data?.firstUsedAt) ?? DASH;
-  const firstUser = userLabel(data?.firstUser) ?? DASH;
-  const topUser = userLabel(data?.topUser) ?? DASH;
-  const totalCount = data ? data.totalCount.toLocaleString() : DASH;
+  const firstUsedAt = formatMonthYear(profile?.firstUsedAt) ?? DASH;
+  const firstUser = userLabel(profile?.firstUser) ?? DASH;
+  const topUser = userLabel(profile?.topUser) ?? DASH;
+  const totalCount = profile ? profile.totalCount.toLocaleString() : DASH;
 
   return (
     <Card className="relative gap-5 p-3 md:p-4 bg-parrot-card-bg backdrop-blur-sm border-parrot shadow-none!">

@@ -3,7 +3,7 @@ import { count, desc, eq } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/d1";
 import { Hono } from "hono";
 import { reactions, users } from "../db/schema";
-import { limitSeasonQuery, seasonCondition } from "./util";
+import { limitSeasonQuery, seasonCondition } from "../util";
 
 export const rankingsRoute = new Hono<{ Bindings: Env }>()
   .get("/emojis", zValidator("query", limitSeasonQuery), async (c) => {
