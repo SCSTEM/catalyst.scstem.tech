@@ -24,7 +24,7 @@ export const usersRoute = new Hono<{ Bindings: Env }>()
         .select({
           userId: reactions.userId,
           emoji: reactions.emoji,
-          count: count(),
+          count: count().as("count"),
           rn: sql<number>`row_number() over (partition by ${reactions.userId} order by count(*) desc)`.as(
             "rn",
           ),

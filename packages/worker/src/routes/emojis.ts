@@ -185,7 +185,7 @@ export const emojisRoute = new Hono<{ Bindings: Env }>()
         .select({
           emoji: reactions.emoji,
           userId: reactions.userId,
-          count: count(),
+          count: count().as("count"),
           rn: sql<number>`row_number() over (partition by ${reactions.emoji} order by count(*) desc)`.as(
             "rn",
           ),
