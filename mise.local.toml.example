@@ -8,8 +8,12 @@
 # SLACK_SIGNING_SECRET = "..."
 
 # ─── Frontend (Vite reads `VITE_*` from process.env) ──────────────────────────
-# Optional. The frontend falls back to CF's always-passes test site key.
-# VITE_TURNSTILE_SITE_KEY = "..."
+# Per-env Turnstile site keys consumed by `deploy:site` / `deploy:web`. The
+# selected value is exported as `VITE_TURNSTILE_SITE_KEY` and baked into the
+# Vite bundle at build time. Without these, the frontend falls back to CF's
+# always-passes test key — which the worker rejects in real deploys.
+# VITE_TURNSTILE_SITE_KEY_STAGING = "1x00000000000000000000AA"
+# VITE_TURNSTILE_SITE_KEY_PROD = "..."
 
 # ─── Wrangler CLI auth (deploys + remote D1 commands) ─────────────────────────
 # Generate at https://dash.cloudflare.com/profile/api-tokens with
