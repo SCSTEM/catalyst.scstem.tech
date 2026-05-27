@@ -1,43 +1,5 @@
 import { and, gte, lt, type SQL } from "drizzle-orm";
-import z from "zod";
-import { reactions } from "../db/schema";
-
-const limitField = z
-  .string()
-  .transform((val) => Number(val))
-  .refine((val) => val >= 1 && val <= 200, {
-    message: "Limit must be between 1 and 200",
-  })
-  .optional()
-  .default(50);
-
-const seasonField = z
-  .string()
-  .transform((val) => Number(val))
-  .refine((val) => Number.isInteger(val) && val >= 1970 && val <= 2100, {
-    message: "Season must be a valid year",
-  })
-  .optional()
-  .default(() => getCurrentSeason());
-
-const optionalSeasonField = z
-  .string()
-  .transform((val) => Number(val))
-  .refine((val) => Number.isInteger(val) && val >= 1970 && val <= 2100, {
-    message: "Season must be a valid year",
-  })
-  .optional();
-
-export const limitQuery = z.object({ limit: limitField });
-
-export const seasonQuery = z.object({ season: seasonField });
-
-export const optionalSeasonQuery = z.object({ season: optionalSeasonField });
-
-export const limitSeasonQuery = z.object({
-  limit: limitField,
-  season: seasonField,
-});
+import { reactions } from "./db/schema";
 
 /**
  * FRC seasons start in July. A date in July of year N belongs to season N+1.

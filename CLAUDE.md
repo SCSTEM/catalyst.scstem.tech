@@ -74,7 +74,7 @@ The worker exports `AppType` from `app.ts`. The web package references the worke
 
 ### Data model
 
-Reactions use delete-on-remove (not event sourcing). Two pre-aggregated tables (`reaction_totals`, `user_emoji_counts`) are maintained inline during writes and rebuilt from scratch during backfill. Schema lives in `src/db/schema.ts`, migrations in `packages/worker/migrations/`.
+Reactions use delete-on-remove (not event sourcing). Two pre-aggregated tables (`reaction_totals`, `user_emoji_counts`) are kept in sync by SQLite triggers on `reactions` and rebuilt from scratch during backfill. Schema lives in `src/db/schema.ts`, migrations in `packages/worker/migrations/`.
 
 ### API routes
 

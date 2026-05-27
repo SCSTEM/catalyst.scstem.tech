@@ -3,26 +3,26 @@ import { count, desc, eq } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/d1";
 import { Hono } from "hono";
 import { reactions, users } from "../db/schema";
-import { limitSeasonQuery, seasonCondition } from "./util";
+import { getTopReactionCounts } from "../lib/stats";
+import { seasonCondition } from "../util";
+import { limitSeasonQuery } from "./validation";
 
 export const rankingsRoute = new Hono<{ Bindings: Env }>()
+  // /rankings/emojis?limit=N&season=S - top N emojis by reaction count.
   .get("/emojis", zValidator("query", limitSeasonQuery), async (c) => {
     const db = drizzle(c.env.DB);
     const { limit, season } = c.req.valid("query");
 
-    const results = await db
-      .select({
-        emoji: reactions.emoji,
-        count: count(),
-      })
-      .from(reactions)
-      .where(seasonCondition(season))
-      .groupBy(reactions.emoji)
-      .orderBy(desc(count()))
-      .limit(limit);
+    const ranked = await getTopReactionCounts(
+      db,
+      reactions.emoji,
+      season,
+      limit,
+    );
 
-    return c.json(results);
+    return c.json(ranked.map((r) => ({ emoji: r.key, count: r.count })));
   })
+  // /rankings/users?limit=N&season=S - top N users by reaction count.
   .get("/users", zValidator("query", limitSeasonQuery), async (c) => {
     const db = drizzle(c.env.DB);
     const { limit, season } = c.req.valid("query");
@@ -30,7 +30,7 @@ export const rankingsRoute = new Hono<{ Bindings: Env }>()
     const results = await db
       .select({
         userId: reactions.userId,
-        totalCount: count(),
+        count: count(),
         displayName: users.displayName,
         avatarUrl: users.avatarUrl,
       })

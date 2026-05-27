@@ -61,7 +61,7 @@ function authFetch(input: RequestInfo | URL, init?: RequestInit) {
   return fetch(input, { ...init, headers, signal });
 }
 
-export const api = hc<ApiType>(baseUrl, {
+export const apiClient = hc<ApiType>(baseUrl, {
   fetch: authFetch,
 });
 

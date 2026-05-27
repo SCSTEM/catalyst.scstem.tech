@@ -8,7 +8,7 @@ import {
   InputOTPGroup,
   InputOTPSlot,
 } from "@/components/ui/input-otp";
-import { api, SESSION_AUTH_KEY, setSessionToken } from "@/lib/api";
+import { apiClient, SESSION_AUTH_KEY, setSessionToken } from "@/lib/api";
 import { consumeInitialPassParam } from "@/lib/initialPass";
 import { cn } from "@/lib/utils";
 import { StatsLayout } from "./layouts/StatsLayout";
@@ -62,7 +62,7 @@ export function AccessGate({ onAuthenticated }: AccessGateProps) {
     setError(null);
 
     try {
-      const res = await api.api.auth.verify.$post({
+      const res = await apiClient.api.auth.verify.$post({
         json: { password: pass, turnstileToken: token },
       });
 

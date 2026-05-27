@@ -34,7 +34,7 @@ function UsersPage() {
           rank={i + 1}
           left={<Avatar url={entry.avatarUrl} name={entry.displayName} />}
           label={entry.displayName || entry.userId}
-          count={entry.totalCount}
+          count={entry.count}
           onClick={() =>
             navigate({
               to: "/stats/users/$userId",

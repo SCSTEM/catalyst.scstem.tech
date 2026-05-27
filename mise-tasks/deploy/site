@@ -60,11 +60,14 @@ if [[ "$DEPLOY_PAGES" == "true" ]]; then
   echo "==> [$ENV] Building web..."
   if [[ "$ENV" == "prod" ]]; then
     PAGES_BRANCH_NAME="main"
+    VITE_TURNSTILE_SITE_KEY="${VITE_TURNSTILE_SITE_KEY_PROD:?missing VITE_TURNSTILE_SITE_KEY_PROD in mise.local.toml}"
   else
     PAGES_BRANCH_NAME="staging"
+    VITE_TURNSTILE_SITE_KEY="${VITE_TURNSTILE_SITE_KEY_STAGING:?missing VITE_TURNSTILE_SITE_KEY_STAGING in mise.local.toml}"
   fi
   CF_PAGES_COMMIT_SHA=$(git rev-parse HEAD) \
   CF_PAGES_BRANCH="$PAGES_BRANCH_NAME" \
+  VITE_TURNSTILE_SITE_KEY="$VITE_TURNSTILE_SITE_KEY" \
     bun --filter '@catalyst/web' build
 
   echo "==> [$ENV] Deploying pages..."
